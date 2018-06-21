@@ -31,6 +31,8 @@ typedef int (*BoeUpgradeCallback)(int,char*);
 typedef int (*BoeRecoverPubCallback)(int,uint8_t*);
 typedef uint8_t TVersion;
 
+void boe_err_free(BoeErr *e);
+
 BoeErr* boe_init(void);
 BoeErr* boe_release(void);
 BoeErr* boe_reg_update_callback(BoeUpgradeCallback func);
