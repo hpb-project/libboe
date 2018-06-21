@@ -61,11 +61,11 @@ typedef enum A_CMD {
     ACMD_PB_GET_AXU_VER         = 0x0C,
     ACMD_PB_SET_BOEID           = 0x0D,
 
-	ACMD_PB_CHECK_BIND			= 0x0E,
-	ACMD_PB_BIND_ID				= 0x0F,
+	//ACMD_PB_CHECK_BIND			= 0x0E,
+	///ACMD_PB_BIND_ID				= 0x0F,
 	ACMD_PB_BIND_ACCOUNT		= 0x10,
 	ACMD_PB_HW_SIGN				= 0x11,
-	ACMD_PB_UNBIND				= 0x12,
+	//ACMD_PB_UNBIND				= 0x12,
 	ACMD_PB_GET_BINDINFO		= 0x13,
 
 
