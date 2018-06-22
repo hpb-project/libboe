@@ -54,7 +54,8 @@ static BoeErr* get_error(A_Package *p)
 static BoeErr* doCommand(A_Package *p, AQData **d)
 {
     BoeErr *ret = NULL;
-    WMessage * wm = WMessageNew(p->header.package_id, axu_check_response, gShortTimeout);
+    WMessage * wm = WMessageNew(p->header.package_id, axu_check_response, gShortTimeout, (uint8_t*)p,
+            axu_package_len(p));
     if(msgc_send(&wqc, wm) == 0)
     {
         AQData *q = msgc_read(&wqc, wm);
@@ -242,6 +243,7 @@ BoeErr* doAXU_GetVersionInfo(TVersion *hw, TVersion *fw, TVersion *axu)
     if(p)
     {
         ret = doCommand(p, &r);
+        free(p);
         if(ret == &e_ok)
         {
             A_Package *q = (A_Package*)(r->buf);
@@ -269,6 +271,7 @@ BoeErr* doAXU_Reset(void)
     if(p)
     {
         ret = doCommand(p, &r);
+        free(p);
         if(ret == &e_ok)
         {
             aqd_free(r);
@@ -292,6 +295,7 @@ BoeErr* doAXU_GetRandom(uint32_t *val)
     if(p)
     {
         ret = doCommand(p, &r);
+        free(p);
         if(ret == &e_ok)
         {
             A_Package *q = (A_Package*)(r->buf);
@@ -316,6 +320,7 @@ BoeErr* doAXU_GetBOEID(uint32_t *id)
     if(p)
     {
         ret = doCommand(p, &r);
+        free(p);
         if(ret == &e_ok)
         {
             A_Package *q = (A_Package*)(r->buf);
@@ -339,6 +344,7 @@ BoeErr* doAXU_GetSingleVer(TVersion *v, ACmd cmd)
     if(p)
     {
         ret = doCommand(p, &r);
+        free(p);
         if(ret == &e_ok)
         {
             A_Package *q = (A_Package*)(r->buf);
@@ -363,6 +369,7 @@ BoeErr* doAXU_GetBindAccount(uint8_t *account_256)
     if(p)
     {
         ret = doCommand(p, &r);
+        free(p);
         if(ret == &e_ok)
         {
             A_Package *q = (A_Package*)(r->buf);
@@ -400,6 +407,7 @@ BoeErr* doAXU_SetBoeID(uint32_t id)
     if(p)
     {
         ret = doCommand(p, &r);
+        free(p);
         if(ret == &e_ok)
         {
             aqd_free(r);
@@ -421,6 +429,7 @@ BoeErr* doAXU_BindAccount(uint8_t *baccount)
     if(p)
     {
         ret = doCommand(p, &r);
+        free(p);
         if(ret == &e_ok)
         {
             aqd_free(r);
@@ -442,6 +451,7 @@ BoeErr* doAXU_HWSign(uint8_t *data, int len, uint8_t *result)
     if(p)
     {
         ret = doCommand(p, &r);
+        free(p);
         if(ret == &e_ok)
         {
             // get sign r, s, v.
@@ -475,6 +485,7 @@ BoeErr* doAXU_TransportStart(ImageHeader *info)
     if(p)
     {
         ret = doCommand(p, &r);
+        free(p);
         if(ret == &e_ok)
         {
             aqd_free(r);
@@ -499,6 +510,7 @@ BoeErr* doAXU_TransportMid(uint32_t fid, uint32_t offset, int len, uint8_t *data
     if(p)
     {
         ret = doCommand(p, &r);
+        free(p);
         if(ret == &e_ok)
         {
             aqd_free(r);
@@ -520,6 +532,7 @@ BoeErr* doAXU_TransportFin(uint32_t fid, uint32_t offset, int len, uint8_t *data
     if(p)
     {
         ret = doCommand(p, &r);
+        free(p);
         if(ret == &e_ok)
         {
             aqd_free(r);
@@ -571,6 +584,7 @@ BoeErr* doAXU_UpgradeStart(uint32_t fid)
     if(p)
     {
         ret = doCommand(p, &r);
+        free(p);
         if(ret == &e_ok)
         {
             aqd_free(r);
@@ -593,6 +607,7 @@ BoeErr* doAXU_UpgradeAbort(uint32_t fid)
     if(p)
     {
         ret = doCommand(p, &r);
+        free(p);
         if(ret == &e_ok)
         {
             aqd_free(r);

@@ -1,4 +1,4 @@
-// Last Update:2018-06-21 20:28:46
+// Last Update:2018-06-22 20:04:25
 /**
  * @file nboe.c
  * @brief 
@@ -13,6 +13,7 @@
 #include "error.h"
 #include "common.h"
 #include "doAXU.h"
+#include "doTSU.h"
 
 struct BoeInstance {
     TVersion hw;
@@ -22,6 +23,7 @@ struct BoeInstance {
     uint32_t updateFid;
     BoeUpgradeCallback updateCallback;
     BoeRecoverPubCallback revocerCallback;
+    TSUContext tsu;
 };
 
 static struct BoeInstance gIns;
@@ -29,6 +31,33 @@ static struct BoeInstance gIns;
 #define GetProgress(p)   (p->data[0])
 #define GetProgressMsg(p) (p->data+1)
 static int axu_msg_handle(uint8_t *data, int len, void *userdata)
+{
+    A_Package *p = (A_Package*)data;
+    struct BoeInstance *ins = (struct BoeInstance*)userdata;
+    if(p->header.magic_aacc == AXU_MAGIC_START &&
+            p->header.magic_ccaa == AXU_MAGIC_END)
+    {
+        switch(p->header.acmd)
+        {
+            case ACMD_BP_RES_UPGRADE_PROGRESS:
+                {
+                    int progress = GetProgress(p);
+                    char *msg    = GetProgressMsg(p);
+                    if(ins->updateCallback != NULL)
+                    {
+                        ins->updateCallback(progress, msg);
+                    }
+                    break;
+                }
+            default:
+                break;
+        }
+    }
+
+    return 0;
+}
+
+static int tsu_msg_handle(uint8_t *data, int len, void *userdata)
 {
     A_Package *p = (A_Package*)data;
     struct BoeInstance *ins = (struct BoeInstance*)userdata;
@@ -78,7 +107,8 @@ BoeErr* boe_init(void)
 {
     // pcie , init community.
     // axu/tsu
-    //doAXU_init(msg_handle, (void*)&gIns);
+    doAXU_Init("/dev/h2c0", "/dev/c2h0", axu_msg_handle, (void*)&gIns);
+    doTSU_Init(&gIns.tsu, "/dev/h2c1", "/dev/c2h1", NULL, NULL);
     if(!connected(&gIns))
     {
         return &e_init_fail;
@@ -89,6 +119,7 @@ BoeErr* boe_init(void)
 BoeErr* boe_release(void)
 {
     doAXU_Release();
+    doTSU_Release(&gIns.tsu);
     // pcie, release pcie.
     return BOE_OK;
 }
@@ -193,13 +224,9 @@ BoeErr* boe_hw_sign(char *p_data, uint8_t *sig)
 /* -------------------  tsu command -------------------------*/
 BoeErr* boe_get_s_random(uint8_t *hash, uint8_t *nexthash)
 {
-    return BOE_OK;
+    return doTSU_GetHash(&gIns.tsu, hash, nexthash);
 }
-BoeErr* boe_valid_sign(uint8_t *hash, uint8_t *r, uint8_t *s, uint8_t v)
+BoeErr* boe_valid_sign(uint8_t *sig, uint8_t *pub)
 {
-    return BOE_OK;
-}
-BoeErr* boe_valid_sign_sync(uint8_t* hash, uint8_t* r, uint8_t* s, uint8_t v, uint8_t *result)
-{
-    return BOE_OK;
+    return doTSU_RecoverPub(&gIns.tsu, sig, pub);
 }

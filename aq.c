@@ -16,6 +16,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "atomic.h"
 #include "aq.h"
 
 AQData* aqd_new(int len)
@@ -51,6 +52,7 @@ int aq_init(AtomicQ *q, uint64_t qlen)
     q->q_len = qlen;
     q->w_idx = 0;
     q->r_idx = 0;
+    q->cycle = 0;
     if(q->queue == NULL)
         return 1;
 
@@ -58,22 +60,29 @@ int aq_init(AtomicQ *q, uint64_t qlen)
 }
 int aq_empty(AtomicQ *q)
 {
-    return q->r_idx == q->w_idx ? 1 : 0;
+    return (q->cycle == 0) ? 1 : 0;
 }
 int aq_full(AtomicQ *q)
 {
-    if(1 == ((q->r_idx + q->q_len - q->w_idx)%q->q_len))
+    if(q->cycle == q->q_len)
         return 1;
-    else 
+    else
         return 0;
 }
+
 int aq_push(AtomicQ *q, AQData *data)
 {
     if(!aq_full(q))
     {
         uint64_t widx = q->w_idx;
-        q->w_idx = (q->w_idx + 1) % q->q_len;
         q->queue[widx] = data;
+
+        if(q->w_idx == q->q_len - 1)
+            q->w_idx = 0;
+        else
+            atomic_fetch_and_add(&q->w_idx, 1);
+
+        atomic_fetch_and_add(&q->cycle, 1);
         return 0;
     }
     else
@@ -82,14 +91,24 @@ int aq_push(AtomicQ *q, AQData *data)
     }
 }
 
+int aq_len(AtomicQ *q)
+{
+    return q->cycle;
+}
+
 AQData* aq_pop(AtomicQ *q)
 {
     AQData *d = NULL;
     if(!aq_empty(q))
     {
         uint64_t r_idx = q->r_idx; 
-        q->r_idx = (q->r_idx + 1) % q->q_len;
         d = q->queue[r_idx];
+        if(q->r_idx == q->q_len - 1)
+            q->r_idx = 0;
+        else
+            atomic_fetch_and_add(&q->r_idx, 1);
+
+        atomic_fetch_and_add(&q->cycle, -1);
         q->queue[r_idx] = NULL;
     }
     return d;
@@ -104,5 +123,6 @@ int aq_free(AtomicQ *q)
             free(d->buf);
         free(d);
     }
+    free(q->queue);
     return 0;
 }

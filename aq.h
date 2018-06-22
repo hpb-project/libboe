@@ -28,6 +28,7 @@ typedef struct AtomicQ{
     uint64_t r_idx;
     uint64_t w_idx;
     uint64_t q_len;
+    uint64_t cycle;
 }AtomicQ;
 
 AQData* aqd_new(int len);
@@ -36,6 +37,7 @@ int aq_init(AtomicQ *q, uint64_t qlen);
 int aq_free(AtomicQ *q);
 int aq_empty(AtomicQ *q);
 int aq_full(AtomicQ *q);
+int aq_len(AtomicQ *q);
 int aq_push(AtomicQ *q, AQData *data);
 AQData* aq_pop(AtomicQ *q);
 #endif  /*AQ_H*/

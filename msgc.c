@@ -24,6 +24,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include "common.h"
+#include "community.h"
 #include "atomic.h"
 #include "aq.h"
 #include "list.h"
@@ -38,7 +39,9 @@ typedef struct WMessage{
     uint64_t sTime;   // timestamp of enter wait list..
     sem_t sem;
     CheckResponse cFunc; // check response is waited.
+    AQData s;
     AQData *d;
+
 }WMessage;
 
 // wait list.
@@ -63,7 +66,7 @@ typedef struct IMsgContext{
 static void *sorting_thread(void*userdata);
 static void *receive_thread(void*userdata);
 
-WMessage* WMessageNew(uint32_t uid, CheckResponse cfunc, uint32_t timeout)
+WMessage* WMessageNew(uint32_t uid, CheckResponse cfunc, uint32_t timeout, uint8_t *data, int len)
 {
     WMessage *msg = (WMessage*)malloc(sizeof(WMessage));
     msg->uid = uid;
@@ -71,6 +74,8 @@ WMessage* WMessageNew(uint32_t uid, CheckResponse cfunc, uint32_t timeout)
     msg->timeout = timeout;
     sem_init(&msg->sem, 0, 0);
     msg->d = NULL;
+    msg->s.buf = data;
+    msg->s.len = len;
     return msg;
 }
 
@@ -138,6 +143,7 @@ int msgc_send(MsgContext *ctx, WMessage *wmsg)
     wmsg->sTime = get_timestamp_us();
     n->wmsg = wmsg;
 //    pthread_mutex_lock(&ctx->mLock);
+    pcie_write(wmsg->s.buf, wmsg->s.len);
     list_add_tail(&(n->list), &(c->wList.list));
  //   pthread_mutex_unlock(&handle->mLock);
 
