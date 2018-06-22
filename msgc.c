@@ -60,7 +60,7 @@ typedef struct IMsgContext{
     int      w_fd;
     uint8_t  th_flag;  // thread control.
     void*    userdata;
-    // pthread_mutex_t lock; // Todo 
+    pthread_mutex_t mlock; // 
 }IMsgContext;
 
 static void *sorting_thread(void*userdata);
@@ -130,6 +130,7 @@ int msgc_release(MsgContext *ctx)
         close(c->w_fd);
         c->w_fd = 0;
     }
+    pthread_mutex_destroy(&c->mlock);
     aq_free(&(c->r_q));
     return 0;
 }
@@ -142,10 +143,11 @@ int msgc_send(MsgContext *ctx, WMessage *wmsg)
         return -1;
     wmsg->sTime = get_timestamp_us();
     n->wmsg = wmsg;
-//    pthread_mutex_lock(&ctx->mLock);
+
     pcie_write(wmsg->s.buf, wmsg->s.len);
+    pthread_mutex_lock(&c->mlock);
     list_add_tail(&(n->list), &(c->wList.list));
- //   pthread_mutex_unlock(&handle->mLock);
+    pthread_mutex_unlock(&c->mlock);
 
     return 0;
 }
@@ -236,7 +238,9 @@ static void *sorting_thread(void*userdata)
                     m->d = d;
                     sem_post(&m->sem);
 
+                    pthread_mutex_lock(&c->mlock);
                     list_del_init(pos);
+                    pthread_mutex_unlock(&c->mlock);
                     free(pnode);
                     break;
                 }
@@ -258,7 +262,9 @@ static void *sorting_thread(void*userdata)
                 m->d = NULL;
                 // timeout.
                 sem_post(&m->sem);
+                pthread_mutex_lock(&c->mlock);
                 list_del_init(pos);
+                pthread_mutex_unlock(&c->mlock);
                 free(pnode);
             }
         } 
@@ -276,7 +282,9 @@ static void *sorting_thread(void*userdata)
             m = pnode->wmsg;
             m->d = NULL;
             sem_post(&m->sem);
+            pthread_mutex_lock(&c->mlock);
             list_del_init(pos);
+            pthread_mutex_unlock(&c->mlock);
             free(pnode);
         } 
     }
