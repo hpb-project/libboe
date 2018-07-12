@@ -13,5 +13,6 @@
 #include <stdint.h>
 typedef uint8_t TVersion;
 typedef void*   Handle_t;
+typedef int (*MsgHandle)(uint8_t *data, int len, void *userdata);
 
 #endif  /*TYPE_H*/

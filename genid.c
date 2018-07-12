@@ -71,6 +71,7 @@ static int exec_shell(const char *cmd, char * buff)
         redn = fread(buff+cnt, BUFFER_LEN-cnt, 1, fp);
     }while(redn > 0 && (cnt+redn < BUFFER_LEN));
     pclose(fp);
+    return 0;
 }
 
 static int scan_board(BoardInfo *board, char *cmd_buf)
@@ -93,7 +94,6 @@ static int scan_mac(MacInfo *macinfo, char *cmd_buf)
 {
     memset(macinfo, 0, sizeof(MacInfo));
     /* mac address */
-    int offset = 0;
     char *str1 = NULL, *token = NULL, *saveptr1 = NULL;
     // get all mac addr
     exec_shell("ifconfig -a | grep -v '^docker' | grep -Eo '[0-9a-fA-F]{2,2}:[0-9a-fA-F]{2,2}:[0-9a-fA-F]{2,2}:[0-9a-fA-F]{2,2}:[0-9a-fA-F]{2,2}:[0-9a-fA-F]{2,2}' | sort", cmd_buf);

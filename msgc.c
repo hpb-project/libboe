@@ -127,7 +127,7 @@ int msgc_release(MsgContext *ctx)
 int msgc_send(MsgContext *ctx, WMessage *wmsg)
 {
     IMsgContext *c = *ctx;
-    int ret = 0;
+    //int ret = 0;
     WaitNode *n = (WaitNode*)malloc(sizeof(WaitNode));
     if(n == NULL)
         return -1;

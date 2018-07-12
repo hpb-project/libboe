@@ -1,4 +1,4 @@
-// Last Update:2018-07-10 20:50:44
+// Last Update:2018-07-12 21:11:05
 /**
  * @file nboe.c
  * @brief 
@@ -23,7 +23,6 @@ struct BoeInstance {
     uint32_t updateFid;
     BoeUpgradeCallback updateCallback;
     BoeRecoverPubCallback revocerCallback;
-    TSUContext tsu;
 };
 
 static struct BoeInstance gIns;
@@ -42,7 +41,7 @@ static int axu_msg_handle(uint8_t *data, int len, void *userdata)
             case ACMD_BP_RES_UPGRADE_PROGRESS:
                 {
                     int progress = GetProgress(p);
-                    char *msg    = GetProgressMsg(p);
+                    char *msg    = (char*)GetProgressMsg(p);
                     if(ins->updateCallback != NULL)
                     {
                         ins->updateCallback(progress, msg);
@@ -59,28 +58,6 @@ static int axu_msg_handle(uint8_t *data, int len, void *userdata)
 
 static int tsu_msg_handle(uint8_t *data, int len, void *userdata)
 {
-    A_Package *p = (A_Package*)data;
-    struct BoeInstance *ins = (struct BoeInstance*)userdata;
-    if(p->header.magic_aacc == AXU_MAGIC_START &&
-            p->header.magic_ccaa == AXU_MAGIC_END)
-    {
-        switch(p->header.acmd)
-        {
-            case ACMD_BP_RES_UPGRADE_PROGRESS:
-                {
-                    int progress = GetProgress(p);
-                    char *msg    = GetProgressMsg(p);
-                    if(ins->updateCallback != NULL)
-                    {
-                        ins->updateCallback(progress, msg);
-                    }
-                    break;
-                }
-            default:
-                break;
-        }
-    }
-
     return 0;
 }
 
@@ -103,12 +80,19 @@ void boe_err_free(BoeErr *e)
     }
 }
 
+void find_eth(char **ethname)
+{
+    char *e = "enops";
+    *ethname = strdup(e);
+}
+
 BoeErr* boe_init(void)
 {
-
+    char *ethname = NULL;
+    find_eth(&ethname); // find current ethname that connect with board.
     // axu/tsu
-    doAXU_Init("/dev/h2c0", "/dev/c2h0", axu_msg_handle, (void*)&gIns);
-    doTSU_Init(&gIns.tsu, "/dev/h2c1", "/dev/c2h1", NULL, NULL);
+    doAXU_Init(ethname, axu_msg_handle, (void*)&gIns);
+    doTSU_Init(ethname, tsu_msg_handle, (void*)&gIns);
     if(!connected(&gIns))
     {
         return &e_init_fail;
@@ -119,7 +103,7 @@ BoeErr* boe_init(void)
 BoeErr* boe_release(void)
 {
     doAXU_Release();
-    doTSU_Release(&gIns.tsu);
+    doTSU_Release();
     return BOE_OK;
 }
 BoeErr* boe_reg_update_callback(BoeUpgradeCallback func)
@@ -176,6 +160,7 @@ BoeErr* boe_upgrade(unsigned char*image, int imagelen)
     {
         return &e_image_header_error;
     }
+    return BOE_OK;
 }
 
 BoeErr* boe_upgrade_abort(void)
@@ -223,9 +208,9 @@ BoeErr* boe_hw_sign(char *p_data, unsigned char *sig)
 /* -------------------  tsu command -------------------------*/
 BoeErr* boe_get_s_random(unsigned char *hash, unsigned char *nexthash)
 {
-    return doTSU_GetHash(&gIns.tsu, hash, nexthash);
+    return doTSU_GetHash(hash, nexthash);
 }
 BoeErr* boe_valid_sign(unsigned char *sig, unsigned char *pub)
 {
-    return doTSU_RecoverPub(&gIns.tsu, sig, pub);
+    return doTSU_RecoverPub(sig, pub);
 }

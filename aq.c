@@ -117,7 +117,7 @@ AQData* aq_pop(AtomicQ *q)
 int aq_free(AtomicQ *q)
 {
     AQData *d = NULL;
-    while(d=aq_pop(q))
+    while((d=aq_pop(q)) != NULL)
     {
         if(d->buf)
             free(d->buf);

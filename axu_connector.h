@@ -23,7 +23,7 @@
 typedef enum {
     AP_QUERY = 0,
     AP_RESPONSE = 1
-};
+}AP_Type;
 
 typedef struct A_PACKAGE_HEADER {
     uint16_t magic_aacc;

@@ -7,7 +7,7 @@ CROSS=
 INC= -I .
 
 CC=${CROSS}gcc
-CFLAGS  := -Wall -g -fPIC -c -fpermissive
+CFLAGS  := -Wall -g -fPIC -c 
 
 OBJ_DIR=./obj
 OUT_DIR=./lib

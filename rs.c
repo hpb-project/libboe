@@ -31,7 +31,7 @@ static uint8_t  rmt_mac[6]={0x7F,0xFF,0xFF,0xFF,0xFF,0xFF};                     
 
 int RSCreate(char *ethname, int type, RSContext *ctx)
 {
-	int sockfd,i;
+	int sockfd;
 	int  if_index;                        //网卡索引
 	struct ifreq *req;                       //网卡操作
 	struct sockaddr_ll *device;            //链路层地址结构

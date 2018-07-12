@@ -12,7 +12,6 @@ typedef struct AXUContext {
 }AXUContext;
 
 static int gShortTimeout = 100000; // 100ms
-static int gLongTimeout = 5000000; // 5s
 static AXUContext gAxu;
 #define AXU_TYPE (0xff00)
 
@@ -649,7 +648,7 @@ BoeErr* doAXU_Init(char *ethname, MsgHandle msghandle, void*userdata)
 
 BoeErr* doAXU_Release()
 {
-    RSRealse(&gAxu.rs);
+    RSRelease(&gAxu.rs);
     msgc_release(&gAxu.wqc);
     return &e_ok;
 }
