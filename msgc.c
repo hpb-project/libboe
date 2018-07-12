@@ -24,7 +24,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include "common.h"
-#include "community.h"
+#include "rs.h"
 #include "atomic.h"
 #include "aq.h"
 #include "list.h"
@@ -56,9 +56,8 @@ typedef struct IMsgContext{
     pthread_t r_thread; // receive msg thread.
     pthread_t s_thread; // sorting msg thread.
     MsgHandle msgHandleFunc; // deal msg function.
-    int      r_fd;
-    int      w_fd;
     uint8_t  th_flag;  // thread control.
+    RSContext *rs;
     void*    userdata;
     pthread_mutex_t mlock; // 
 }IMsgContext;
@@ -86,7 +85,7 @@ int WMessageFree(WMessage *m)
     return 0;
 }
 
-int msgc_init(MsgContext *ctx, char *r_devname, char *w_devname, MsgHandle msghandle, void*userdata)
+int msgc_init(MsgContext *ctx, RSContext *rs, MsgHandle msghandle, void*userdata)
 {
     int ret = 0;
     IMsgContext *c = (IMsgContext*)malloc(sizeof(IMsgContext));
@@ -100,9 +99,8 @@ int msgc_init(MsgContext *ctx, char *r_devname, char *w_devname, MsgHandle msgha
         free(c);
         return ret;
     }
-    c->r_fd = open(r_devname, O_RDONLY);
-    c->w_fd = open(w_devname, O_WRONLY);
     c->msgHandleFunc = msghandle;
+    c->rs = rs;
     c->th_flag = 0; // post thread.
     c->userdata = userdata;
 
@@ -120,31 +118,28 @@ int msgc_release(MsgContext *ctx)
     c->th_flag = 2;
     pthread_join(c->r_thread, NULL);
     pthread_join(c->s_thread, NULL);
-    if(c->r_fd > 0)
-    {
-        close(c->r_fd);
-        c->r_fd = 0;
-    }
-    if(c->w_fd > 0)
-    {
-        close(c->w_fd);
-        c->w_fd = 0;
-    }
     pthread_mutex_destroy(&c->mlock);
     aq_free(&(c->r_q));
+    
     return 0;
 }
 
 int msgc_send(MsgContext *ctx, WMessage *wmsg)
 {
     IMsgContext *c = *ctx;
+    int ret = 0;
     WaitNode *n = (WaitNode*)malloc(sizeof(WaitNode));
     if(n == NULL)
         return -1;
     wmsg->sTime = get_timestamp_us();
     n->wmsg = wmsg;
 
-    pcie_write(wmsg->s.buf, wmsg->s.len);
+    if(RSWrite(c->rs, wmsg->s.buf, wmsg->s.len) < 0)
+    {
+        free(n);
+        return -1;
+    }
+
     pthread_mutex_lock(&c->mlock);
     list_add_tail(&(n->list), &(c->wList.list));
     pthread_mutex_unlock(&c->mlock);
@@ -163,21 +158,14 @@ static void *receive_thread(void*userdata)
     IMsgContext *c = (IMsgContext*)userdata;
     int ret = 0;
     int cycle_ms = 20;
-    int maxfd = 0;
-    struct timeval tv;
 
     static uint8_t buf[64*1024];
-    int max_package_len = sizeof(buf);
-    fd_set rfds;
+    int max_package_len;
     while(c->th_flag == 0) ; // wait thread start.
     while(c->th_flag == 1)
     {
-        FD_ZERO(&rfds);
-        FD_SET(c->r_fd, &rfds);
-        maxfd = c->r_fd + 1;
-        tv.tv_usec = cycle_ms * 1000;
-
-        ret = select(maxfd, &rfds, NULL, NULL, &tv);
+        max_package_len = sizeof(buf);
+        ret = RSSelect(c->rs, cycle_ms);
         if(ret < 0)
         {
             fprintf(stderr, "select error.\n");
@@ -188,15 +176,12 @@ static void *receive_thread(void*userdata)
             // timeout.
         }
         else {
-            if(FD_ISSET(c->r_fd, &rfds))
+            ret = RSRead(c->rs, buf, &max_package_len);
+            if(ret == 0)
             {
-                int len = read(c->r_fd, buf, max_package_len);
-                if(len > 0)
-                {
-                    AQData *d = aqd_new(len);
-                    memcpy(d->buf, buf, len);
-                    aq_push(&c->r_q, d);
-                }
+                AQData *d = aqd_new(max_package_len);
+                memcpy(d->buf, buf, max_package_len);
+                aq_push(&c->r_q, d);
             }
         }
     }

@@ -19,6 +19,7 @@
 
 #include <stdint.h>
 #include "aq.h"
+#include "rs.h"
 
 typedef int (*CheckResponse)(uint8_t *res, int len, uint32_t uid);
 typedef int (*MsgHandle)(uint8_t *data, int len, void *userdata);
@@ -28,7 +29,7 @@ typedef void*  MsgContext;
 WMessage* WMessageNew(uint32_t uid, CheckResponse cfunc, uint32_t timeout, uint8_t *data, int len);
 int WMessageFree(WMessage *m);
 
-int msgc_init(MsgContext *c, char *r_devname, char *w_devname, MsgHandle msghandle, void*userdata);
+int msgc_init(MsgContext *c, RSContext *rs, MsgHandle msghandle, void*userdata);
 int msgc_release(MsgContext *ctx);
 int msgc_send(MsgContext *ctx, WMessage *wmsg);
 AQData* msgc_read(MsgContext *ctx, WMessage *wmsg);

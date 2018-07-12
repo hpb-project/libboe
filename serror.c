@@ -1,12 +1,12 @@
-// Last Update:2018-06-21 15:45:07
+// Last Update:2018-07-11 21:16:21
 /**
- * @file error.c
+ * @file serror.c
  * @brief 
  * @author luxueqian
  * @version 0.1.00
  * @date 2018-06-21
  */
-#include "error.h"
+#include "serror.h"
 
 BoeErr e_ok = {.ecode = 100, .emsg = "ok", .bfree = 0};
 BoeErr e_init_fail = {.ecode = 101, .emsg = "init failed", .bfree = 0};

@@ -18,7 +18,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include "axu_connector.h"
-#include "community.h"
 #include "atomic.h"
 
 static uint16_t  g_sequence_id = 0;

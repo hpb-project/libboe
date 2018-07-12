@@ -18,7 +18,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include "tsu_connector.h"
-#include "community.h"
 #include "common.h"
 #include "atomic.h"
 #define TRACE() printf("func:%s,line:%d\n", __FUNCTION__, __LINE__)

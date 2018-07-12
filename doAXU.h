@@ -1,4 +1,4 @@
-// Last Update:2018-06-21 14:59:45
+// Last Update:2018-07-11 21:38:23
 /**
  * @file doAXU.h
  * @brief 
@@ -14,7 +14,7 @@
 #include "axu_connector.h"
 
 typedef int (*MsgHandle)(uint8_t *data, int len, void *userdata);
-BoeErr* doAXU_Init(char *r_devname, char *w_devname, MsgHandle msghandle, void*userdata);
+BoeErr* doAXU_Init(char *ethname, MsgHandle msghandle, void*userdata);
 BoeErr* doAXU_Release();
 BoeErr* doAXU_GetVersionInfo(TVersion *hw, TVersion *fw, TVersion *axu);
 BoeErr* doAXU_Reset(void);

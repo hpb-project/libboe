@@ -1,14 +1,14 @@
-// Last Update:2018-06-21 15:41:00
+// Last Update:2018-07-11 21:17:41
 /**
- * @file error.h
+ * @file serror.h
  * @brief 
  * @author luxueqian
  * @version 0.1.00
  * @date 2018-06-20
  */
 
-#ifndef ERROR_H
-#define ERROR_H
+#ifndef SERROR_H
+#define SERROR_H
 #include "boe.h"
 #include "axu_connector.h"
 
@@ -27,4 +27,4 @@ BoeErr e_gen_host_id_failed;
 BoeErr e_axu_inner[MAX_AXU_ERRNUM];
 
 
-#endif  /*ERROR_H*/
+#endif  /*SERROR_H*/

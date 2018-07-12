@@ -14,7 +14,7 @@
 #include "doTSU.h"
 #include "msgc.h"
 #include "boe.h"
-#include "error.h"
+#include "serror.h"
 
 
 #define TX_SIG_LEN (97)

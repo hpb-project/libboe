@@ -2,14 +2,20 @@
 #include "common.h"
 #include "msgc.h"
 #include "axu_connector.h"
-#include "community.h"
-#include "error.h"
+#include "rs.h"
+#include "serror.h"
 #include "doAXU.h"
+
+typedef struct AXUContext {
+    RSContext  rs;
+    MsgContext wqc;
+}AXUContext;
 
 static int gShortTimeout = 100000; // 100ms
 static int gLongTimeout = 5000000; // 5s
+static AXUContext gAxu;
+#define AXU_TYPE (0xff00)
 
-static MsgContext wqc;
 #define PSetData(p, o, v) \
     {\
         axu_set_data(p, o, (uint8_t*)&(v), sizeof(v));\
@@ -54,11 +60,12 @@ static BoeErr* get_error(A_Package *p)
 static BoeErr* doCommand(A_Package *p, AQData **d)
 {
     BoeErr *ret = NULL;
+    MsgContext *wqc = &gAxu.wqc;
     WMessage * wm = WMessageNew(p->header.package_id, axu_check_response, gShortTimeout, (uint8_t*)p,
             axu_package_len(p));
-    if(msgc_send(&wqc, wm) == 0)
+    if(msgc_send(wqc, wm) == 0)
     {
-        AQData *q = msgc_read(&wqc, wm);
+        AQData *q = msgc_read(wqc, wm);
         if(q == NULL || q->buf == NULL)
             return &e_msgc_read_timeout;
         A_Package *r = (A_Package*)q->buf;
@@ -622,16 +629,27 @@ BoeErr* doAXU_UpgradeAbort(uint32_t fid)
 }
 
 
-BoeErr* doAXU_Init(char *r_devname, char *w_devname, MsgHandle msghandle, void*userdata)
+BoeErr* doAXU_Init(char *ethname, MsgHandle msghandle, void*userdata)
 {
-    int ret = msgc_init(&wqc, r_devname, w_devname, msghandle, userdata);
+    int ret = 0;
+
+    ret = RSCreate(ethname, AXU_TYPE, &(gAxu.rs));
     if(ret != 0)
+    {
         return &e_init_fail;
+    }
+    ret = msgc_init(&gAxu.wqc, &gAxu.rs, msghandle, userdata);
+    if(ret != 0)
+    {
+        RSRelease(&gAxu.rs);
+        return &e_init_fail;
+    }
     return &e_ok;
 }
 
 BoeErr* doAXU_Release()
 {
-    msgc_release(&wqc);
+    RSRealse(&gAxu.rs);
+    msgc_release(&gAxu.wqc);
     return &e_ok;
 }

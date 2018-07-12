@@ -1,4 +1,4 @@
-// Last Update:2018-06-22 20:04:25
+// Last Update:2018-07-10 20:50:44
 /**
  * @file nboe.c
  * @brief 
@@ -10,7 +10,7 @@
 #include <string.h>
 #include "genid.h"
 #include "boe.h"
-#include "error.h"
+#include "serror.h"
 #include "common.h"
 #include "doAXU.h"
 #include "doTSU.h"
@@ -105,7 +105,7 @@ void boe_err_free(BoeErr *e)
 
 BoeErr* boe_init(void)
 {
-    // pcie , init community.
+
     // axu/tsu
     doAXU_Init("/dev/h2c0", "/dev/c2h0", axu_msg_handle, (void*)&gIns);
     doTSU_Init(&gIns.tsu, "/dev/h2c1", "/dev/c2h1", NULL, NULL);
@@ -120,7 +120,6 @@ BoeErr* boe_release(void)
 {
     doAXU_Release();
     doTSU_Release(&gIns.tsu);
-    // pcie, release pcie.
     return BOE_OK;
 }
 BoeErr* boe_reg_update_callback(BoeUpgradeCallback func)
@@ -152,7 +151,7 @@ BoeErr* boe_get_axu_version(TVersion *axu)
     return doAXU_GetAXUVer(axu);
 }
 
-BoeErr* boe_upgrade(uint8_t *image, int imagelen)
+BoeErr* boe_upgrade(unsigned char*image, int imagelen)
 {
     ImageHeader header;
     BoeErr* ret = NULL;
@@ -187,29 +186,29 @@ BoeErr* boe_reset(void)
 {
     return doAXU_Reset();
 }
-BoeErr* boe_set_boeid(uint32_t id)
+BoeErr* boe_set_boeid(unsigned int id)
 {
     return doAXU_SetBoeID(id);
 }
-BoeErr* boe_set_bind_account(uint8_t *baccount)
+BoeErr* boe_set_bind_account(unsigned char *baccount)
 {
     return doAXU_BindAccount(baccount);
 }
 
-BoeErr* boe_get_random(uint32_t *val)
+BoeErr* boe_get_random(unsigned int*val)
 {
     return doAXU_GetRandom(val);
 }
-BoeErr* boe_get_boeid(uint32_t *id)
+BoeErr* boe_get_boeid(unsigned int *id)
 {
     return doAXU_GetBOEID(id);
 }
-BoeErr* boe_get_bind_account(uint8_t *baccount)
+BoeErr* boe_get_bind_account(unsigned char *baccount)
 {
     return doAXU_GetBindAccount(baccount);
 }
 
-BoeErr* boe_hw_sign(char *p_data, uint8_t *sig)
+BoeErr* boe_hw_sign(char *p_data, unsigned char *sig)
 {
     int len = strlen(p_data) + 2*32 + 1;
     char *p_buf = (char*)malloc(len);
@@ -222,11 +221,11 @@ BoeErr* boe_hw_sign(char *p_data, uint8_t *sig)
     return &e_gen_host_id_failed;
 }
 /* -------------------  tsu command -------------------------*/
-BoeErr* boe_get_s_random(uint8_t *hash, uint8_t *nexthash)
+BoeErr* boe_get_s_random(unsigned char *hash, unsigned char *nexthash)
 {
     return doTSU_GetHash(&gIns.tsu, hash, nexthash);
 }
-BoeErr* boe_valid_sign(uint8_t *sig, uint8_t *pub)
+BoeErr* boe_valid_sign(unsigned char *sig, unsigned char *pub)
 {
     return doTSU_RecoverPub(&gIns.tsu, sig, pub);
 }
