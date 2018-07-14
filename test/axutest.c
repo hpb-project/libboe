@@ -1,4 +1,4 @@
-// Last Update:2018-07-14 11:29:59
+// Last Update:2018-07-14 15:45:50
 /**
  * @file axutest.c
  * @brief 
@@ -157,17 +157,17 @@ static void hwsign(uint8_t *src, int srclen, uint8_t *sign, int slen)
 
 int test_get_hwsign()
 {
-    uint8_t account[32];
+    uint8_t data[31];
     int i = 0;
-    for(i=0; i < 32; i++)
+    for(i=0; i < sizeof(data); i++)
     {
-        account[i] = i + 0xa;
+        data[i] = i + 0xa;
     }
     uint8_t rsign[65], lsign[65];
-    hwsign(account, sizeof(account), lsign, sizeof(lsign));
+    hwsign(data, sizeof(data), lsign, sizeof(lsign));
 
     BoeErr *ret = NULL;
-    ret = doAXU_HWSign(account, sizeof(account), rsign);
+    ret = doAXU_HWSign(data, sizeof(data), rsign);
     if(ret == BOE_OK)
     {
         for(i = 0; i < 65; i++)
