@@ -68,19 +68,47 @@ static void *receive_thread(void*userdata);
 WMessage* WMessageNew(uint32_t uid, CheckResponse cfunc, uint32_t timeout, uint8_t *data, int len)
 {
     WMessage *msg = (WMessage*)malloc(sizeof(WMessage));
+    int align = len;
+    if(msg == NULL)
+    {
+        return NULL;
+    }
     msg->uid = uid;
     msg->cFunc = cfunc;
-    msg->timeout = timeout;
-    sem_init(&msg->sem, 0, 0);
+    msg->timeout = timeout*1000;
     msg->d = NULL;
-    msg->s.buf = data;
-    msg->s.len = len;
+    if(align%4 != 0)
+    {
+        align += (4-align%4);
+    }
+    msg->s.buf = malloc(align);
+    msg->s.len = align;
+    if(msg->s.buf == NULL)
+    {
+        free(msg);
+        return NULL;
+    }
+    memset(msg->s.buf, 0x0, align);
+    memcpy(msg->s.buf, data, len);
+
+    if(sem_init(&msg->sem, 0, 0) < 0)
+    {
+        free(msg->s.buf);
+        free(msg);
+        return NULL;
+    }
+
     return msg;
 }
 
 int WMessageFree(WMessage *m)
 {
     sem_destroy(&m->sem);
+    if(m->s.buf != NULL)
+    {
+        free(m->s.buf);
+        m->s.buf = NULL;
+    }
     free(m);
     return 0;
 }

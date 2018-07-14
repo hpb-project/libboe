@@ -11,9 +11,11 @@ typedef struct AXUContext {
     MsgContext wqc;
 }AXUContext;
 
-static int gShortTimeout = 100000; // 100ms
+static int gShortTimeout = 1000000; // 1s
 static AXUContext gAxu;
 #define AXU_TYPE (0xff00)
+#define ACCOUNT_LEN (256/8)
+#define HWSIGN_LEN  (65)
 
 #define PSetData(p, o, v) \
     {\
@@ -23,7 +25,7 @@ static AXUContext gAxu;
 
 #define PSetDataLen(p, o, v, l) \
     {\
-        axu_set_data(p, o, (uint8_t*)&(v), l);\
+        axu_set_data(p, o, (uint8_t*)(v), l);\
         o += l;\
     }
 
@@ -62,26 +64,43 @@ static BoeErr* doCommand(A_Package *p, AQData **d)
     MsgContext *wqc = &gAxu.wqc;
     WMessage * wm = WMessageNew(p->header.package_id, axu_check_response, gShortTimeout, (uint8_t*)p,
             axu_package_len(p));
+    if(wm == NULL)
+    {
+        ret = &e_no_mem;
+        goto end;
+    }
     if(msgc_send(wqc, wm) == 0)
     {
         AQData *q = msgc_read(wqc, wm);
         if(q == NULL || q->buf == NULL)
-            return &e_msgc_read_timeout;
+        {
+            ret = &e_msgc_read_timeout;
+            goto end;
+        }
+
         A_Package *r = (A_Package*)q->buf;
         if(isErr(r))
         {
             ret = get_error(r);
             aqd_free(q);
-            return ret;
+            goto end;
         }
         else
         {
             *d = q;
-            return &e_ok;
+            ret = &e_ok;
         }
     }
     else
-        return &e_msgc_send_fail;
+    {
+        ret = &e_msgc_send_fail;
+    }
+end:
+    if(wm != NULL)
+    {
+        WMessageFree(wm);
+    }
+    return ret;
 }
 
 static A_Package* make_query_simple(ACmd cmd)
@@ -195,12 +214,12 @@ static A_Package* make_query_set_boeid(ACmd cmd, uint32_t id)
 
 static A_Package* make_query_bind_account(ACmd cmd, uint8_t *baccount)
 {
-    A_Package *p = axu_package_new(256);
+    A_Package *p = axu_package_new(ACCOUNT_LEN);
     int offset = 0;
     if(p)
     {
         axu_package_init(p, NULL, cmd);
-        PSetDataLen(p, offset, baccount, 256);
+        PSetDataLen(p, offset, baccount, ACCOUNT_LEN);
 
         axu_finish_package(p);
     }
@@ -379,7 +398,7 @@ BoeErr* doAXU_GetBindAccount(uint8_t *account_256)
         if(ret == &e_ok)
         {
             A_Package *q = (A_Package*)(r->buf);
-            memcpy(account_256, q->data, 256);
+            memcpy(account_256, q->data, ACCOUNT_LEN);
             aqd_free(r);
             return &e_ok;
         }
@@ -462,9 +481,9 @@ BoeErr* doAXU_HWSign(uint8_t *data, int len, uint8_t *result)
         {
             // get sign r, s, v.
             A_Package *q = (A_Package*)r->buf;
-            if(q->header.body_length >= 65)
+            if(q->header.body_length >= HWSIGN_LEN)
             {
-                memcpy(result, q->data, 65);
+                memcpy(result, q->data, HWSIGN_LEN);
                 aqd_free(r);
                 return &e_ok;
             }

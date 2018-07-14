@@ -45,7 +45,7 @@ int axu_package_free(A_Package *pack)
 
 int axu_package_len(A_Package *pack)
 {
-    return pack->header.body_length + sizeof(A_Package_Header);
+    return pack->header.body_length + sizeof(A_Package);
 }
 
 void axu_package_init(A_Package *pack, A_Package* req, ACmd cmd)

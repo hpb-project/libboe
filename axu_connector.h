@@ -31,6 +31,7 @@ typedef struct A_PACKAGE_HEADER {
     uint16_t body_length;
     uint8_t  acmd;
     uint8_t  q_or_r; // AP_QUERY is query and AP_RESPONSE is response.
+    uint16_t reversed;
     uint16_t magic_ccaa;
 }A_Package_Header;
 
@@ -40,7 +41,7 @@ typedef struct A_PACKAGE{
     uint8_t     data[];
 }A_Package;
 
-#define PACKAGE_MAX_SIZE 	(2048 - sizeof(A_Package))   // 2KB
+#define PACKAGE_MAX_SIZE 	(1024)   // 2KB
 #define MAX_AXU_ERRNUM (30)
 #define AXU_MAGIC_START (0xaacc)
 #define AXU_MAGIC_END   (0xccaa)
