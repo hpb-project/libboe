@@ -26,7 +26,7 @@
 
 
 static uint8_t  rmt_mac[6]={0x7F,0xFF,0xFF,0xFF,0xFF,0xFF};                      //远端mac地址
-#define max_package_len (1024)
+#define max_package_len (1200)
 #define package_header_len (sizeof(struct ethhdr))
 
 int RSCreate(char *ethname, int type, RSContext *ctx)

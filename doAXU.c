@@ -135,7 +135,7 @@ static A_Package* make_query_ts_start(ACmd cmd, uint8_t usage, uint32_t fid, uin
     return p;
 }
 
-static A_Package* make_query_ts_mid(ACmd cmd, uint32_t fid, uint16_t doffset, uint32_t len, uint8_t *data)
+static A_Package* make_query_ts_mid(ACmd cmd, uint32_t fid, uint32_t doffset, uint32_t len, uint8_t *data)
 {
     int offset = 0;
     A_Package *p = axu_package_new(PACKAGE_MAX_SIZE);
@@ -153,7 +153,7 @@ static A_Package* make_query_ts_mid(ACmd cmd, uint32_t fid, uint16_t doffset, ui
     return p;
 }
 
-static A_Package* make_query_ts_fin(ACmd cmd, uint32_t fid, uint16_t doffset, uint32_t len, uint8_t *data)
+static A_Package* make_query_ts_fin(ACmd cmd, uint32_t fid, uint32_t doffset, uint32_t len, uint8_t *data)
 {
     A_Package *p = axu_package_new(PACKAGE_MAX_SIZE);
     int offset = 0;
@@ -524,9 +524,9 @@ BoeErr* doAXU_TransportStart(ImageHeader *info)
     }
 }
 
-#define TransMidFidOffset()   (0)
-#define TransMidOffsetOffset()   (4)
-#define TransMidDataOffset()   (6)
+#define TransMidFidOffset()     (0)
+#define TransMidOffsetOffset()  (4)
+#define TransMidDataOffset()    (8)
 BoeErr* doAXU_TransportMid(uint32_t fid, uint32_t offset, int len, uint8_t *data)
 {
     A_Package *p = make_query_ts_mid(ACMD_PB_TRANSPORT_MIDDLE, fid, offset, len, data);
@@ -575,7 +575,7 @@ BoeErr* doAXU_Transport(ImageHeader *info, uint8_t *data)
 {
     BoeErr *ret = NULL;
     ret = doAXU_TransportStart(info);
-    if(ret == &e_ok)
+    if(ret == BOE_OK)
     {
         uint16_t offset = 0;
         int plen = 0, pmaxlen = PACKAGE_MAX_SIZE - TransMidDataOffset(); 
