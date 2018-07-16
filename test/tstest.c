@@ -1,4 +1,4 @@
-// Last Update:2018-07-14 21:38:25
+// Last Update:2018-07-16 17:13:17
 /**
  * @file axutest.c
  * @brief 
@@ -50,8 +50,15 @@ int test_upgrade(unsigned char*image, int imagelen)
     {
         uint8_t *p_data = image + sizeof(ImageHeader);
         uint32_t chk = checksum(p_data, header.len);
+        //for(int i = 0; i < header.len; i++)
+        //{
+        //    printf("d[%d] = 0x%02x\r\n", i, p_data[i]);
+        //}
         if(chk != header.chk)
+        {
+            printf("chk not match.\n");
             return 1;
+        }
         
         ret = doAXU_Transport(&header, p_data);
         if(ret != BOE_OK)
@@ -80,7 +87,7 @@ int main(int argc, char *argv[])
     }
     char *ethname = argv[1];
     char *filename = argv[2];
-    int nret = 0;
+    int nret = 0, rret = 0;
 
     FBuf = (uint8_t*)malloc(FBufLen);
     memset(FBuf, 0x0, FBufLen);
@@ -112,14 +119,21 @@ int main(int argc, char *argv[])
     }
 
     nret = test_upgrade(FBuf, flen);
-    if(nret == 0)
-        printf("test success.\n");
-    else
-        printf("test failed.\n");
-
-
     fclose(fp);
+    if(nret == 0)
+    {
+        printf("test success.\n");
+        rret = 0;
+    }
+    else
+    {
+        printf("test failed.\n");
+        rret = 1;
+    }
+
+
+
 end:
     doAXU_Release();
-    return 0;
+    return rret;
 }

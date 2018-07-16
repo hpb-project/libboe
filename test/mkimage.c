@@ -112,6 +112,7 @@ int main(int argc, char *argv[])
     fw = s2i(argv[3]);
     axu = s2i(argv[4]);
     int len = filelen(iname);
+    printf("file len = %d\r\n", len);
     uint8_t *p_buf = (uint8_t*)malloc(len + sizeof(ImageHeader));
     if(p_buf == NULL)
     {

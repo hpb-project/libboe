@@ -18,6 +18,7 @@
 #define AXU_CONNECTOR_H
 #include <stdint.h>
 #include "common.h"
+#include "rs.h"
 
 
 typedef enum {
@@ -41,7 +42,7 @@ typedef struct A_PACKAGE{
     uint8_t     data[];
 }A_Package;
 
-#define PACKAGE_MAX_SIZE 	(1024)   // 2KB
+#define PACKAGE_MAX_SIZE 	(RS_MAX_PACKAGE_LEN - 4 - sizeof(A_Package))   // 2KB
 #define MAX_AXU_ERRNUM (30)
 #define AXU_MAGIC_START (0xaacc)
 #define AXU_MAGIC_END   (0xccaa)

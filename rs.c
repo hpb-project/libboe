@@ -1,4 +1,4 @@
-// Last Update:2018-07-12 11:09:39
+// Last Update:2018-07-16 19:43:59
 /**
  * @file rawsocket.c
  * @brief 
@@ -26,7 +26,7 @@
 
 
 static uint8_t  rmt_mac[6]={0x7F,0xFF,0xFF,0xFF,0xFF,0xFF};                      //远端mac地址
-#define max_package_len (1200)
+#define max_package_len (RS_MAX_PACKAGE_LEN)
 #define package_header_len (sizeof(struct ethhdr))
 
 int RSCreate(char *ethname, int type, RSContext *ctx)

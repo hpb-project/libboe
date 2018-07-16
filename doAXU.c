@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdio.h>
 #include "common.h"
 #include "msgc.h"
 #include "axu_connector.h"
@@ -526,7 +527,8 @@ BoeErr* doAXU_TransportStart(ImageHeader *info)
 
 #define TransMidFidOffset()     (0)
 #define TransMidOffsetOffset()  (4)
-#define TransMidDataOffset()    (8)
+#define TransMidLenOffset()     (8)
+#define TransMidDataOffset()    (12)
 BoeErr* doAXU_TransportMid(uint32_t fid, uint32_t offset, int len, uint8_t *data)
 {
     A_Package *p = make_query_ts_mid(ACMD_PB_TRANSPORT_MIDDLE, fid, offset, len, data);
@@ -575,16 +577,21 @@ BoeErr* doAXU_Transport(ImageHeader *info, uint8_t *data)
 {
     BoeErr *ret = NULL;
     ret = doAXU_TransportStart(info);
+
     if(ret == BOE_OK)
     {
-        uint16_t offset = 0;
-        int plen = 0, pmaxlen = PACKAGE_MAX_SIZE - TransMidDataOffset(); 
+        uint32_t offset = 0;
+        int plen = 0;
+        int pmaxlen = PACKAGE_MAX_SIZE - TransMidDataOffset();
         while(1)
         {
             plen = info->len - offset;
+            printf("offset = %d.\n", offset);
+
             if(plen > pmaxlen)
             {
                 ret = doAXU_TransportMid(info->chk, offset, pmaxlen, data+offset);
+                printf("transport mid data len %d\n", pmaxlen);
                 offset += pmaxlen;
                 if(ret != &e_ok)
                     break;
@@ -592,6 +599,7 @@ BoeErr* doAXU_Transport(ImageHeader *info, uint8_t *data)
             else
             {
                 ret = doAXU_TransportFin(info->chk, offset, plen, data+offset);
+                printf("transport fin data len %d\n", plen);
                 offset += plen;
                 break;
             }

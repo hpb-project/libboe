@@ -27,7 +27,10 @@ static uint16_t  g_sequence_id = 0;
 A_Package* axu_package_new(uint32_t len)
 {
     if(len > PACKAGE_MAX_SIZE)
+    {
+        printf("Package len (%d) is bigger than PACKAGE_MAX_SIZE(%d) \r\n", len, (int)PACKAGE_MAX_SIZE);
         return NULL;
+    }
 
     A_Package * pack = (A_Package*)malloc(len + sizeof(A_Package));
     if(pack != NULL)
@@ -69,6 +72,7 @@ void axu_package_init(A_Package *pack, A_Package* req, ACmd cmd)
 int axu_set_data(A_Package *pack, int offset, uint8_t *data, int len)
 {
     if((offset + len) > pack->header.body_length){
+        printf("axu_set_data offset(%d) + len(%d) > body_length(%d)\n", offset, len, pack->header.body_length);
         return 1;
     }
     memcpy(pack->data + offset, data, len);
