@@ -1,4 +1,4 @@
-// Last Update:2018-07-12 21:11:05
+// Last Update:2018-07-16 20:38:34
 /**
  * @file nboe.c
  * @brief 
@@ -143,11 +143,15 @@ BoeErr* boe_upgrade(unsigned char*image, int imagelen)
     if((memcmp(header.vendor, "hpb", 3) == 0)
             && (imagelen - sizeof(header) == header.len))
     {
-        uint32_t chk = checksum(image+sizeof(header), header.len);
+        uint8_t *p_data = image + sizeof(ImageHeader);
+        uint32_t chk = checksum(p_data, header.len);
         if(chk != header.chk)
+        {
+            printf("boe_upgrade: checksum not match\n");
             return &e_image_chk_error;
+        }
         
-        ret = doAXU_Transport(&header, image+sizeof(header));
+        ret = doAXU_Transport(&header, p_data);
         if(ret != BOE_OK)
             return ret;
         ret = doAXU_UpgradeStart(header.chk);

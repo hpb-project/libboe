@@ -1,4 +1,4 @@
-// Last Update:2018-07-16 17:13:17
+// Last Update:2018-07-16 20:37:41
 /**
  * @file axutest.c
  * @brief 
@@ -50,10 +50,6 @@ int test_upgrade(unsigned char*image, int imagelen)
     {
         uint8_t *p_data = image + sizeof(ImageHeader);
         uint32_t chk = checksum(p_data, header.len);
-        //for(int i = 0; i < header.len; i++)
-        //{
-        //    printf("d[%d] = 0x%02x\r\n", i, p_data[i]);
-        //}
         if(chk != header.chk)
         {
             printf("chk not match.\n");
