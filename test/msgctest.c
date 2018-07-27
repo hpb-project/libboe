@@ -41,7 +41,7 @@ static int axu_check_response(uint8_t* data, int plen, uint32_t uid)
 static int doCommand(uint8_t*p, int len, AQData **d)
 {
     MsgContext *wqc = &glb.wqc;
-    WMessage * wm = WMessageNew(0, axu_check_response, 100000, (uint8_t*)p, len);
+    WMessage * wm = WMessageNew(0, axu_check_response, 10000000, (uint8_t*)p, len);
     if(msgc_send(wqc, wm) == 0)
     {
         AQData *q = msgc_read(wqc, wm);

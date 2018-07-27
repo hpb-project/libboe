@@ -7,6 +7,16 @@
 #include "serror.h"
 #include "doAXU.h"
 
+static struct timeval gTs, gTe;
+static struct timezone gTz;
+
+#define PROFILE_START() \
+    gettimeofday(&gTs, &gTz);\
+
+#define PROFILE_END() \
+    gettimeofday(&gTe, &gTz);\
+    printf("--PROFILE-- cost time %ldms.\n", (gTe.tv_sec*1000000 + gTe.tv_usec - gTs.tv_sec*1000000 - gTs.tv_usec)/1000);
+
 typedef struct AXUContext {
     RSContext  rs;
     MsgContext wqc;
@@ -583,15 +593,16 @@ BoeErr* doAXU_Transport(ImageHeader *info, uint8_t *data)
         uint32_t offset = 0;
         int plen = 0;
         int pmaxlen = PACKAGE_MAX_SIZE - TransMidDataOffset();
+        PROFILE_START();
         while(1)
         {
             plen = info->len - offset;
-            printf("offset = %d.\n", offset);
+            //printf("offset = %d.\n", offset);
 
             if(plen > pmaxlen)
             {
                 ret = doAXU_TransportMid(info->chk, offset, pmaxlen, data+offset);
-                printf("transport mid data len %d\n", pmaxlen);
+                //printf("transport mid data len %d\n", pmaxlen);
                 offset += pmaxlen;
                 if(ret != &e_ok)
                     break;
@@ -604,6 +615,7 @@ BoeErr* doAXU_Transport(ImageHeader *info, uint8_t *data)
                 break;
             }
         }
+        PROFILE_END();
         return ret;
     }
     return ret;

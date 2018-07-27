@@ -227,7 +227,7 @@ static void *sorting_thread(void*userdata)
     AQData *d = NULL;
     uint8_t bmatch = 0;
     uint64_t ts, te;
-    int cycle_ms = 20;
+    int cycle_ms = 1;
 
 
     while(c->th_flag == 0) ; // wait thread start.
@@ -284,7 +284,7 @@ static void *sorting_thread(void*userdata)
         te = get_timestamp_us();
         if(((te - ts)/1000) < cycle_ms)
         {
-            usleep(cycle_ms*1000 - (te-ts));
+            //usleep(cycle_ms*1000 - (te-ts));
         }
     }
     {
