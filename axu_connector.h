@@ -57,18 +57,27 @@ typedef enum A_CMD {
     ACMD_PB_UPGRADE_ABORT       = 0x06,
     ACMD_PB_RESET               = 0x07,
     ACMD_PB_GET_RANDOM          = 0x08,
-    ACMD_PB_GET_BOEID           = 0x09,
+    ACMD_PB_GET_SN           = 0x09,
     ACMD_PB_GET_HW_VER          = 0x0A,
     ACMD_PB_GET_FW_VER          = 0x0B,
     ACMD_PB_GET_AXU_VER         = 0x0C,
-    ACMD_PB_SET_BOEID           = 0x0D,
+    ACMD_PB_SET_SN           = 0x0D,
 
 	//ACMD_PB_CHECK_BIND			= 0x0E,
-	///ACMD_PB_BIND_ID				= 0x0F,
+	//ACMD_PB_BIND_ID				= 0x0F,
 	ACMD_PB_BIND_ACCOUNT		= 0x10,
 	ACMD_PB_HW_SIGN				= 0x11,
 	//ACMD_PB_UNBIND				= 0x12,
-	ACMD_PB_GET_BINDINFO		= 0x13,
+	ACMD_PB_GET_ACCOUNT		= 0x13,
+
+	ACMD_PB_GENKEY			= 0x14,
+	ACMD_PB_GET_PUBKEY		= 0x15,
+	ACMD_PB_LOCK_PRIKEY		= 0x16,
+	ACMD_PB_VERIFY		= 0x17,
+
+	ACMD_PB_SET_MAC		= 0x18,
+	ACMD_PB_GET_MAC		= 0x19,
+
 
 
     ACMD_BP_RES_ACK             = 0x51,

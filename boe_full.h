@@ -15,8 +15,8 @@
 // along with the go-hpb. If not, see <http://www.gnu.org/licenses/>.
 
 
-#ifndef BOE_H
-#define BOE_H
+#ifndef BOE_FULL_H
+#define BOE_FULL_H
 #include <stdint.h>
 
 
@@ -112,4 +112,10 @@ BoeErr* boe_get_s_random(unsigned char *hash, unsigned char *nexthash);
  */
 BoeErr* boe_valid_sign(unsigned char *sig, unsigned char *pub);
 
-#endif  /*BOE_H*/
+BoeErr* boe_genkey(unsigned char *pubkey);
+BoeErr* boe_get_pubkey(unsigned char *pubkey);
+BoeErr* boe_lock_pk(void);
+BoeErr* boe_hw_verify(unsigned char *hash, unsigned char *signature, unsigned char *pubkey);
+BoeErr* boe_set_mac(unsigned char *mac);
+BoeErr* boe_get_mac(unsigned char *mac);
+#endif  /*BOE_FULL_H*/

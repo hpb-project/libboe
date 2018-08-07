@@ -4,7 +4,7 @@ OUT_FILE_NAME=libboe.a
 
 
 CROSS=
-INC= -I .
+INC= -I . -I./sweetb
 
 CC=${CROSS}gcc
 CFLAGS  := -Wall -g -fPIC -c 

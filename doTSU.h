@@ -10,7 +10,7 @@
 #ifndef DO_T_S_U_H
 #define DO_T_S_U_H
 #include <stdint.h>
-#include "boe.h"
+#include "boe_full.h"
 #include "tsu_connector.h"
 
 BoeErr* doTSU_Init(char *ethname, MsgHandle msghandle, void*userdata);

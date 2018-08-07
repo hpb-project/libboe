@@ -11,7 +11,7 @@
 #include <unistd.h>
 #include <string.h>
 #include "doAXU.h"
-#include "boe.h"
+#include "boe_full.h"
 
 
 typedef int (*TestFunc)(void);

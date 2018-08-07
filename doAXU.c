@@ -25,8 +25,13 @@ typedef struct AXUContext {
 static int gShortTimeout = 1000000; // 1s
 static AXUContext gAxu;
 #define AXU_TYPE (0xff00)
-#define ACCOUNT_LEN (256/8)
-#define HWSIGN_LEN  (65)
+#define ACCOUNT_LEN  (42)
+#define BOARD_SN_LEN (20)
+#define HWSIGN_LEN   (64)
+#define PUBKEY_LEN   (64)
+#define BOARD_MAC_LEN (6)
+#define RANDOM_LEN   (32)
+#define HASH_LEN     (32)
 
 #define PSetData(p, o, v) \
     {\
@@ -209,14 +214,44 @@ static A_Package* make_query_upgrade_abort(ACmd cmd, uint32_t fid)
     return p;
 }
 
-static A_Package* make_query_set_boeid(ACmd cmd, uint32_t id)
+static A_Package* make_query_set_boesn(ACmd cmd, unsigned char *sn)
 {
     A_Package *p = axu_package_new(100);
     int offset = 0;
     if(p)
     {
         axu_package_init(p, NULL, cmd);
-        PSetData(p, offset, id);
+        PSetDataLen(p, offset, sn, BOARD_SN_LEN);
+
+        axu_finish_package(p);
+    }
+    return p;
+}
+
+static A_Package* make_query_verify(ACmd cmd, unsigned char *hash, unsigned char *signature, unsigned char *pubkey)
+{
+    A_Package *p = axu_package_new(HWSIGN_LEN + PUBKEY_LEN + HASH_LEN);
+    int offset = 0;
+    if(p)
+    {
+        axu_package_init(p, NULL, cmd);
+        PSetDataLen(p, offset, hash, HASH_LEN);
+        PSetDataLen(p, offset, signature, HWSIGN_LEN);
+        PSetDataLen(p, offset, pubkey, PUBKEY_LEN);
+
+        axu_finish_package(p);
+    }
+    return p;
+}
+
+static A_Package* make_query_set_boe_mac(ACmd cmd, unsigned char *mac)
+{
+    A_Package *p = axu_package_new(100);
+    int offset = 0;
+    if(p)
+    {
+        axu_package_init(p, NULL, cmd);
+        PSetDataLen(p, offset, mac, BOARD_MAC_LEN);
 
         axu_finish_package(p);
     }
@@ -322,8 +357,7 @@ BoeErr* doAXU_Reset(void)
 }
 
 
-#define GetRandom(p)       (*((uint32_t*)p->data))
-BoeErr* doAXU_GetRandom(uint32_t *val)
+BoeErr* doAXU_GetRandom(unsigned char *rdm)
 {
     A_Package *p = make_query_simple(ACMD_PB_GET_RANDOM);
     BoeErr *ret = NULL;
@@ -335,7 +369,7 @@ BoeErr* doAXU_GetRandom(uint32_t *val)
         if(ret == &e_ok)
         {
             A_Package *q = (A_Package*)(r->buf);
-            *val = GetRandom(q);
+            memcpy(rdm, q->data, RANDOM_LEN);
             aqd_free(r);
             return &e_ok;
         }
@@ -347,10 +381,9 @@ BoeErr* doAXU_GetRandom(uint32_t *val)
     }
 }
 
-#define GetBOEID(p)       (*((uint32_t*)p->data))
-BoeErr* doAXU_GetBOEID(uint32_t *id)
+BoeErr* doAXU_GetBOESN(unsigned char *sn)
 {
-    A_Package *p = make_query_simple(ACMD_PB_GET_BOEID);
+    A_Package *p = make_query_simple(ACMD_PB_GET_SN);
     BoeErr *ret = NULL;
     AQData *r = NULL;
     if(p)
@@ -360,7 +393,123 @@ BoeErr* doAXU_GetBOEID(uint32_t *id)
         if(ret == &e_ok)
         {
             A_Package *q = (A_Package*)(r->buf);
-            *id = GetBOEID(q);
+            memcpy(sn, q->data, BOARD_SN_LEN);
+            aqd_free(r);
+            return &e_ok;
+        }
+        return ret;
+    }
+    else
+    {
+        return &e_no_mem;
+    }
+}
+
+BoeErr* doAXU_Get_MAC(unsigned char *mac)
+{
+    A_Package *p = make_query_simple(ACMD_PB_GET_MAC);
+    BoeErr *ret = NULL;
+    AQData *r = NULL;
+    if(p)
+    {
+        ret = doCommand(p, &r);
+        free(p);
+        if(ret == &e_ok)
+        {
+            A_Package *q = (A_Package*)(r->buf);
+            memcpy(mac, q->data, BOARD_MAC_LEN);
+            aqd_free(r);
+            return &e_ok;
+        }
+        return ret;
+    }
+    else
+    {
+        return &e_no_mem;
+    }
+}
+
+BoeErr* doAXU_Genkey(unsigned char *pubkey)
+{
+    A_Package *p = make_query_simple(ACMD_PB_GENKEY);
+    BoeErr *ret = NULL;
+    AQData *r = NULL;
+    if(p)
+    {
+        ret = doCommand(p, &r);
+        free(p);
+        if(ret == &e_ok)
+        {
+            A_Package *q = (A_Package*)(r->buf);
+            memcpy(pubkey, q->data, PUBKEY_LEN);
+            aqd_free(r);
+            return &e_ok;
+        }
+        return ret;
+    }
+    else
+    {
+        return &e_no_mem;
+    }
+}
+
+BoeErr* doAXU_Get_Pubkey(unsigned char *pubkey)
+{
+    A_Package *p = make_query_simple(ACMD_PB_GET_PUBKEY);
+    BoeErr *ret = NULL;
+    AQData *r = NULL;
+    if(p)
+    {
+        ret = doCommand(p, &r);
+        free(p);
+        if(ret == &e_ok)
+        {
+            A_Package *q = (A_Package*)(r->buf);
+            memcpy(pubkey, q->data, PUBKEY_LEN);
+            aqd_free(r);
+            return &e_ok;
+        }
+        return ret;
+    }
+    else
+    {
+        return &e_no_mem;
+    }
+}
+
+BoeErr* doAXU_HW_Verify(unsigned char *hash, unsigned char *signature, unsigned char *pubkey)
+{
+    A_Package *p = make_query_verify(ACMD_PB_VERIFY, hash, signature, pubkey);
+    BoeErr *ret = NULL;
+    AQData *r = NULL;
+    if(p)
+    {
+        ret = doCommand(p, &r);
+        free(p);
+        if(ret == &e_ok)
+        {
+            aqd_free(r);
+            return &e_ok;
+        }
+        return ret;
+    }
+    else
+    {
+        return &e_no_mem;
+    }
+}
+
+BoeErr* doAXU_Lock_PK()
+{
+    A_Package *p = make_query_simple(ACMD_PB_GET_PUBKEY);
+    BoeErr *ret = NULL;
+    AQData *r = NULL;
+    if(p)
+    {
+        ret = doCommand(p, &r);
+        free(p);
+        if(ret == &e_ok)
+        {
             aqd_free(r);
             return &e_ok;
         }
@@ -396,10 +545,9 @@ BoeErr* doAXU_GetSingleVer(TVersion *v, ACmd cmd)
     }
 }
 
-#define GetBindAccount(p)   (p->data)
-BoeErr* doAXU_GetBindAccount(uint8_t *account_256)
+BoeErr* doAXU_GetBindAccount(uint8_t *account)
 {
-    A_Package *p = make_query_simple(ACMD_PB_GET_BINDINFO);
+    A_Package *p = make_query_simple(ACMD_PB_GET_ACCOUNT);
     BoeErr *ret = NULL;
     AQData *r = NULL;
     if(p)
@@ -409,7 +557,7 @@ BoeErr* doAXU_GetBindAccount(uint8_t *account_256)
         if(ret == &e_ok)
         {
             A_Package *q = (A_Package*)(r->buf);
-            memcpy(account_256, q->data, ACCOUNT_LEN);
+            memcpy(account, q->data, ACCOUNT_LEN);
             aqd_free(r);
             return &e_ok;
         }
@@ -435,9 +583,30 @@ BoeErr* doAXU_GetAXUVer(TVersion *axu)
     return doAXU_GetSingleVer(axu, ACMD_PB_GET_AXU_VER);
 }
 
-BoeErr* doAXU_SetBoeID(uint32_t id)
+BoeErr* doAXU_SetBoeSN(unsigned char *sn)
 {
-    A_Package *p = make_query_set_boeid(ACMD_PB_SET_BOEID, id);
+    A_Package *p = make_query_set_boesn(ACMD_PB_SET_SN, sn);
+    BoeErr *ret = NULL;
+    AQData *r = NULL;
+    if(p)
+    {
+        ret = doCommand(p, &r);
+        free(p);
+        if(ret == &e_ok)
+        {
+            aqd_free(r);
+            return &e_ok;
+        }
+        return ret;
+    }
+    else
+    {
+        return &e_no_mem;
+    }
+}
+BoeErr* doAXU_Set_MAC(unsigned char *mac)
+{
+    A_Package *p = make_query_set_boe_mac(ACMD_PB_SET_MAC, mac);
     BoeErr *ret = NULL;
     AQData *r = NULL;
     if(p)
@@ -479,9 +648,9 @@ BoeErr* doAXU_BindAccount(uint8_t *baccount)
     }
 }
 
-BoeErr* doAXU_HWSign(uint8_t *data, int len, uint8_t *result)
+BoeErr* doAXU_HWSign(uint8_t *data, uint8_t *result)
 {
-    A_Package *p = make_query_hwsign(ACMD_PB_HW_SIGN, data, len);
+    A_Package *p = make_query_hwsign(ACMD_PB_HW_SIGN, data, HASH_LEN);
     BoeErr *ret = NULL;
     AQData *r = NULL;
     if(p)
@@ -490,7 +659,7 @@ BoeErr* doAXU_HWSign(uint8_t *data, int len, uint8_t *result)
         free(p);
         if(ret == &e_ok)
         {
-            // get sign r, s, v.
+            // get sign r, s.
             A_Package *q = (A_Package*)r->buf;
             if(q->header.body_length >= HWSIGN_LEN)
             {

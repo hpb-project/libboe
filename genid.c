@@ -76,17 +76,11 @@ static int exec_shell(const char *cmd, char * buff)
 
 static int scan_board(BoardInfo *board, char *cmd_buf)
 {
-    uid_t uid = getuid();
-    if(setuid(0))
-    {
-        printf("setuid failed.\n");
-        return 1;
-    }
     memset(board, 0x0, sizeof(*board));
     /* board id */
     exec_shell("dmidecode -s system-serial-number", cmd_buf);
     strcpy(board->board_id, cmd_buf);
-    setuid(uid);
+    board->board_id[strlen(cmd_buf)-1] = '\0';
     return 0;
 }
 
@@ -94,18 +88,26 @@ static int scan_mac(MacInfo *macinfo, char *cmd_buf)
 {
     memset(macinfo, 0, sizeof(MacInfo));
     /* mac address */
+    int offset = 0;
+    char tmp_buf[2048] = {0};
+    char cmd[1024] = {0};
+    uint8_t mac_merge[8*18] = {0};
     char *str1 = NULL, *token = NULL, *saveptr1 = NULL;
     // get all mac addr
-    exec_shell("ifconfig -a | grep -v '^docker' | grep -Eo '[0-9a-fA-F]{2,2}:[0-9a-fA-F]{2,2}:[0-9a-fA-F]{2,2}:[0-9a-fA-F]{2,2}:[0-9a-fA-F]{2,2}:[0-9a-fA-F]{2,2}' | sort", cmd_buf);
-    for (str1 = cmd_buf; ; str1 = NULL) 
+    exec_shell("ls /sys/class/net/ -l | grep -v 'virtual' | grep -v 'total' | awk '{print $9}'", cmd_buf);
+    strcpy(tmp_buf, cmd_buf);
+    for (str1 = tmp_buf; ; str1 = NULL) 
     {
         token = strtok_r(str1, "\n", &saveptr1);
         if (token == NULL)
             break;
+        sprintf(cmd, "ifconfig %s| grep -Eo '[0-9a-fA-F]{2,2}:[0-9a-fA-F]{2,2}:[0-9a-fA-F]{2,2}:[0-9a-fA-F]{2,2}:[0-9a-fA-F]{2,2}:[0-9a-fA-F]{2,2}'", token);
+        exec_shell(cmd, cmd_buf);
+        cmd_buf[strlen(cmd_buf)-1] = '\0';
         // filter virtual mac.
-        if(!is_virtual_mac(token))
+        if(!is_virtual_mac(cmd_buf))
         {
-            memcpy(macinfo->mac_list[macinfo->mac_num], token, strlen(token));
+            memcpy(macinfo->mac_list[macinfo->mac_num], cmd_buf, strlen(cmd_buf));
             macinfo->mac_num++;
         }
     }

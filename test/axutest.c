@@ -1,4 +1,4 @@
-// Last Update:2018-07-14 15:45:50
+// Last Update:2018-08-07 17:39:45
 /**
  * @file axutest.c
  * @brief 
@@ -11,7 +11,7 @@
 #include <unistd.h>
 #include <string.h>
 #include "doAXU.h"
-#include "boe.h"
+#include "boe_full.h"
 
 
 typedef int (*TestFunc)(void);
@@ -38,27 +38,36 @@ static int axu_msg_handle(uint8_t *data, int len, void *userdata)
 
     return 0;
 }
+void hex_dump_ln(unsigned char *buf, int len)
+{
+    for(int i = 0; i < len; i++)
+    {
+        printf("%02x", buf[i]);
+    }
+    printf("\n");
+}
 
 int test_get_random()
 {
-    uint32_t val;
+    unsigned char r[32];
     BoeErr *ret = NULL;
-    ret = doAXU_GetRandom(&val);
+    ret = doAXU_GetRandom(r);
     if(ret == BOE_OK)
     {
-        printf("Random = %d\n", val);
+        printf("get random:");
+        hex_dump_ln(r, sizeof(r));
         return 0;
     }
     return 1;
 }
-int test_get_boeid()
+int test_get_boesn()
 {
-    uint32_t val;
+    unsigned char sn[21] = {0};
     BoeErr *ret = NULL;
-    ret = doAXU_GetBOEID(&val);
+    ret = doAXU_GetBOESN(sn);
     if(ret == BOE_OK)
     {
-        printf("get boe 0x%x.\n", val);
+        printf("get sn:%s\n", sn);
         return 0;
     }
     return 1;
@@ -99,12 +108,14 @@ int test_get_axu_ver()
     }
     return 1;
 }
-int test_set_boeid()
+int test_set_boesn()
 {
     uint32_t id = 0x1234abcd;
+    unsigned char sn[21] = {0};
+    memcpy(sn, "12345678901234567890", 20);
     BoeErr *ret = NULL;
-    ret = doAXU_SetBoeID(id);
-    printf("set boe 0x%x.\n", id);
+    ret = doAXU_SetBoeSN(sn);
+    printf("set boe sn:%s\n", sn);
     if(ret == BOE_OK)
     {
         return 0;
@@ -113,13 +124,11 @@ int test_set_boeid()
 }
 int test_set_account()
 {
-    uint8_t account[32];
-    for(int i = 0; i < 32; i++)
-    {
-        account[i] = i+0xa;
-        printf("a[%d] = 0x%02x\n", i, account[i]);
-    }
+    char account[43] = {0};
+    memcpy(account, "0x1122334455667788990011223344556677889900", 42);
+
     BoeErr *ret = NULL;
+    printf("set account :%s\n", account);
     ret = doAXU_BindAccount(account);
     if(ret == BOE_OK)
     {
@@ -129,66 +138,96 @@ int test_set_account()
 }
 int test_get_account()
 {
-    uint8_t account[32];
+    char account[43] = {0};
 
     BoeErr *ret = NULL;
     ret = doAXU_GetBindAccount(account);
     if(ret == BOE_OK)
     {
-        for(int i = 0; i < 32; i++)
-        {
-            printf("a[%d]=0x%02x\n", i, account[i]);
-        }
+        printf("get account :%s\n", account);
         return 0;
     }
     return 1;
 }
 
-static void hwsign(uint8_t *src, int srclen, uint8_t *sign, int slen)
+int test_hw_sign()
 {
-    int len = srclen > slen ? slen : srclen;
-    memset(sign, 0x0, slen);
-    for(int i = 0; i < len; i++)
-    {
-        sign[i] = src[i]<<2;
-    }
-    return;
-}
-
-int test_get_hwsign()
-{
-    uint8_t data[31];
+    uint8_t data[32];
     int i = 0;
     for(i=0; i < sizeof(data); i++)
     {
         data[i] = i + 0xa;
     }
-    uint8_t rsign[65], lsign[65];
-    hwsign(data, sizeof(data), lsign, sizeof(lsign));
-
+    uint8_t rsign[64];
     BoeErr *ret = NULL;
-    ret = doAXU_HWSign(data, sizeof(data), rsign);
+    ret = doAXU_HWSign(data, rsign);
     if(ret == BOE_OK)
     {
-        for(i = 0; i < 65; i++)
-        {
-            if(rsign[i] != lsign[i])
-            {
-                printf("hwsign not equal.\r\n");
-                return 1;
-            }
-        }
+        printf("signature:");
+        hex_dump_ln(rsign, sizeof(rsign));
         return 0;
     }
     return 1;
 }
 
-int test_reset()
+int test_genkey()
 {
-    BoeErr *ret = NULL;
-    ret = doAXU_Reset();
+    unsigned char pubkey[64];
+    BoeErr *ret = doAXU_Genkey(pubkey);
     if(ret == BOE_OK)
     {
+        printf("genkey pubkey:");
+        hex_dump_ln(pubkey, sizeof(pubkey));
+        return 0;
+    }
+    return 1;
+}
+
+int test_get_pubkey()
+{
+    unsigned char pubkey[64];
+    BoeErr *ret = doAXU_Get_Pubkey(pubkey);
+    if(ret == BOE_OK)
+    {
+        printf("get pubkey:");
+        hex_dump_ln(pubkey, sizeof(pubkey));
+        return 0;
+    }
+    return 1;
+}
+
+
+
+int test_set_mac()
+{
+    unsigned char mac[6];
+    mac[0] = 0xff;
+    mac[1] = 0x12;
+    mac[2] = 0x34;
+    mac[3] = 0x45;
+    mac[4] = 0x67;
+    mac[5] = 0x89;
+    BoeErr *ret = NULL;
+    printf("set mac:");
+    hex_dump_ln(mac, sizeof(mac));
+    ret = doAXU_Set_MAC(mac);
+    if(ret == BOE_OK)
+    {
+        return 0;
+    }
+    return 1;
+}
+
+int test_get_mac()
+{
+    unsigned char mac[6];
+    BoeErr *ret = NULL;
+
+    ret = doAXU_Get_MAC(mac);
+    if(ret == BOE_OK)
+    {
+        printf("get mac:");
+        hex_dump_ln(mac, sizeof(mac));
         return 0;
     }
     return 1;
@@ -197,16 +236,19 @@ int test_reset()
 void printf_help()
 {
     printf("Cmd         Function        \n");
-    printf(" 0           test_get_random\n");
-    printf(" 1           test_get_boeid\n");
-    printf(" 2           test_get_hw_ver\n");
-    printf(" 3           test_get_fw_ver\n");
-    printf(" 4           test_get_axu_ver\n");
-    printf(" 5           test_set_boeid\n");
-    printf(" 6           test_set_account\n");
-    printf(" 7           test_get_account\n");
-    printf(" 8           test_get_hwsign\n");
-    printf(" 9           test_reset\n");
+    printf(" 0            test_get_random\n");
+    printf(" 1            test_get_boesn\n");
+    printf(" 2            test_get_hw_ver\n");
+    printf(" 3            test_get_fw_ver\n");
+    printf(" 4            test_get_axu_ver\n");
+    printf(" 5            test_set_boesn\n");
+    printf(" 6            test_set_account\n");
+    printf(" 7            test_get_account\n");
+    printf(" 8            test_hw_sign\n");
+    printf(" 9            test_genkey\n");
+    printf(" 10           test_get_pubkey\n");
+    printf(" 11           test_set_mac\n");
+    printf(" 12           test_get_mac\n");
 }
 
 
@@ -245,7 +287,7 @@ int main(int argc, char *argv[])
                     pfunc = test_get_random;
                     break;
                 case 1:
-                    pfunc = test_get_boeid;
+                    pfunc = test_get_boesn;
                     break;
                 case 2:
                     pfunc = test_get_hw_ver;
@@ -257,7 +299,7 @@ int main(int argc, char *argv[])
                     pfunc = test_get_axu_ver;
                     break;
                 case 5:
-                    pfunc = test_set_boeid;
+                    pfunc = test_set_boesn;
                     break;
                 case 6:
                     pfunc = test_set_account;
@@ -266,10 +308,19 @@ int main(int argc, char *argv[])
                     pfunc = test_get_account;
                     break;
                 case 8:
-                    pfunc = test_get_hwsign;
+                    pfunc = test_hw_sign;
                     break;
                 case 9:
-                    pfunc = test_reset;
+                    pfunc = test_genkey;
+                    break;
+                case 10:
+                    pfunc = test_get_pubkey;
+                    break;
+                case 11:
+                    pfunc = test_set_mac;
+                    break;
+                case 12:
+                    pfunc = test_get_mac;
                     break;
                 default:
                     printf("not support cmd %d.\n", cmd);

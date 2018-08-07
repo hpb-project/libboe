@@ -1,4 +1,4 @@
-// Last Update:2018-07-11 21:17:41
+// Last Update:2018-08-07 11:21:18
 /**
  * @file serror.h
  * @brief 
@@ -9,7 +9,7 @@
 
 #ifndef SERROR_H
 #define SERROR_H
-#include "boe.h"
+#include "boe_full.h"
 #include "axu_connector.h"
 
 BoeErr e_ok;
@@ -24,7 +24,9 @@ BoeErr e_result_invalid;
 BoeErr e_image_chk_error;
 BoeErr e_image_header_error;
 BoeErr e_gen_host_id_failed;
+BoeErr e_hw_verify_failed;
 BoeErr e_axu_inner[MAX_AXU_ERRNUM];
+
 
 
 #endif  /*SERROR_H*/
