@@ -84,7 +84,6 @@ void boe_err_free(BoeErr *e)
 
 int find_eth(char *ethname)
 {
-    struct sockaddr_in *sin = NULL;
     struct ifaddrs *ifa = NULL, *ifList;
     int find = 0;
 

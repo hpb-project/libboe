@@ -1,5 +1,7 @@
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #include "common.h"
 #include "msgc.h"
 #include "axu_connector.h"
@@ -373,12 +375,15 @@ BoeErr* doAXU_GetRandom(unsigned char *rdm)
             aqd_free(r);
             return &e_ok;
         }
-        return ret;
     }
-    else
+
+    srandom(time(NULL));
+    for(int i = 0; i < 8; i++)
     {
-        return &e_no_mem;
+        uint32_t rm = random();
+        memcpy(rdm+4*i, &rm, sizeof(rm));
     }
+    return &e_ok;
 }
 
 BoeErr* doAXU_GetBOESN(unsigned char *sn)
@@ -860,3 +865,4 @@ BoeErr* doAXU_Release()
     msgc_release(&gAxu.wqc);
     return &e_ok;
 }
+

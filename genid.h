@@ -20,5 +20,5 @@
 /*
  * scan host pc and general an id to check with BOE board bound id.
  */
-int general_id(char *genid);
+int general_id(unsigned char *genid);
 #endif  /*GENID_H*/

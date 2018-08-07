@@ -88,10 +88,8 @@ static int scan_mac(MacInfo *macinfo, char *cmd_buf)
 {
     memset(macinfo, 0, sizeof(MacInfo));
     /* mac address */
-    int offset = 0;
     char tmp_buf[2048] = {0};
     char cmd[1024] = {0};
-    uint8_t mac_merge[8*18] = {0};
     char *str1 = NULL, *token = NULL, *saveptr1 = NULL;
     // get all mac addr
     exec_shell("ls /sys/class/net/ -l | grep -v 'virtual' | grep -v 'total' | awk '{print $9}'", cmd_buf);
@@ -119,7 +117,7 @@ static int scan_mac(MacInfo *macinfo, char *cmd_buf)
     return 0;
 }
 
-static int s_general_id(MacInfo *macinfo, BoardInfo *board, char *id)
+static int s_general_id(MacInfo *macinfo, BoardInfo *board, unsigned char *id)
 {
     int datalen = 0;
     for(int i = 0; i < macinfo->mac_num; i++)
@@ -141,14 +139,14 @@ static int s_general_id(MacInfo *macinfo, BoardInfo *board, char *id)
     SHA3_256(sha256, merge_data, datalen);
     for(int i = 0; i < 32; i++)
     {
-        sprintf((id)+2*i,"%02x",sha256[i]);
+        sprintf((char *)id+2*i,"%02x",sha256[i]);
     }
     free(merge_data);
 
     return 0;
 }
 
-int general_id(char *genid)
+int general_id(unsigned char *genid)
 {
     BoardInfo       board;
     MacInfo         mac;

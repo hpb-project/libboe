@@ -20,9 +20,9 @@ int p256_verify(unsigned char hash[32], unsigned char pubkey[64], unsigned char 
     sb_sw_signature_t ssignature;
     sb_sw_message_digest_t message;
 
-    memcpy(spubkey.bytes, pubkey, sizeof(pubkey));
-    memcpy(ssignature.bytes, signature, sizeof(signature));
-    memcpy(message.bytes, hash, sizeof(hash));
+    memcpy(spubkey.bytes, pubkey, 64);
+    memcpy(ssignature.bytes, signature, 64);
+    memcpy(message.bytes, hash, 32);
 
     sb_error_t ret = sb_sw_verify_signature(&ctx,
             (const sb_sw_signature_t*)&ssignature,
