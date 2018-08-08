@@ -1,4 +1,4 @@
-// Last Update:2018-08-08 11:40:27
+// Last Update:2018-08-08 12:38:38
 /**
  * @file nboe.c
  * @brief 
@@ -96,28 +96,25 @@ int find_eth(char *ethname)
 
     for (ifa = ifList; ifa != NULL; ifa = ifa->ifa_next)
     {
-        if(ifa->ifa_addr->sa_family == AF_INET)
-        {
-            char *name = ifa->ifa_name;
-            if(strcmp(name, "lo") == 0)
-                continue;
-            if(doAXU_Init(name, axu_msg_handle, (void*)&gIns) == BOE_OK)
-            {
-                if(connected(&gIns))
-                {
-                    doAXU_Release();
-                    memcpy(ethname, name, strlen(name));
-                    ethname[strlen(name)+1] = '\0';
-                    find = 1;
-                    break;
-                }
-                else
-                {
-                    doAXU_Release();
-                }
-            }
+        char *name = ifa->ifa_name;
+        //printf("ethname = %s.\n", name);
+        if(strcmp(name, "lo") == 0)
             continue;
+        if(doAXU_Init(name, axu_msg_handle, (void*)&gIns) == BOE_OK)
+        {
+            if(connected(&gIns))
+            {
+                doAXU_Release();
+                strcpy(ethname, name);
+                find = 1;
+                break;
+            }
+            else
+            {
+                doAXU_Release();
+            }
         }
+        continue;
     }
 
     freeifaddrs(ifList);
@@ -147,12 +144,10 @@ BoeErr* init_check()
 
     if(gIns.bInitCon != 1)
     {
-        char ethname[30];
-        if(!find_eth(ethname)) // find current ethname that connect with board.
+        if(!find_eth(gIns.methname)) // find current ethname that connect with board.
         {
             return &e_init_fail;
         }
-        strcpy(gIns.methname, ethname);
 
         ret = boe_inner_init(gIns.methname);
         if(ret == BOE_OK)

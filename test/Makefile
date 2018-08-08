@@ -1,4 +1,4 @@
-all:rstest msgctest axutest tstest mkimage
+all:rstest msgctest axutest tstest mkimage boetest
 
 rstest:
 	gcc -g rstest.c ../rs.c -I ../ -o rstest
@@ -15,5 +15,8 @@ tstest:
 mkimage:
 	gcc mkimage.c ../axu_connector.c ../common.c ../serror.c -I.. -o mkimage
 
+boetest:
+	gcc -g  boetest.c -I ../ -L ../lib --static -lboe -lpthread -o boetest
+
 clean:
-	rm rstest msgctest axutest tstest mkimage
+	rm rstest msgctest axutest tstest mkimage boetest
