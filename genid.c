@@ -137,10 +137,7 @@ static int s_general_id(MacInfo *macinfo, BoardInfo *board, unsigned char *id)
 
     uint8_t sha256[32] = {0};
     SHA3_256(sha256, merge_data, datalen);
-    for(int i = 0; i < 32; i++)
-    {
-        sprintf((char *)id+2*i,"%02x",sha256[i]);
-    }
+    memcpy(id, sha256, 32);
     free(merge_data);
 
     return 0;

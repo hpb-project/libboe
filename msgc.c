@@ -196,7 +196,7 @@ static void *receive_thread(void*userdata)
         ret = RSSelect(c->rs, cycle_ms);
         if(ret < 0)
         {
-            fprintf(stderr, "select error.\n");
+            //fprintf(stderr, "select error.\n");
             continue;
         }
         else if(ret == 0)
