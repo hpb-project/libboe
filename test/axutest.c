@@ -1,4 +1,4 @@
-// Last Update:2018-08-07 17:39:45
+// Last Update:2018-08-08 10:43:57
 /**
  * @file axutest.c
  * @brief 
@@ -122,10 +122,13 @@ int test_set_boesn()
     }
     return 1;
 }
+// "0xb43557693992362c1cf2a4aba13edad2804160bf"
+// "0x6703decbf077e9a2eaefa6f7ab57bcad83c28f19"
+// "0xf978562dc272d4d47868d508354da19c21988258"
 int test_set_account()
 {
     char account[43] = {0};
-    memcpy(account, "0x1122334455667788990011223344556677889900", 42);
+    memcpy(account, "0xb43557693992362c1cf2a4aba13edad2804160bf", 42);
 
     BoeErr *ret = NULL;
     printf("set account :%s\n", account);

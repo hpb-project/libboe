@@ -1,4 +1,4 @@
-// Last Update:2018-08-07 16:55:30
+// Last Update:2018-08-08 11:40:27
 /**
  * @file nboe.c
  * @brief 
@@ -23,7 +23,9 @@ struct BoeInstance {
     TVersion hw;
     TVersion fw;
     TVersion axu;
-    uint8_t  bConnect;
+    char     methname[100];
+    uint8_t  bInitCon;
+    uint8_t  bConnected;
     uint32_t updateFid;
     BoeUpgradeCallback updateCallback;
 };
@@ -121,25 +123,80 @@ int find_eth(char *ethname)
     freeifaddrs(ifList);
     return find;
 }
+BoeErr* boe_inner_init(char *ethname)
+{
+    BoeErr *ret = doAXU_Init(ethname, axu_msg_handle, (void*)&gIns);
+    if(ret != BOE_OK)
+    {
+        return ret;
+    }
+    ret = doTSU_Init(ethname, tsu_msg_handle, (void*)&gIns);
+    if(ret != BOE_OK)
+    {
+        doAXU_Release();
+        return ret;
+    }
+    return ret;
+}
+
+BoeErr* init_check()
+{
+    BoeErr *ret = BOE_OK;
+    if(gIns.bConnected)
+        return BOE_OK;
+
+    if(gIns.bInitCon != 1)
+    {
+        char ethname[30];
+        if(!find_eth(ethname)) // find current ethname that connect with board.
+        {
+            return &e_init_fail;
+        }
+        strcpy(gIns.methname, ethname);
+
+        ret = boe_inner_init(gIns.methname);
+        if(ret == BOE_OK)
+        {
+            gIns.bInitCon = 1;
+            if(connected(&gIns))
+            {
+                gIns.bConnected = 1;
+            }
+        }
+    }
+    else if(!gIns.bConnected)
+    {
+        if(connected(&gIns))
+        {
+            gIns.bConnected = 1;
+        }
+    }
+    if(gIns.bConnected)
+        return BOE_OK;
+
+    return &e_init_fail;
+}
 
 BoeErr* boe_init(void)
 {
-    char ethname[30];
-    if(!find_eth(ethname)) // find current ethname that connect with board.
-    {
-        return &e_init_fail;
-    }
-    // axu/tsu
-    doAXU_Init(ethname, axu_msg_handle, (void*)&gIns);
-    doTSU_Init(ethname, tsu_msg_handle, (void*)&gIns);
+    gIns.bInitCon = 0;
+    gIns.bConnected = 0;
+    memset(gIns.methname, 0x0, sizeof(gIns.methname));
 
+    init_check();
     return BOE_OK;
 }
 
+
+
 BoeErr* boe_release(void)
 {
-    doAXU_Release();
-    doTSU_Release();
+    if(gIns.bInitCon)
+    {
+        doAXU_Release();
+        doTSU_Release();
+    }
+
     return BOE_OK;
 }
 
@@ -151,84 +208,124 @@ BoeErr* boe_reg_update_callback(BoeUpgradeCallback func)
 
 BoeErr* boe_get_all_version(TVersion *hw, TVersion *fw, TVersion *axu)
 {
-    return doAXU_GetVersionInfo(hw, fw, axu);
+    BoeErr *ret = init_check();
+    if(ret == BOE_OK)
+        return doAXU_GetVersionInfo(hw, fw, axu);
+    return ret;
 }
 
 BoeErr* boe_get_hw_version(TVersion *hw)
 {
-    return doAXU_GetHWVer(hw);
+    BoeErr *ret = init_check();
+    if(ret == BOE_OK)
+        return doAXU_GetHWVer(hw);
+    return ret;
 }
 BoeErr* boe_get_fw_version(TVersion *fw)
 {
-    return doAXU_GetFWVer(fw);
+    BoeErr *ret = init_check();
+    if(ret == BOE_OK)
+        return doAXU_GetFWVer(fw);
+    return ret;
 }
 BoeErr* boe_get_axu_version(TVersion *axu)
 {
-    return doAXU_GetAXUVer(axu);
+    BoeErr *ret = init_check();
+    if(ret == BOE_OK)
+        return doAXU_GetAXUVer(axu);
+    return ret;
 }
 
 BoeErr* boe_upgrade(unsigned char*image, int imagelen)
 {
-    ImageHeader header;
-    BoeErr* ret = NULL;
-    memcpy(&header, image, sizeof(header));
-    if((memcmp(header.vendor, "hpb", 3) == 0)
-            && (imagelen - sizeof(header) == header.len))
+    BoeErr *ret = init_check();
+    if(ret == BOE_OK)
     {
-        uint8_t *p_data = image + sizeof(ImageHeader);
-        uint32_t chk = checksum(p_data, header.len);
-        if(chk != header.chk)
+        ImageHeader header;
+        BoeErr* ret = NULL;
+        memcpy(&header, image, sizeof(header));
+        if((memcmp(header.vendor, "hpb", 3) == 0)
+                && (imagelen - sizeof(header) == header.len))
         {
-            printf("boe_upgrade: checksum not match\n");
-            return &e_image_chk_error;
+            uint8_t *p_data = image + sizeof(ImageHeader);
+            uint32_t chk = checksum(p_data, header.len);
+            if(chk != header.chk)
+            {
+                printf("boe_upgrade: checksum not match\n");
+                return &e_image_chk_error;
+            }
+            gIns.updateFid = header.chk;
+
+            ret = doAXU_Transport(&header, p_data);
+            if(ret != BOE_OK)
+                return ret;
+            ret = doAXU_UpgradeStart(gIns.updateFid);
         }
-        gIns.updateFid = header.chk;
-        
-        ret = doAXU_Transport(&header, p_data);
-        if(ret != BOE_OK)
-            return ret;
-        ret = doAXU_UpgradeStart(gIns.updateFid);
+        else
+        {
+            return &e_image_header_error;
+        }
     }
-    else
-    {
-        return &e_image_header_error;
-    }
-    return BOE_OK;
+    return ret;
 }
 
 BoeErr* boe_upgrade_abort(void)
 {
-    return doAXU_UpgradeAbort(gIns.updateFid);
+    BoeErr *ret = init_check();
+    if(ret == BOE_OK)
+        return doAXU_UpgradeAbort(gIns.updateFid);
+    return ret;
 }
 BoeErr* boe_hw_check(void)
 {
     TVersion hw, fw, axuver;
-    return doAXU_GetVersionInfo(&hw, &fw, &axuver);
+    BoeErr *ret = init_check();
+    if(ret == BOE_OK)
+        return doAXU_GetVersionInfo(&hw, &fw, &axuver);
+    return ret;
 }
 BoeErr* boe_reboot(void)
 {
-    return doAXU_Reset();
+    BoeErr *ret = init_check();
+    if(ret == BOE_OK)
+        return doAXU_Reset();
+    return ret;
 }
 BoeErr* boe_set_boesn(unsigned char *sn)
 {
-    return doAXU_SetBoeSN(sn);
+    BoeErr *ret = init_check();
+    if(ret == BOE_OK)
+        return doAXU_SetBoeSN(sn);
+    return ret;
 }
 BoeErr* boe_set_bind_account(unsigned char *account)
 {
-    return doAXU_BindAccount(account);
+    BoeErr *ret = init_check();
+    if(ret == BOE_OK)
+        return doAXU_BindAccount(account);
+    return ret;
 }
 
 BoeErr* boe_get_random(unsigned char *r)
 {
-    return doAXU_GetRandom(r);
+    BoeErr *ret = init_check();
+    if(ret == BOE_OK)
+        return doAXU_GetRandom(r);
+    return ret;
 }
 BoeErr* boe_get_boesn(unsigned char *sn)
 {
-    return doAXU_GetBOESN(sn);
+    BoeErr *ret = init_check();
+    if(ret == BOE_OK)
+        return doAXU_GetBOESN(sn);
+    return ret;
 }
 BoeErr* boe_get_bind_account(unsigned char *baccount)
 {
-    return doAXU_GetBindAccount(baccount);
+    BoeErr *ret = init_check();
+    if(ret == BOE_OK)
+        return doAXU_GetBindAccount(baccount);
+    return ret;
 }
 
 BoeErr* boe_hw_sign(unsigned char *p_random, unsigned char *sig)
@@ -236,17 +333,22 @@ BoeErr* boe_hw_sign(unsigned char *p_random, unsigned char *sig)
     // merge p_random and hid, 
     // sha3_256 generate hash.
     // use hash to signature.
-    int len = 32 + 2 * 32;
-    unsigned char p_buf[32 + 2*32];
-    memset(p_buf, 0, len);
-    if(0 == general_id(p_buf))
+    BoeErr *ret = init_check();
+    if(ret == BOE_OK)
     {
-        uint8_t hash[32] = {0};
-        memcpy(p_buf+2*32, p_random, 32);
-        SHA3_256(hash, p_buf, len);
-        return doAXU_HWSign(hash, sig);
+        int len = 32 + 2 * 32;
+        unsigned char p_buf[32 + 2*32];
+        memset(p_buf, 0, len);
+        if(0 == general_id(p_buf))
+        {
+            uint8_t hash[32] = {0};
+            memcpy(p_buf+2*32, p_random, 32);
+            SHA3_256(hash, p_buf, len);
+            return doAXU_HWSign(hash, sig);
+        }
+        return &e_gen_host_id_failed;
     }
-    return &e_gen_host_id_failed;
+    return ret;
 }
 BoeErr* boe_p256_verify(unsigned char *random, unsigned char *signature, unsigned char * hid, unsigned char *pubkey)
 {
@@ -266,34 +368,58 @@ BoeErr* boe_p256_verify(unsigned char *random, unsigned char *signature, unsigne
 }
 BoeErr* boe_genkey(unsigned char *pubkey)
 {
-    return doAXU_Genkey(pubkey);
+    BoeErr *ret = init_check();
+    if(ret == BOE_OK)
+        return doAXU_Genkey(pubkey);
+    return ret;
 }
 BoeErr* boe_get_pubkey(unsigned char *pubkey)
 {
-    return doAXU_Get_Pubkey(pubkey);
+    BoeErr *ret = init_check();
+    if(ret == BOE_OK)
+        return doAXU_Get_Pubkey(pubkey);
+    return ret;
 }
 BoeErr* boe_lock_pk(void)
 {
-    return doAXU_Lock_PK();
+    BoeErr *ret = init_check();
+    if(ret == BOE_OK)
+        return doAXU_Lock_PK();
+    return ret;
 }
 BoeErr* boe_hw_verify(unsigned char *hash, unsigned char *signature, unsigned char *pubkey)
 {
-    return doAXU_HW_Verify(hash, signature, pubkey);
+    BoeErr *ret = init_check();
+    if(ret == BOE_OK)
+        return doAXU_HW_Verify(hash, signature, pubkey);
+    return ret;
 }
 BoeErr* boe_set_mac(unsigned char *mac)
 {
-    return doAXU_Set_MAC(mac);
+    BoeErr *ret = init_check();
+    if(ret == BOE_OK)
+        return doAXU_Set_MAC(mac);
+    return ret;
 }
 BoeErr* boe_get_mac(unsigned char *mac)
 {
-    return doAXU_Get_MAC(mac);
+    BoeErr *ret = init_check();
+    if(ret == BOE_OK)
+        return doAXU_Get_MAC(mac);
+    return ret;
 }
 /* -------------------  tsu command -------------------------*/
 BoeErr* boe_get_s_random(unsigned char *hash, unsigned char *nexthash)
 {
-    return doTSU_GetHash(hash, nexthash);
+    BoeErr *ret = init_check();
+    if(ret == BOE_OK)
+        return doTSU_GetHash(hash, nexthash);
+    return ret;
 }
 BoeErr* boe_valid_sign(unsigned char *sig, unsigned char *pub)
 {
-    return doTSU_RecoverPub(sig, pub);
+    BoeErr *ret = init_check();
+    if(ret == BOE_OK)
+        return doTSU_RecoverPub(sig, pub);
+    return ret;
 }
