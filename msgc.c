@@ -282,10 +282,7 @@ static void *sorting_thread(void*userdata)
             }
         } 
         te = get_timestamp_us();
-        if(((te - ts)/1000) < cycle_ms)
-        {
-            //usleep(cycle_ms*1000 - (te-ts));
-        }
+        usleep(100);
     }
     {
         

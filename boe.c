@@ -1,4 +1,4 @@
-// Last Update:2018-08-08 17:47:09
+// Last Update:2018-08-09 17:57:36
 /**
  * @file nboe.c
  * @brief 
@@ -178,7 +178,6 @@ BoeErr* boe_init(void)
     gIns.bConnected = 0;
     memset(gIns.methname, 0x0, sizeof(gIns.methname));
 
-    init_check();
     return BOE_OK;
 }
 

@@ -122,7 +122,13 @@ int aq_free(AtomicQ *q)
         if(d->buf)
             free(d->buf);
         free(d);
+
     }
-    free(q->queue);
+    if(q->queue)
+    {
+        free(q->queue);
+        q->queue = NULL;
+    }
+
     return 0;
 }
