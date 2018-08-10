@@ -731,7 +731,7 @@ BoeErr* doAXU_TransportMid(uint32_t fid, uint32_t offset, int len, uint8_t *data
     AQData *r = NULL;
     if(p)
     {
-        ret = doCommand(p, &r);
+        ret = doCommandWithTimeout(p, &r, 1500);
         free(p);
         if(ret == &e_ok)
         {
