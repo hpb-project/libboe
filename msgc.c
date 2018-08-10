@@ -35,7 +35,7 @@
 // wait response. 
 typedef struct WMessage{
     uint32_t uid;     // unique id.
-    uint32_t timeout; // timeout unit us.
+    uint64_t timeout; // timeout unit us.
     uint64_t sTime;   // timestamp of enter wait list..
     sem_t sem;
     CheckResponse cFunc; // check response is waited.
@@ -65,7 +65,7 @@ typedef struct IMsgContext{
 static void *sorting_thread(void*userdata);
 static void *receive_thread(void*userdata);
 
-WMessage* WMessageNew(uint32_t uid, CheckResponse cfunc, uint32_t timeout, uint8_t *data, int len)
+WMessage* WMessageNew(uint32_t uid, CheckResponse cfunc, uint64_t timeoutms, uint8_t *data, int len)
 {
     WMessage *msg = (WMessage*)malloc(sizeof(WMessage));
     int align = len;
@@ -75,7 +75,7 @@ WMessage* WMessageNew(uint32_t uid, CheckResponse cfunc, uint32_t timeout, uint8
     }
     msg->uid = uid;
     msg->cFunc = cfunc;
-    msg->timeout = timeout*1000;
+    msg->timeout = timeoutms*1000;
     msg->d = NULL;
     if(align%4 != 0)
     {

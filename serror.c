@@ -1,4 +1,4 @@
-// Last Update:2018-08-07 11:21:58
+// Last Update:2018-08-10 17:18:37
 /**
  * @file serror.c
  * @brief 
@@ -21,6 +21,8 @@ BoeErr e_image_chk_error = {.ecode = 109, .emsg = "image checksum error", .bfree
 BoeErr e_image_header_error = {.ecode = 110, .emsg = "image header error", .bfree = 0};
 BoeErr e_gen_host_id_failed = {.ecode = 111, .emsg = "general host id failed", .bfree = 0};
 BoeErr e_hw_verify_failed = {.ecode = 112, .emsg = "verify failed", .bfree = 0};
+BoeErr e_update_ver_not_match = {.ecode = 113, .emsg = "version not match", .bfree = 0};
+BoeErr e_update_reboot_failed = {.ecode = 114, .emsg = "board reboot failed", .bfree = 0};
 BoeErr e_axu_inner[MAX_AXU_ERRNUM];
 
 BoeErr *BOE_OK = &e_ok;

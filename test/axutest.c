@@ -1,4 +1,4 @@
-// Last Update:2018-08-08 10:43:57
+// Last Update:2018-08-10 21:13:19
 /**
  * @file axutest.c
  * @brief 
@@ -60,6 +60,18 @@ int test_get_random()
     }
     return 1;
 }
+int test_get_version()
+{
+    unsigned char H,M,F,D;
+    BoeErr *ret = NULL;
+    ret = doAXU_GetVersionInfo(&H,&M,&F,&D);
+    if(ret == BOE_OK)
+    {
+        printf("get version:%d.%d.%d.%d\n", H>>4, M, F, D);
+        return 0;
+    }
+    return 1;
+}
 int test_get_boesn()
 {
     unsigned char sn[21] = {0};
@@ -72,42 +84,7 @@ int test_get_boesn()
     }
     return 1;
 }
-int test_get_hw_ver()
-{
-    TVersion ver;
-    BoeErr *ret = NULL;
-    ret = doAXU_GetHWVer(&ver);
-    if(ret == BOE_OK)
-    {
-        printf("HW = 0x%02x\n", ver);
-        return 0;
-    }
-    return 1;
-}
-int test_get_fw_ver()
-{
-    TVersion ver;
-    BoeErr *ret = NULL;
-    ret = doAXU_GetFWVer(&ver);
-    if(ret == BOE_OK)
-    {
-        printf("FW = 0x%02x\n", ver);
-        return 0;
-    }
-    return 1;
-}
-int test_get_axu_ver()
-{
-    TVersion ver;
-    BoeErr *ret = NULL;
-    ret = doAXU_GetAXUVer(&ver);
-    if(ret == BOE_OK)
-    {
-        printf("FW = 0x%02x\n", ver);
-        return 0;
-    }
-    return 1;
-}
+
 int test_set_boesn()
 {
     uint32_t id = 0x1234abcd;
@@ -241,9 +218,7 @@ void printf_help()
     printf("Cmd         Function        \n");
     printf(" 0            test_get_random\n");
     printf(" 1            test_get_boesn\n");
-    printf(" 2            test_get_hw_ver\n");
-    printf(" 3            test_get_fw_ver\n");
-    printf(" 4            test_get_axu_ver\n");
+    printf(" 2            test_get_version\n");
     printf(" 5            test_set_boesn\n");
     printf(" 6            test_set_account\n");
     printf(" 7            test_get_account\n");
@@ -293,13 +268,7 @@ int main(int argc, char *argv[])
                     pfunc = test_get_boesn;
                     break;
                 case 2:
-                    pfunc = test_get_hw_ver;
-                    break;
-                case 3:
-                    pfunc = test_get_fw_ver; 
-                    break;
-                case 4:
-                    pfunc = test_get_axu_ver;
+                    pfunc = test_get_version;
                     break;
                 case 5:
                     pfunc = test_set_boesn;

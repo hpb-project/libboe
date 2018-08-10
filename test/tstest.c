@@ -1,4 +1,4 @@
-// Last Update:2018-07-16 20:37:41
+// Last Update:2018-08-10 20:05:15
 /**
  * @file axutest.c
  * @brief 
@@ -64,6 +64,25 @@ int test_upgrade(unsigned char*image, int imagelen)
             printf("upgrade success.\n");
         else
             printf("upgrade failed.\n");
+        TVersion version;
+        int waittime = 10;
+        while(waittime > 0){
+            if(BOE_OK == doAXU_GetVersionInfo(&version.H, &version.M, &version.F, &version.D))
+            {
+                if(1)
+                {
+                    printf("upgrade successed\r\n");
+                    return 0;
+                }
+                else
+                {
+                    printf("version not update, upgrade failed\r\n");
+                    return 1;
+                }
+            }
+            waittime--;
+        }
+        printf("board not reboot successed, upgrade failed\r\n");
     }
     else
     {

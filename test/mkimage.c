@@ -20,6 +20,7 @@ int s2i(char *s)
     }
     return val;
 }
+
 int filelen(char *filename)
 {
     struct stat statbuf;  
@@ -56,7 +57,7 @@ int fileRead(char *filename, uint8_t*p_buf)
     return 0;
 }
 
-int fillHeader(ImageHeader *h, TVersion hw, TVersion fw, TVersion axu, 
+int fillHeader(ImageHeader *h, unsigned char H, unsigned char M, unsigned char F, unsigned char D, 
         uint8_t *p_data, int len)
 {
     h->usage = BD_USE_UPGRADE_FW;
@@ -65,9 +66,11 @@ int fillHeader(ImageHeader *h, TVersion hw, TVersion fw, TVersion axu,
     h->vendor[2] = 'b';
     h->len = len;
     h->chk = checksum(p_data, len);
-    h->hw = hw;
-    h->fw = fw;
-    h->axu = axu;
+
+    h->version.H = H;
+    h->version.M = M;
+    h->version.F = F;
+    h->version.D = D;
     return 0;
 }
 
@@ -101,16 +104,17 @@ int fileWrite(char *filename, uint8_t *p_buf, int len)
 int main(int argc, char *argv[])
 {
     int ret = 0;
-    if(argc < 5)
+    if(argc < 6)
     {
-        printf("usage: %s iname hwver fwver axuver\n", argv[0]);
+        printf("usage: %s iname hver mver fver dver\n", argv[0]);
         return 1;
     }
-    TVersion hw, fw, axu;
+    TVersion v;
     char *iname = argv[1];
-    hw = s2i(argv[2]);
-    fw = s2i(argv[3]);
-    axu = s2i(argv[4]);
+    v.H = s2i(argv[2]);
+    v.M = s2i(argv[3]);
+    v.F = s2i(argv[4]);
+    v.D = s2i(argv[5]);
     int len = filelen(iname);
     printf("file len = %d\r\n", len);
     uint8_t *p_buf = (uint8_t*)malloc(len + sizeof(ImageHeader));
@@ -126,7 +130,7 @@ int main(int argc, char *argv[])
         printf("file read error.\n");
         return 1;
     }
-    ret = fillHeader((ImageHeader*)p_buf, hw, fw, axu, p_data,len);
+    ret = fillHeader((ImageHeader*)p_buf, v.H, v.M, v.F, v.D, p_data,len);
     if(ret != 0)
     {
         printf("fillheader error.\n");

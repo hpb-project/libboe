@@ -23,7 +23,7 @@
 #define TRACE() printf("func:%s,line:%d\n", __FUNCTION__, __LINE__)
 
 static uint32_t  g_sequence = 0;
-static const TVersion g_tsu_version = 0x10;
+static const unsigned char g_tsu_version = 0x10;
 
 #define fetch_tsu_package_sequence() atomic_fetch_and_add(&g_sequence,1)
 #define TSU_PAYLOAD_MAX_SIZE (65535 - sizeof(T_Package))

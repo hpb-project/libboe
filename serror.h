@@ -1,4 +1,4 @@
-// Last Update:2018-08-07 11:21:18
+// Last Update:2018-08-10 17:19:06
 /**
  * @file serror.h
  * @brief 
@@ -25,8 +25,9 @@ BoeErr e_image_chk_error;
 BoeErr e_image_header_error;
 BoeErr e_gen_host_id_failed;
 BoeErr e_hw_verify_failed;
+BoeErr e_update_ver_not_match;
+BoeErr e_update_reboot_failed;
 BoeErr e_axu_inner[MAX_AXU_ERRNUM];
-
 
 
 #endif  /*SERROR_H*/

@@ -1,4 +1,4 @@
-// Last Update:2018-08-07 15:41:01
+// Last Update:2018-08-10 19:48:02
 /**
  * @file doAXU.h
  * @brief 
@@ -15,7 +15,7 @@
 
 BoeErr* doAXU_Init(char *ethname, MsgHandle msghandle, void*userdata);
 BoeErr* doAXU_Release();
-BoeErr* doAXU_GetVersionInfo(TVersion *hw, TVersion *fw, TVersion *axu);
+BoeErr* doAXU_GetVersionInfo(unsigned char *H, unsigned char *M, unsigned char *F, unsigned char *D);
 BoeErr* doAXU_Reset(void);
 BoeErr* doAXU_GetRandom(unsigned char *rdm);
 BoeErr* doAXU_GetBOESN(unsigned char *sn);

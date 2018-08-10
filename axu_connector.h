@@ -42,6 +42,13 @@ typedef struct A_PACKAGE{
     uint8_t     data[];
 }A_Package;
 
+typedef struct Tversion {
+    unsigned char H;
+    unsigned char M;
+    unsigned char F;
+    unsigned char D;
+}TVersion;
+
 #define PACKAGE_MAX_SIZE 	(RS_MAX_PACKAGE_LEN - 4 - sizeof(A_Package))   // 2KB
 #define MAX_AXU_ERRNUM (30)
 #define AXU_MAGIC_START (0xaacc)
@@ -92,9 +99,7 @@ typedef struct ImageHeader{
     uint8_t vendor[3];
     uint32_t chk;
     uint32_t len;
-    TVersion hw;
-    TVersion fw;
-    TVersion axu;
+    TVersion version;
 }ImageHeader;
 
 A_Package* axu_package_new(uint32_t len);

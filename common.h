@@ -59,8 +59,6 @@ PublicKey_t* new_pubkey(void);
 void delete_pubkey(PublicKey_t *pub);
 SignResult_t* new_signresult(void);
 void delete_signresult(SignResult_t *result);
-TVersion get_version_major(TVersion version);
-TVersion get_version_min(TVersion version);
 uint32_t checksum(uint8_t *data, uint32_t len);
 uint64_t get_timestamp_us();
 

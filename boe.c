@@ -1,4 +1,4 @@
-// Last Update:2018-08-09 17:57:36
+// Last Update:2018-08-10 19:57:09
 /**
  * @file nboe.c
  * @brief 
@@ -11,6 +11,7 @@
 #include <ifaddrs.h>  
 #include <arpa/inet.h>  
 #include "sha3.h"
+#include <unistd.h>
 #include "genid.h"
 #include "boe_full.h"
 #include "sb_api.h"
@@ -20,9 +21,7 @@
 #include "doTSU.h"
 
 struct BoeInstance {
-    TVersion hw;
-    TVersion fw;
-    TVersion axu;
+    TVersion version;
     char     methname[100];
     uint8_t  bInitCon;
     uint8_t  bConnected;
@@ -68,7 +67,7 @@ static int tsu_msg_handle(uint8_t *data, int len, void *userdata)
 
 static int connected(struct BoeInstance *ins)
 {
-    if(doAXU_GetVersionInfo(&ins->hw, &ins->fw, &ins->axu) == BOE_OK)
+    if(doAXU_GetVersionInfo(&ins->version.H, &ins->version.M, &ins->version.F, &ins->version.D) == BOE_OK)
     {
         return 1;
     }else
@@ -97,7 +96,6 @@ int find_eth(char *ethname)
     for (ifa = ifList; ifa != NULL; ifa = ifa->ifa_next)
     {
         char *name = ifa->ifa_name;
-        //printf("ethname = %s.\n", name);
         if(strcmp(name, "lo") == 0)
             continue;
         if(doAXU_Init(name, axu_msg_handle, (void*)&gIns) == BOE_OK)
@@ -200,34 +198,32 @@ BoeErr* boe_reg_update_callback(BoeUpgradeCallback func)
     return BOE_OK;
 }
 
-BoeErr* boe_get_all_version(TVersion *hw, TVersion *fw, TVersion *axu)
+BoeErr* boe_get_version(unsigned char *H, unsigned char *M, unsigned char *F, unsigned char *D)
 {
     BoeErr *ret = init_check();
     if(ret == BOE_OK)
-        return doAXU_GetVersionInfo(hw, fw, axu);
+        return doAXU_GetVersionInfo(H,M,F,D);
     return ret;
 }
 
-BoeErr* boe_get_hw_version(TVersion *hw)
+BoeErr* boe_get_hw_version(unsigned char *H)
 {
-    BoeErr *ret = init_check();
-    if(ret == BOE_OK)
-        return doAXU_GetHWVer(hw);
-    return ret;
+    if(gIns.bConnected)
+    {
+        *H = gIns.version.H;
+        return BOE_OK;
+    }
+    return &e_init_fail;
+
 }
-BoeErr* boe_get_fw_version(TVersion *fw)
+BoeErr* boe_get_m_version(unsigned char *M)
 {
-    BoeErr *ret = init_check();
-    if(ret == BOE_OK)
-        return doAXU_GetFWVer(fw);
-    return ret;
-}
-BoeErr* boe_get_axu_version(TVersion *axu)
-{
-    BoeErr *ret = init_check();
-    if(ret == BOE_OK)
-        return doAXU_GetAXUVer(axu);
-    return ret;
+    if(gIns.bConnected)
+    {
+        *M = gIns.version.M;
+        return BOE_OK;
+    }
+    return &e_init_fail;
 }
 
 BoeErr* boe_upgrade(unsigned char*image, int imagelen)
@@ -254,6 +250,35 @@ BoeErr* boe_upgrade(unsigned char*image, int imagelen)
             if(ret != BOE_OK)
                 return ret;
             ret = doAXU_UpgradeStart(gIns.updateFid);
+            if(ret != BOE_OK)
+            {
+                return ret;
+            }
+            else 
+            {
+                // wait board reboot
+                TVersion version;
+                int waittime = 10;
+                while(waittime > 0){
+                    if(BOE_OK == doAXU_GetVersionInfo(&version.H,&version.M,&version.F,&version.D))
+                    {
+                        if(version.H==header.version.H && version.M == header.version.M 
+                            && version.F==header.version.F && version.D == header.version.D)
+                        {
+                            printf("upgrade successed\r\n");
+                            return BOE_OK;
+                        }
+                        else
+                        {
+                            printf("version not update, upgrade failed\r\n");
+                            return &e_update_ver_not_match;
+                        }
+                    }
+                    usleep(500000);
+                    waittime--;
+                }
+                return &e_update_reboot_failed;
+            }
         }
         else
         {
@@ -272,10 +297,10 @@ BoeErr* boe_upgrade_abort(void)
 }
 BoeErr* boe_hw_check(void)
 {
-    TVersion hw, fw, axuver;
+    TVersion version;
     BoeErr *ret = init_check();
     if(ret == BOE_OK)
-        return doAXU_GetVersionInfo(&hw, &fw, &axuver);
+        return doAXU_GetVersionInfo(&version.H, &version.M, &version.F, &version.D);
     return ret;
 }
 BoeErr* boe_reboot(void)
@@ -337,19 +362,7 @@ BoeErr* boe_hw_sign(unsigned char *p_random, unsigned char *sig)
         {
             uint8_t hash[32] = {0};
             memcpy(p_buf+32, p_random, 32);
-            printf("sign p_buf:0x");
-            for(int m = 0; m < 3*32; m++)
-            {
-                printf("%02x", p_buf[m]);
-            }
-            printf("\n");
             SHA3_256(hash, p_buf, len);
-            printf("sign hash:0x");
-            for(int m = 0; m < 32; m++)
-            {
-                printf("%02x", hash[m]);
-            }
-            printf("\n");
             return doAXU_HWSign(hash, sig);
         }
         return &e_gen_host_id_failed;
@@ -364,20 +377,8 @@ BoeErr* boe_p256_verify(unsigned char *random, unsigned char *signature, unsigne
     memcpy(p_buf, hid, 32);
     memcpy(p_buf+32, random, 32);
 
-    printf("verify p_buf:0x");
-    for(int m = 0; m < 2*32; m++)
-    {
-        printf("%02x", p_buf[m]);
-    }
-    printf("\n");
     uint8_t hash[32] = {0};
     SHA3_256(hash, p_buf, len);
-    printf("verify hash:0x");
-    for(int m = 0; m < 32; m++)
-    {
-        printf("%02x", hash[m]);
-    }
-    printf("\n");
 
     int ret = p256_verify(hash, pubkey, signature);
     if(ret == 0)

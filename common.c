@@ -44,15 +44,6 @@ void delete_signresult(SignResult_t *result)
         free(result);
 }
 
-TVersion get_version_major(TVersion version)
-{
-    return get_major(version);
-}
-TVersion get_version_min(TVersion version)
-{
-    return get_minor(version);
-}
-
 uint32_t checksum(uint8_t *data, uint32_t len)
 {
     uint32_t chk = 0;
@@ -71,6 +62,6 @@ uint64_t get_timestamp_us()
     struct timeval tl;
     uint64_t ts = 0;
     gettimeofday(&tl, NULL);
-    ts = tl.tv_sec * 1000 * 1000 * 1000 + tl.tv_usec;
+    ts = tl.tv_sec * 1000 * 1000 + tl.tv_usec;
     return ts;
 }

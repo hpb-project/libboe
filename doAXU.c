@@ -24,7 +24,7 @@ typedef struct AXUContext {
     MsgContext wqc;
 }AXUContext;
 
-static int gShortTimeout = 1000000; // 1s
+static int gShortTimeout = 1000; // 1s
 static AXUContext gAxu;
 #define AXU_TYPE (0xff00)
 #define ACCOUNT_LEN  (42)
@@ -74,6 +74,51 @@ static BoeErr* get_error(A_Package *p)
     }
     ret->ecode = p->data[0];
     strncpy(ret->emsg, (char*)(p->data+1), sizeof(ret->emsg)-1);
+    return ret;
+}
+
+static BoeErr* doCommandWithTimeout(A_Package *p, AQData **d, uint64_t timeout_ms)
+{
+    BoeErr *ret = NULL;
+    MsgContext *wqc = &gAxu.wqc;
+    WMessage * wm = WMessageNew(p->header.package_id, axu_check_response, timeout_ms, (uint8_t*)p,
+            axu_package_len(p));
+    if(wm == NULL)
+    {
+        ret = &e_no_mem;
+        goto end;
+    }
+    if(msgc_send(wqc, wm) == 0)
+    {
+        AQData *q = msgc_read(wqc, wm);
+        if(q == NULL || q->buf == NULL)
+        {
+            ret = &e_msgc_read_timeout;
+            goto end;
+        }
+
+        A_Package *r = (A_Package*)q->buf;
+        if(isErr(r))
+        {
+            ret = get_error(r);
+            aqd_free(q);
+            goto end;
+        }
+        else
+        {
+            *d = q;
+            ret = &e_ok;
+        }
+    }
+    else
+    {
+        ret = &e_msgc_send_fail;
+    }
+end:
+    if(wm != NULL)
+    {
+        WMessageFree(wm);
+    }
     return ret;
 }
 static BoeErr* doCommand(A_Package *p, AQData **d)
@@ -133,7 +178,7 @@ static A_Package* make_query_simple(ACmd cmd)
 }
 
 static A_Package* make_query_ts_start(ACmd cmd, uint8_t usage, uint32_t fid, uint32_t chk,
-        uint32_t len, TVersion hw, TVersion fw, TVersion axu)
+        uint32_t len, TVersion v)
 {
     A_Package *p = axu_package_new(100);
     int offset = 0;
@@ -144,9 +189,10 @@ static A_Package* make_query_ts_start(ACmd cmd, uint8_t usage, uint32_t fid, uin
         PSetData(p, offset, fid);
         PSetData(p, offset, chk);
         PSetData(p, offset, len);
-        PSetData(p, offset, hw);
-        PSetData(p, offset, fw);
-        PSetData(p, offset, axu);
+        PSetData(p, offset, v.H);
+        PSetData(p, offset, v.M);
+        PSetData(p, offset, v.F);
+        PSetData(p, offset, v.D);
 
         axu_finish_package(p);
     }
@@ -305,10 +351,11 @@ int axu_check_response(uint8_t* data, int plen, uint32_t uid)
 
 
 
-#define BPGetHWVersion(p)  (p->data[0])
-#define BPGetFWVersion(p)  (p->data[1])
-#define BPGetAXUVersion(p)  (p->data[2])
-BoeErr* doAXU_GetVersionInfo(TVersion *hw, TVersion *fw, TVersion *axu)
+#define BPGetHVersion(p)  (p->data[0])
+#define BPGetMVersion(p)  (p->data[1])
+#define BPGetFVersion(p)  (p->data[2])
+#define BPGetDVersion(p)  (p->data[3])
+BoeErr* doAXU_GetVersionInfo(unsigned char *H, unsigned char *M, unsigned char *F, unsigned char *D)
 {
     A_Package *p = make_query_simple(ACMD_PB_GET_VERSION_INFO);
     BoeErr *ret = NULL;
@@ -321,9 +368,10 @@ BoeErr* doAXU_GetVersionInfo(TVersion *hw, TVersion *fw, TVersion *axu)
         {
             A_Package *q = (A_Package*)(r->buf);
 
-            *hw = BPGetHWVersion(q);
-            *fw = BPGetFWVersion(q);
-            *axu = BPGetAXUVersion(q);
+            *H = BPGetHVersion(q);
+            *M = BPGetMVersion(q);
+            *F = BPGetFVersion(q);
+            *D = BPGetDVersion(q);
             aqd_free(r);
             return &e_ok;
         }
@@ -526,29 +574,6 @@ BoeErr* doAXU_Lock_PK()
     }
 }
 
-BoeErr* doAXU_GetSingleVer(TVersion *v, ACmd cmd)
-{
-    A_Package *p = make_query_simple(cmd);
-    BoeErr *ret = NULL;
-    AQData *r = NULL;
-    if(p)
-    {
-        ret = doCommand(p, &r);
-        free(p);
-        if(ret == &e_ok)
-        {
-            A_Package *q = (A_Package*)(r->buf);
-            *v = (*((TVersion*)(q->data)));
-            aqd_free(r);
-            return &e_ok;
-        }
-        return ret;
-    }
-    else
-    {
-        return &e_no_mem;
-    }
-}
 
 BoeErr* doAXU_GetBindAccount(uint8_t *account)
 {
@@ -572,20 +597,6 @@ BoeErr* doAXU_GetBindAccount(uint8_t *account)
     {
         return &e_no_mem;
     }
-}
-BoeErr* doAXU_GetHWVer(TVersion *hw)
-{
-    return doAXU_GetSingleVer(hw, ACMD_PB_GET_HW_VER);
-}
-
-BoeErr* doAXU_GetFWVer(TVersion *fw)
-{
-    return doAXU_GetSingleVer(fw, ACMD_PB_GET_FW_VER);
-}
-
-BoeErr* doAXU_GetAXUVer(TVersion *axu)
-{
-    return doAXU_GetSingleVer(axu, ACMD_PB_GET_AXU_VER);
 }
 
 BoeErr* doAXU_SetBoeSN(unsigned char *sn)
@@ -689,7 +700,7 @@ BoeErr* doAXU_HWSign(uint8_t *data, uint8_t *result)
 BoeErr* doAXU_TransportStart(ImageHeader *info)
 {
     A_Package *p = make_query_ts_start(ACMD_PB_TRANSPORT_START, info->usage, 
-            info->chk, info->chk, info->len, info->hw, info->fw, info->axu);
+            info->chk, info->chk, info->len, info->version);
     BoeErr *ret = NULL;
     AQData *r = NULL;
     if(p)
@@ -767,7 +778,7 @@ BoeErr* doAXU_Transport(ImageHeader *info, uint8_t *data)
         uint32_t offset = 0;
         int plen = 0;
         int pmaxlen = PACKAGE_MAX_SIZE - TransMidDataOffset();
-        PROFILE_START();
+        //PROFILE_START();
         while(1)
         {
             plen = info->len - offset;
@@ -784,12 +795,12 @@ BoeErr* doAXU_Transport(ImageHeader *info, uint8_t *data)
             else
             {
                 ret = doAXU_TransportFin(info->chk, offset, plen, data+offset);
-                printf("transport fin data len %d\n", plen);
+                //printf("transport fin data len %d\n", plen);
                 offset += plen;
                 break;
             }
         }
-        PROFILE_END();
+        //PROFILE_END();
         return ret;
     }
     return ret;
@@ -802,7 +813,7 @@ BoeErr* doAXU_UpgradeStart(uint32_t fid)
     AQData *r = NULL;
     if(p)
     {
-        ret = doCommand(p, &r);
+        ret = doCommandWithTimeout(p, &r, 120*1000); // 2mins
         free(p);
         if(ret == &e_ok)
         {
