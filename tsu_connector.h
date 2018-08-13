@@ -25,7 +25,7 @@ typedef struct T_PACKAGE{
     uint8_t     version;        // the package is request(0) or responsed(1).
     uint8_t     status;      // 0: no fragment; 1: first fragment; 
                                     // 2: middle fragment; 3:last fragment.
-    uint16_t    reserved;           // reserved.
+    uint8_t    reserved;           // reserved.
     uint8_t     payload[];          // payload data pointor.
 }T_Package;
 
