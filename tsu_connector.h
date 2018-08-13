@@ -21,28 +21,20 @@
 #include "common.h"
 typedef struct T_PACKAGE{
     uint32_t    sequence;           // package sequence id.
-    uint8_t     version;            // protocol version.
-    uint8_t     is_response;        // the package is request(0) or responsed(1).
-    uint8_t     fragment_flag;      // 0: no fragment; 1: first fragment; 
+    uint8_t     function_id;            // protocol version.
+    uint8_t     version;        // the package is request(0) or responsed(1).
+    uint8_t     status;      // 0: no fragment; 1: first fragment; 
                                     // 2: middle fragment; 3:last fragment.
-    uint8_t     function_id;        // task type.
     uint16_t    reserved;           // reserved.
-    uint16_t    length;             // payload data length.
-    uint32_t    checksum;           // payload data checksum.
     uint8_t     payload[];          // payload data pointor.
 }T_Package;
 
-#define FUNCTION_ECSDA_SIGN 0x1 
+#define FUNCTION_GEN_HASH 0x1
 #define FUNCTION_ECSDA_CHECK 0x2 
-#define FUNCTION_SHA3_256 0x3 
-#define FUNCTION_SHA3_512 0x4 
-#define FUNCTION_AES256 0x5 
-#define FUNCTION_RLP 0x6
-#define FUNCTION_GEN_HASH 0x7
+
 
 T_Package* tsu_package_new(uint8_t fid, uint32_t len);
 int tsu_set_data(T_Package* p, uint16_t offset, uint8_t* data, uint32_t len);
 void tsu_finish_package(T_Package *p);
-int tsu_package_len(T_Package *p);
 
 #endif  /*TSU_CONNECTOR_H*/

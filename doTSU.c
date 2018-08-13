@@ -1,4 +1,4 @@
-// Last Update:2018-07-12 21:09:08
+// Last Update:2018-08-13 16:05:58
 /**
  * @file doTSU.c
  * @brief 
@@ -27,15 +27,15 @@ static TSUContext gTsu;
 
 #define TX_SIG_LEN (97)
 #define TX_PUB_LEN (64)
-#define TSU_HASH_LEN (256)
+#define TSU_HASH_LEN (32)
 
-static int gShortTimeout = 100000; // 100ms
-static int gLongTimeout = 5000000; // 5s
+static int gShortTimeout = 1000; // 100ms
+static int gLongTimeout = 5000; // 5s
 
 int tsu_check_response(uint8_t* data, int plen, uint32_t uid)
 {
     T_Package *p = (T_Package*)data;
-    if(p->sequence == uid && p->is_response == 1)
+    if(p->sequence == uid)
         return 1;
     return 0;
 }
@@ -71,34 +71,36 @@ BoeErr* doTSU_Release()
     return &e_ok;
 }
 
-T_Package *make_query_recover_key(uint8_t *sig)
+T_Package *make_query_recover_key(uint8_t *sig, int *len)
 {
     T_Package *p = tsu_package_new(FUNCTION_ECSDA_CHECK, TX_SIG_LEN);
     if(p)
     {
         tsu_set_data(p, 0, sig, TX_SIG_LEN);
         tsu_finish_package(p);
+        *len = TX_SIG_LEN + sizeof(T_Package);
     }
 
     return p;
 }
 
-T_Package *make_query_get_hash(uint8_t *hash)
+T_Package *make_query_get_hash(uint8_t *hash, int *len)
 {
     T_Package *p = tsu_package_new(FUNCTION_GEN_HASH, TSU_HASH_LEN);
     if(p)
     {
         tsu_set_data(p, 0, hash, TSU_HASH_LEN);
         tsu_finish_package(p);
+        *len = TSU_HASH_LEN + sizeof(T_Package);
     }
 
     return p;
 }
 
-static BoeErr* doCommand(T_Package *p, AQData **d, int timeout)
+static BoeErr* doCommand(T_Package *p, AQData **d, int timeout, int wlen)
 {
     MsgContext *wqc = &gTsu.msgc;
-    WMessage * wm = WMessageNew(p->sequence, tsu_check_response, timeout, (uint8_t*)p, tsu_package_len(p));
+    WMessage * wm = WMessageNew(p->sequence, tsu_check_response, timeout, (uint8_t*)p, wlen);
     if(msgc_send(wqc, wm) == 0)
     {
         AQData *q = msgc_read(wqc, wm);
@@ -115,18 +117,17 @@ static BoeErr* doCommand(T_Package *p, AQData **d, int timeout)
 
 BoeErr* doTSU_RecoverPub(uint8_t *sig, uint8_t *pub)
 {
-    T_Package *p = make_query_recover_key(sig);
+    int wlen = 0;
+    T_Package *p = make_query_recover_key(sig, &wlen);
     BoeErr *ret = NULL;
     AQData *r = NULL;
     if(p)
     {
-        ret = doCommand(p, &r, gShortTimeout);
+        ret = doCommand(p, &r, gShortTimeout, wlen);
         free(p);
         if(ret == &e_ok)
         {
             T_Package *q = (T_Package*)r->buf;
-            if(q->length != TX_PUB_LEN)
-                return &e_result_invalid;
             memcpy(pub, q->payload, TX_PUB_LEN);
             aqd_free(r);
             return &e_ok;
@@ -141,18 +142,17 @@ BoeErr* doTSU_RecoverPub(uint8_t *sig, uint8_t *pub)
 
 BoeErr* doTSU_GetHash(uint8_t *hash, uint8_t *next_hash)
 {
-    T_Package *p = make_query_get_hash(hash);
+    int wlen = 0;
+    T_Package *p = make_query_get_hash(hash, &wlen);
     BoeErr *ret = NULL;
     AQData *r = NULL;
     if(p)
     {
-        ret = doCommand(p, &r, gLongTimeout);
+        ret = doCommand(p, &r, gLongTimeout, wlen);
         free(p);
         if(ret == &e_ok)
         {
             T_Package *q = (T_Package*)r->buf;
-            if(q->length != TSU_HASH_LEN)
-                return &e_result_invalid;
             memcpy(next_hash, q->payload, TSU_HASH_LEN);
             aqd_free(r);
             return &e_ok;

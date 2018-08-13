@@ -1,4 +1,4 @@
-// Last Update:2018-08-13 11:27:32
+// Last Update:2018-08-13 17:23:39
 /**
  * @file nboe.c
  * @brief 
@@ -75,6 +75,15 @@ static int connected(struct BoeInstance *ins)
         return 0;
     }
 }
+static BoeErr * bConnected()
+{
+    if(gIns.bInitCon && gIns.bConnected)
+    {
+        return BOE_OK;
+    }
+    return &e_init_fail;
+}
+
 void boe_err_free(BoeErr *e)
 {
     if(e->bfree)
@@ -175,6 +184,7 @@ BoeErr* boe_init(void)
     gIns.bInitCon = 0;
     gIns.bConnected = 0;
     memset(gIns.methname, 0x0, sizeof(gIns.methname));
+    init_check();
 
     return BOE_OK;
 }
@@ -200,7 +210,7 @@ BoeErr* boe_reg_update_callback(BoeUpgradeCallback func)
 
 BoeErr* boe_get_version(unsigned char *H, unsigned char *M, unsigned char *F, unsigned char *D)
 {
-    BoeErr *ret = init_check();
+    BoeErr *ret = bConnected();
     if(ret == BOE_OK)
         return doAXU_GetVersionInfo(H,M,F,D);
     return ret;
@@ -223,12 +233,12 @@ BoeErr* boe_get_m_version(unsigned char *M)
         *M = gIns.version.M;
         return BOE_OK;
     }
-    return &e_init_fail;
+    return &e_conn_fail;
 }
 
 BoeErr* boe_upgrade(unsigned char*image, int imagelen)
 {
-    BoeErr *ret = init_check();
+    BoeErr *ret = bConnected();
     if(ret == BOE_OK)
     {
         ImageHeader header;
@@ -290,7 +300,7 @@ BoeErr* boe_upgrade(unsigned char*image, int imagelen)
 
 BoeErr* boe_upgrade_abort(void)
 {
-    BoeErr *ret = init_check();
+    BoeErr *ret = bConnected();
     if(ret == BOE_OK)
         return doAXU_UpgradeAbort(gIns.updateFid);
     return ret;
@@ -298,28 +308,28 @@ BoeErr* boe_upgrade_abort(void)
 BoeErr* boe_hw_check(void)
 {
     TVersion version;
-    BoeErr *ret = init_check();
+    BoeErr *ret = bConnected();
     if(ret == BOE_OK)
         return doAXU_GetVersionInfo(&version.H, &version.M, &version.F, &version.D);
     return ret;
 }
 BoeErr* boe_reboot(void)
 {
-    BoeErr *ret = init_check();
+    BoeErr *ret = bConnected();
     if(ret == BOE_OK)
         return doAXU_Reset();
     return ret;
 }
 BoeErr* boe_set_boesn(unsigned char *sn)
 {
-    BoeErr *ret = init_check();
+    BoeErr *ret = bConnected();
     if(ret == BOE_OK)
         return doAXU_SetBoeSN(sn);
     return ret;
 }
 BoeErr* boe_set_bind_account(unsigned char *account)
 {
-    BoeErr *ret = init_check();
+    BoeErr *ret = bConnected();
     if(ret == BOE_OK)
         return doAXU_BindAccount(account);
     return ret;
@@ -327,27 +337,27 @@ BoeErr* boe_set_bind_account(unsigned char *account)
 
 BoeErr* boe_get_random(unsigned char *r)
 {
-    BoeErr *ret = init_check();
+    BoeErr *ret = bConnected();
     if(ret == BOE_OK)
         return doAXU_GetRandom(r);
     return ret;
 }
 BoeErr* boe_get_boesn(unsigned char *sn)
 {
-    BoeErr *ret = init_check();
+    BoeErr *ret = bConnected();
     if(ret == BOE_OK)
         return doAXU_GetBOESN(sn);
     return ret;
 }
 BoeErr* boe_get_bind_account(unsigned char *baccount)
 {
-    BoeErr *ret = init_check();
+    BoeErr *ret = bConnected();
     if(ret == BOE_OK)
         return doAXU_GetBindAccount(baccount);
     return ret;
 }
 
-void hex_dump_ln(unsigned char *buf, int len)
+static void hex_dump_ln(unsigned char *buf, int len)
 {
     for(int i =0; i < len; i++)
     {
@@ -362,7 +372,7 @@ BoeErr* boe_hw_sign(unsigned char *p_random, unsigned char *sig)
     // merge p_random and hid, 
     // sha3_256 generate hash.
     // use hash to signature.
-    BoeErr *ret = init_check();
+    BoeErr *ret = bConnected();
     if(ret == BOE_OK)
     {
         int len = 32 + 32;
@@ -406,42 +416,42 @@ BoeErr* boe_p256_verify(unsigned char *random,  unsigned char * hid, unsigned ch
 }
 BoeErr* boe_genkey(unsigned char *pubkey)
 {
-    BoeErr *ret = init_check();
+    BoeErr *ret = bConnected();
     if(ret == BOE_OK)
         return doAXU_Genkey(pubkey);
     return ret;
 }
 BoeErr* boe_get_pubkey(unsigned char *pubkey)
 {
-    BoeErr *ret = init_check();
+    BoeErr *ret = bConnected();
     if(ret == BOE_OK)
         return doAXU_Get_Pubkey(pubkey);
     return ret;
 }
 BoeErr* boe_lock_pk(void)
 {
-    BoeErr *ret = init_check();
+    BoeErr *ret = bConnected();
     if(ret == BOE_OK)
         return doAXU_Lock_PK();
     return ret;
 }
 BoeErr* boe_hw_verify(unsigned char *hash, unsigned char *signature, unsigned char *pubkey)
 {
-    BoeErr *ret = init_check();
+    BoeErr *ret = bConnected();
     if(ret == BOE_OK)
         return doAXU_HW_Verify(hash, signature, pubkey);
     return ret;
 }
 BoeErr* boe_set_mac(unsigned char *mac)
 {
-    BoeErr *ret = init_check();
+    BoeErr *ret = bConnected();
     if(ret == BOE_OK)
         return doAXU_Set_MAC(mac);
     return ret;
 }
 BoeErr* boe_get_mac(unsigned char *mac)
 {
-    BoeErr *ret = init_check();
+    BoeErr *ret = bConnected();
     if(ret == BOE_OK)
         return doAXU_Get_MAC(mac);
     return ret;
@@ -449,14 +459,14 @@ BoeErr* boe_get_mac(unsigned char *mac)
 /* -------------------  tsu command -------------------------*/
 BoeErr* boe_get_s_random(unsigned char *hash, unsigned char *nexthash)
 {
-    BoeErr *ret = init_check();
+    BoeErr *ret = bConnected();
     if(ret == BOE_OK)
         return doTSU_GetHash(hash, nexthash);
     return ret;
 }
 BoeErr* boe_valid_sign(unsigned char *sig, unsigned char *pub)
 {
-    BoeErr *ret = init_check();
+    BoeErr *ret = bConnected();
     if(ret == BOE_OK)
         return doTSU_RecoverPub(sig, pub);
     return ret;

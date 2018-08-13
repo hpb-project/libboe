@@ -26,38 +26,30 @@ static uint32_t  g_sequence = 0;
 static const unsigned char g_tsu_version = 0x10;
 
 #define fetch_tsu_package_sequence() atomic_fetch_and_add(&g_sequence,1)
-#define TSU_PAYLOAD_MAX_SIZE (65535 - sizeof(T_Package))
+#define TSU_PAYLOAD_MAX_SIZE ( - sizeof(T_Package))
+#define TSU_PAYLOAD_SIZE ()
 
 T_Package* tsu_package_new(uint8_t fid, uint32_t len)
 {
-    if(len > TSU_PAYLOAD_MAX_SIZE)
-        return NULL;
     T_Package *p = (T_Package*)malloc(sizeof(T_Package)+len);
     if(p)
     {
         p->sequence = fetch_tsu_package_sequence();
         p->version = g_tsu_version;
-        p->is_response = 0;
-        p->fragment_flag = 0;
-        p->length = len;
+        p->status= 0;
         p->function_id = fid;
+        p->reserved = 0;
     }
     return p;
 }
 
 int tsu_set_data(T_Package* p, uint16_t offset, uint8_t* data, uint32_t len)
 {
-    if((offset + len) > p->length)
-        return 1;
     memcpy(p->payload+offset, data, len);
     return 0;
 }
+
 void tsu_finish_package(T_Package *p)
 {
-    p->checksum = checksum(p->payload, p->length);
 }
 
-int tsu_package_len(T_Package *p)
-{
-    return sizeof(T_Package) + p->length;
-}
