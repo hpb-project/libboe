@@ -1,4 +1,4 @@
-// Last Update:2018-08-09 17:18:09
+// Last Update:2018-08-13 11:28:12
 /**
  * @file rawsocket.c
  * @brief 
@@ -54,7 +54,7 @@ int RSCreate(char *ethname, int type, RSContext *ctx)
 	//1:建立raw socket
 	if ((ctx->sfd = socket(AF_PACKET, SOCK_RAW, htons(type)))== -1)
 	{
-		printf("raw sokcet set up fail !!\n");
+		//printf("raw sokcet set up fail !!\n");
         goto failed;
 	}
     sockfd = ctx->sfd;

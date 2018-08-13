@@ -1,4 +1,4 @@
-// Last Update:2018-08-10 21:13:19
+// Last Update:2018-08-11 17:04:02
 /**
  * @file axutest.c
  * @brief 
@@ -105,7 +105,7 @@ int test_set_boesn()
 int test_set_account()
 {
     char account[43] = {0};
-    memcpy(account, "0xb43557693992362c1cf2a4aba13edad2804160bf", 42);
+    memcpy(account, "0x6703decbf077e9a2eaefa6f7ab57bcad83c28f19", 42);
 
     BoeErr *ret = NULL;
     printf("set account :%s\n", account);

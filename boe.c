@@ -1,4 +1,4 @@
-// Last Update:2018-08-10 19:57:09
+// Last Update:2018-08-13 11:27:32
 /**
  * @file nboe.c
  * @brief 
@@ -347,6 +347,16 @@ BoeErr* boe_get_bind_account(unsigned char *baccount)
     return ret;
 }
 
+void hex_dump_ln(unsigned char *buf, int len)
+{
+    for(int i =0; i < len; i++)
+    {
+        printf("%02x", buf[i]);
+    }
+    printf("\n");
+
+}
+
 BoeErr* boe_hw_sign(unsigned char *p_random, unsigned char *sig)
 {
     // merge p_random and hid, 
@@ -360,16 +370,21 @@ BoeErr* boe_hw_sign(unsigned char *p_random, unsigned char *sig)
         memset(p_buf, 0, len);
         if(0 == general_id(p_buf))
         {
+            // hid(32)+random(32)
             uint8_t hash[32] = {0};
             memcpy(p_buf+32, p_random, 32);
+            //printf("boe hwsign---p_buf:0x");
+            //hex_dump_ln(p_buf, sizeof(p_buf));
             SHA3_256(hash, p_buf, len);
+            //printf("boe hwsign---hash:0x");
+            //hex_dump_ln(hash, sizeof(hash));
             return doAXU_HWSign(hash, sig);
         }
         return &e_gen_host_id_failed;
     }
     return ret;
 }
-BoeErr* boe_p256_verify(unsigned char *random, unsigned char *signature, unsigned char * hid, unsigned char *pubkey)
+BoeErr* boe_p256_verify(unsigned char *random,  unsigned char * hid, unsigned char *pubkey, unsigned char *signature)
 {
     int len = 32 + 32;
     unsigned char p_buf[32 + 32];
@@ -377,8 +392,12 @@ BoeErr* boe_p256_verify(unsigned char *random, unsigned char *signature, unsigne
     memcpy(p_buf, hid, 32);
     memcpy(p_buf+32, random, 32);
 
+    //printf("boe verify---p_buf:0x");
+    //hex_dump_ln(p_buf, sizeof(p_buf));
     uint8_t hash[32] = {0};
     SHA3_256(hash, p_buf, len);
+    //printf("boe verify---hash:0x");
+    //hex_dump_ln(hash, sizeof(hash));
 
     int ret = p256_verify(hash, pubkey, signature);
     if(ret == 0)
