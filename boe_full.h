@@ -32,6 +32,7 @@ typedef int (*BoeUpgradeCallback)(int,char*);
 void boe_err_free(BoeErr *e);
 
 BoeErr* boe_init(void);
+BoeErr* boe_test_init(char *ethname);
 BoeErr* boe_release(void);
 BoeErr* boe_reg_update_callback(BoeUpgradeCallback func);
 BoeErr* boe_get_hw_version(unsigned char *H);
@@ -43,6 +44,7 @@ BoeErr* boe_upgrade_abort(void);
  * check board is connected.
  */
 BoeErr* boe_hw_check(void);
+BoeErr* boe_hw_connect(void);
 /*
  * let board reboot.
  */
@@ -116,4 +118,8 @@ BoeErr* boe_lock_pk(void);
 BoeErr* boe_hw_verify(unsigned char *hash, unsigned char *signature, unsigned char *pubkey);
 BoeErr* boe_set_mac(unsigned char *mac);
 BoeErr* boe_get_mac(unsigned char *mac);
+BoeErr* boe_phy_read(unsigned int reg, unsigned int *val);
+BoeErr* boe_phy_shd_read(unsigned int reg, unsigned int shadow, unsigned int *val);
+BoeErr* boe_reg_read(unsigned int reg, unsigned int *val);
+BoeErr* boe_reg_write(unsigned int reg, unsigned int val);
 #endif  /*BOE_FULL_H*/

@@ -306,6 +306,64 @@ static A_Package* make_query_set_boe_mac(ACmd cmd, unsigned char *mac)
     return p;
 }
 
+static A_Package* make_query_phy_reg(ACmd cmd, uint32_t reg)
+{
+    A_Package *p = axu_package_new(100);
+    int offset = 0;
+    if(p)
+    {
+        axu_package_init(p, NULL, cmd);
+        PSetDataLen(p, offset, (uint8_t*)&reg, sizeof(reg));
+
+        axu_finish_package(p);
+    }
+    return p;
+}
+
+static A_Package* make_query_write_reg(ACmd cmd, uint32_t reg, uint32_t val)
+{
+    A_Package *p = axu_package_new(100);
+    int offset = 0;
+    if(p)
+    {
+        axu_package_init(p, NULL, cmd);
+        PSetDataLen(p, offset, (uint8_t*)&reg, sizeof(reg));
+        PSetDataLen(p, offset, (uint8_t*)&val, sizeof(val));
+
+        axu_finish_package(p);
+    }
+    return p;
+}
+
+static A_Package* make_query_read_reg(ACmd cmd, uint32_t reg)
+{
+    A_Package *p = axu_package_new(100);
+    int offset = 0;
+    if(p)
+    {
+        axu_package_init(p, NULL, cmd);
+        PSetDataLen(p, offset, (uint8_t*)&reg, sizeof(reg));
+
+        axu_finish_package(p);
+    }
+    return p;
+}
+
+static A_Package* make_query_phy_shd_reg(ACmd cmd, uint32_t reg, uint16_t shd)
+{
+    A_Package *p = axu_package_new(100);
+    int offset = 0;
+    if(p)
+    {
+        axu_package_init(p, NULL, cmd);
+        PSetDataLen(p, offset, (uint8_t*)&reg, sizeof(reg));
+        PSetDataLen(p, offset, (uint8_t*)&shd, sizeof(shd));
+
+        axu_finish_package(p);
+    }
+    return p;
+}
+
 static A_Package* make_query_bind_account(ACmd cmd, uint8_t *baccount)
 {
     A_Package *p = axu_package_new(ACCOUNT_LEN);
@@ -632,6 +690,107 @@ BoeErr* doAXU_Set_MAC(unsigned char *mac)
         if(ret == &e_ok)
         {
             aqd_free(r);
+            return &e_ok;
+        }
+        return ret;
+    }
+    else
+    {
+        return &e_no_mem;
+    }
+}
+
+BoeErr* doAXU_Phy_Read(uint32_t reg, uint16_t *val)
+{
+    A_Package *p = make_query_phy_reg(ACMD_PB_PHY_READ, reg);
+    BoeErr *ret = NULL;
+    AQData *r = NULL;
+    if(p)
+    {
+        ret = doCommand(p, &r);
+        free(p);
+
+        if(ret == &e_ok)
+        {
+            A_Package *q = (A_Package*)r->buf;
+            *val = *(uint16_t*)(q->data);
+            aqd_free(r);
+
+            return &e_ok;
+        }
+        return ret;
+    }
+    else
+    {
+        return &e_no_mem;
+    }
+}
+
+BoeErr* doAXU_Phy_Shd_Read(uint32_t reg, uint16_t shadow, uint16_t *val)
+{
+    A_Package *p = make_query_phy_shd_reg(ACMD_PB_PHY_SHD_READ, reg, shadow);
+    BoeErr *ret = NULL;
+    AQData *r = NULL;
+    if(p)
+    {
+        ret = doCommand(p, &r);
+        free(p);
+
+        if(ret == &e_ok)
+        {
+            A_Package *q = (A_Package*)r->buf;
+            *val = *(uint16_t*)(q->data);
+            aqd_free(r);
+
+            return &e_ok;
+        }
+        return ret;
+    }
+    else
+    {
+        return &e_no_mem;
+    }
+}
+
+BoeErr* doAXU_Reg_Write(uint32_t reg, uint32_t val)
+{
+    A_Package *p = make_query_write_reg(ACMD_PB_REG_WRITE, reg, val);
+    BoeErr *ret = NULL;
+    AQData *r = NULL;
+    if(p)
+    {
+        ret = doCommand(p, &r);
+        free(p);
+
+        if(ret == &e_ok)
+        {
+            aqd_free(r);
+            return &e_ok;
+        }
+        return ret;
+    }
+    else
+    {
+        return &e_no_mem;
+    }
+}
+
+BoeErr* doAXU_Reg_Read(uint32_t reg, uint32_t *val)
+{
+    A_Package *p = make_query_read_reg(ACMD_PB_REG_READ, reg);
+    BoeErr *ret = NULL;
+    AQData *r = NULL;
+    if(p)
+    {
+        ret = doCommand(p, &r);
+        free(p);
+
+        if(ret == &e_ok)
+        {
+            A_Package *q = (A_Package*)r->buf;
+            *val = *(uint32_t*)(q->data);
+            aqd_free(r);
+
             return &e_ok;
         }
         return ret;

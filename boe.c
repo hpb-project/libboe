@@ -1,4 +1,4 @@
-// Last Update:2018-08-13 17:23:39
+// Last Update:2018-08-16 22:37:20
 /**
  * @file nboe.c
  * @brief 
@@ -179,6 +179,59 @@ BoeErr* init_check()
     return &e_init_fail;
 }
 
+int test_eth(char *ethname)
+{
+    if(doAXU_Init(ethname, axu_msg_handle, (void*)&gIns) == BOE_OK)
+    {
+        if(connected(&gIns))
+        {
+            doAXU_Release();
+            return 0;
+        }
+        else
+        {
+            doAXU_Release();
+        }
+    }
+    return 1;
+}
+
+BoeErr* test_init()
+{
+    BoeErr *ret = BOE_OK;
+    if(gIns.bConnected)
+        return BOE_OK;
+
+    if(gIns.bInitCon != 1)
+    {
+        if(0!=test_eth(gIns.methname)) // find current ethname that connect with board.
+        {
+            return &e_init_fail;
+        }
+
+        ret = boe_inner_init(gIns.methname);
+        if(ret == BOE_OK)
+        {
+            gIns.bInitCon = 1;
+            if(connected(&gIns))
+            {
+                gIns.bConnected = 1;
+            }
+        }
+    }
+    else if(!gIns.bConnected)
+    {
+        if(connected(&gIns))
+        {
+            gIns.bConnected = 1;
+        }
+    }
+    if(gIns.bConnected)
+        return BOE_OK;
+
+    return &e_init_fail;
+}
+
 BoeErr* boe_init(void)
 {
     gIns.bInitCon = 0;
@@ -190,6 +243,13 @@ BoeErr* boe_init(void)
 }
 
 
+BoeErr* boe_test_init(char *ethname)
+{
+    gIns.bInitCon = 0;
+    gIns.bConnected = 0;
+    strcpy(gIns.methname, ethname);
+    return test_init();
+}
 
 BoeErr* boe_release(void)
 {
@@ -312,6 +372,10 @@ BoeErr* boe_hw_check(void)
     if(ret == BOE_OK)
         return doAXU_GetVersionInfo(&version.H, &version.M, &version.F, &version.D);
     return ret;
+}
+BoeErr* boe_hw_connect(void)
+{
+    return bConnected();
 }
 BoeErr* boe_reboot(void)
 {
@@ -454,6 +518,57 @@ BoeErr* boe_get_mac(unsigned char *mac)
     BoeErr *ret = bConnected();
     if(ret == BOE_OK)
         return doAXU_Get_MAC(mac);
+    return ret;
+}
+BoeErr* boe_phy_read(unsigned int reg, unsigned int *val)
+{
+    BoeErr *ret = bConnected();
+    uint16_t sval = 0;
+    if(ret == BOE_OK)
+    {
+        ret = doAXU_Phy_Read(reg, &sval);
+        if(ret == BOE_OK)
+        {
+            *val = sval;
+        }
+    }
+
+    return ret;
+}
+BoeErr* boe_phy_shd_read(unsigned int reg, unsigned int shd, unsigned int *val)
+{
+    BoeErr *ret = bConnected();
+    uint16_t sval = 0;
+    uint16_t sshd = shd;
+    if(ret == BOE_OK)
+    {
+        ret = doAXU_Phy_Shd_Read(reg, sshd, &sval);
+        if(ret == BOE_OK)
+        {
+            *val = sval;
+        }
+    }
+
+    return ret;
+}
+BoeErr* boe_reg_read(unsigned int reg, unsigned int *val)
+{
+    BoeErr *ret = bConnected();
+    if(ret == BOE_OK)
+    {
+        ret = doAXU_Reg_Read(reg, val);
+    }
+
+    return ret;
+}
+BoeErr* boe_reg_write(unsigned int reg, unsigned int val)
+{
+    BoeErr *ret = bConnected();
+    if(ret == BOE_OK)
+    {
+        ret = doAXU_Reg_Write(reg, val);
+    }
+
     return ret;
 }
 /* -------------------  tsu command -------------------------*/

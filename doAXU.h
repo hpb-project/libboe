@@ -1,4 +1,4 @@
-// Last Update:2018-08-10 19:48:02
+// Last Update:2018-08-16 22:26:57
 /**
  * @file doAXU.h
  * @brief 
@@ -36,5 +36,9 @@ BoeErr* doAXU_Lock_PK(void);
 BoeErr* doAXU_HW_Verify(unsigned char *hash, unsigned char *signature, unsigned char *pubkey);
 BoeErr* doAXU_Set_MAC(unsigned char *mac);
 BoeErr* doAXU_Get_MAC(unsigned char *mac);
+BoeErr* doAXU_Phy_Read(uint32_t reg, uint16_t *val);
+BoeErr* doAXU_Phy_Shd_Read(uint32_t reg, uint16_t shadow, uint16_t *val);
+BoeErr* doAXU_Reg_Read(uint32_t reg, uint32_t *val);
+BoeErr* doAXU_Reg_Write(uint32_t reg, uint32_t val);
 
 #endif  /*DO_A_X_U_H*/

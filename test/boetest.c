@@ -1,4 +1,4 @@
-// Last Update:2018-08-13 20:59:30
+// Last Update:2018-08-16 20:53:39
 /**
  * @file boetest.c
  * @brief 
@@ -16,7 +16,7 @@
 #include <sys/time.h>
 
 #define BUF_THR   20       //缓存门限
-#define TEST_NUMB 100050   //测试次数
+#define TEST_NUMB 10000   //测试次数
 typedef struct rsv_t{
     uint8_t r[32];
     uint8_t s[32];
@@ -33,7 +33,7 @@ static volatile int gCurrent = 0;
 int get_data(rsv_t **data)
 {
     int pidx = gCurrent++;
-    if(pidx >= gTotal)
+    if((pidx >= TEST_NUMB) || (pidx >= gTotal))
     {
         return -1;
     }
@@ -63,11 +63,8 @@ void *test_ecc(void *usrdata)
                     continue;
                 }
             }
-            else 
-            {
-                printf("bret ecode = %d, emsg = %s.\n", bret->ecode, bret->emsg);
-            }
             gErrcnt++;
+            printf("ecctest current = %d.\n",gCurrent);
         }
         else
         {
@@ -78,9 +75,9 @@ void *test_ecc(void *usrdata)
 }
 static void load_data(int argc, char *argv[])
 {
-	char *data_path1 = argv[1];
-	char *data_path2 = argv[2];
-	char *data_path3 = argv[3];
+	char *data_path1 = argv[2];
+	char *data_path2 = argv[3];
+	char *data_path3 = argv[4];
 	FILE *fd1;
 	FILE *fd2;
 	FILE *fd3;
@@ -91,7 +88,7 @@ static void load_data(int argc, char *argv[])
 		exit(1);
 	}
 
-    while((gTotal <= 100000) && (!feof(fd1)) && (!feof(fd2))  && (!feof(fd3)))
+    while((gTotal < TEST_NUMB) && (!feof(fd1)) && (!feof(fd2))  && (!feof(fd3)))
     {
         rsv_t *p = &(rsv_array[gTotal]);
         //读取一组数据并发送
@@ -141,30 +138,30 @@ static int ecdsa_test(int argc, char *argv[])
     pthread_t th10;
 
     ret = pthread_create(&th1, NULL, test_ecc, NULL);
-    ret = pthread_create(&th2, NULL, test_ecc, NULL);
-    ret = pthread_create(&th3, NULL, test_ecc, NULL);
-    ret = pthread_create(&th4, NULL, test_ecc, NULL);
-    ret = pthread_create(&th5, NULL, test_ecc, NULL);
-    ret = pthread_create(&th6, NULL, test_ecc, NULL);
-    ret = pthread_create(&th7, NULL, test_ecc, NULL);
-    ret = pthread_create(&th8, NULL, test_ecc, NULL);
-    ret = pthread_create(&th9, NULL, test_ecc, NULL);
-    ret = pthread_create(&th10, NULL, test_ecc, NULL);
+//    ret = pthread_create(&th2, NULL, test_ecc, NULL);
+//    ret = pthread_create(&th3, NULL, test_ecc, NULL);
+//    ret = pthread_create(&th4, NULL, test_ecc, NULL);
+//    ret = pthread_create(&th5, NULL, test_ecc, NULL);
+//    ret = pthread_create(&th6, NULL, test_ecc, NULL);
+//    ret = pthread_create(&th7, NULL, test_ecc, NULL);
+//    ret = pthread_create(&th8, NULL, test_ecc, NULL);
+//    ret = pthread_create(&th9, NULL, test_ecc, NULL);
+//    ret = pthread_create(&th10, NULL, test_ecc, NULL);
 
 	gettimeofday(&start, &tz);
 
 
 	
     pthread_join(th1, NULL);
-    pthread_join(th2, NULL);
-    pthread_join(th3, NULL);
-    pthread_join(th4, NULL);
-    pthread_join(th5, NULL);
-    pthread_join(th6, NULL);
-    pthread_join(th7, NULL);
-    pthread_join(th8, NULL);
-    pthread_join(th9, NULL);
-    pthread_join(th10, NULL);
+//    pthread_join(th2, NULL);
+//    pthread_join(th3, NULL);
+//    pthread_join(th4, NULL);
+//    pthread_join(th5, NULL);
+//    pthread_join(th6, NULL);
+//    pthread_join(th7, NULL);
+//    pthread_join(th8, NULL);
+//    pthread_join(th9, NULL);
+//    pthread_join(th10, NULL);
 
 	gettimeofday(&stop, &tz);
     {
@@ -173,51 +170,16 @@ static int ecdsa_test(int argc, char *argv[])
         printf("ECDSA test finished,static results are fellow:\n");
         printf("ECDSA ERROR count : %d\n",gErrcnt);
         printf("ECDSA test time : %ldms\n",duration);
+        if(gErrcnt != 0)
+        {
+            printf("ECDSA Error count : %d\n", gErrcnt);
+            return 1;
+        }
 
-        return 0;
     }
 	return 0;
 }
-static void get_hash_1(uint8_t *hash)
-{
-#if 0
-	hash[0] = 0x44;
-	hash[1] = 0x44;
-	hash[2] = 0xba;
-	hash[3] = 0x1d;
-	hash[4] = 0x95;
-	hash[5] = 0x14;
-	hash[6] = 0x65;
-	hash[7] = 0x51;
-	hash[8] = 0x36;
-	hash[9] = 0x8f;
-	hash[10] = 0x6d;
-	hash[11] = 0x05;
-	hash[12] = 0x98;
-	hash[13] = 0x38;
-	hash[14] = 0x07;
-	hash[15] = 0x43;
-	hash[16] = 0x2e;
-	hash[17] = 0x8e;
-	hash[18] = 0x16;
-	hash[19] = 0xd6;
-	hash[20] = 0x1c;
-	hash[21] = 0x3d;
-	hash[22] = 0x92;
-	hash[23] = 0x2a;
-	hash[24] = 0x79;
-	hash[25] = 0xe6;
-	hash[26] = 0x8f;
-	hash[27] = 0x29;
-	hash[28] = 0x71;
-	hash[29] = 0xfe;
-	hash[30] = 0x42;
-	hash[31] = 0x15;
-#endif
-    memset(hash, 0, 32);
-    hash[31] = 0x11;
-}
-uint8_t emptyHash[32] = {0};
+
 static void shex_dump_ln(unsigned char *buf, int len)
 {
     for(int i =0; i < len; i++)
@@ -230,9 +192,14 @@ static void shex_dump_ln(unsigned char *buf, int len)
 
 int main(int argc, char *argv[])
 {
-    BoeErr *ret = boe_init();
-    unsigned char last_hash[32];
-    unsigned char next_hash[32];
+    if(argc < 5)
+    {
+        printf("Usage: %s ethname rsh rsv xy\n", argv[0]);
+        return 1;
+    }
+
+    char *ethname = argv[1];
+    BoeErr *ret = boe_test_init(ethname);
     if(ret != BOE_OK)
     {
         printf("init failed.\r\n");
@@ -247,33 +214,58 @@ int main(int argc, char *argv[])
     else
     {
         printf("hw check success.\r\n");
-
     }
     {
-        get_hash_1(last_hash);
-        for(int i = 0; i < 3; i++)
+        // phy test.
+        unsigned int reg_02 = 0x02;
+        unsigned int reg_03 = 0x03;
+        unsigned int val_02 = 0;
+        unsigned int val_03 = 0;
+        unsigned int val_s  = 0;
+        ret = boe_phy_read(reg_02, &val_02);
+        if(ret != BOE_OK)
         {
-            ret = boe_get_s_random(last_hash, next_hash);
-            if(ret != BOE_OK)
-            {
-                printf("s_random failed, ecode:%d, emsg:%s\n", ret->ecode, ret->emsg);
-            }
-            else 
-            {
-                printf("last_hash:0x");
-                shex_dump_ln(last_hash, sizeof(last_hash));
-                printf("next_hash:0x");
-                shex_dump_ln(next_hash, sizeof(next_hash));
-                memcpy(last_hash, next_hash, sizeof(next_hash));
-            }
-            sleep(1);
+            printf("read phy 0x02 register failed.\r\n");
+            return 1;
+        }
+        printf("reg_0x02 = 0x%02x.\n", val_02);
+        ret = boe_phy_read(reg_03, &val_03);
+        if(ret != BOE_OK)
+        {
+            printf("read phy 0x03 register failed.\r\n");
+            return 1;
+        }
+        printf("reg_0x03 = 0x%02x.\n", val_03);
+        ret = boe_phy_shd_read(0x1c, 0x1F, &val_s);
+        if(ret != BOE_OK)
+        {
+            printf("read phy shd register failed.\r\n");
+            return 1;
+        }
+        printf("reg_1C = 0x%02x.\n", val_s);
+        if((val_02 == 0x0020) && ((val_03 & 0xFFF0)==0x60C0) &&
+                ((val_s & 0x06) == 0x04))
+        {
+            printf("phy is ok.\r\n");
+        }
+        else{
+            printf("phy is error.\r\n");
+            return 1;
         }
     }
     {
         // ecc test.
-        ecdsa_test(argc, argv);
-
+        if(0 == ecdsa_test(argc, argv))
+        {
+            printf("ecc test ok.\n");
+        }
+        else
+        {
+            printf("ecc test failed.\n");
+            return 1;
+        }
     }
+
 
     
     boe_release();

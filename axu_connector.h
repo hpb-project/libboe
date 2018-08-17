@@ -84,6 +84,11 @@ typedef enum A_CMD {
 
 	ACMD_PB_SET_MAC		= 0x18,
 	ACMD_PB_GET_MAC		= 0x19,
+	ACMD_PB_PHY_READ    = 0x20,
+    ACMD_PB_PHY_SHD_READ    = 0x21, // shadow register read
+    ACMD_PB_PHY_SHD_WRITE   = 0x22, // shadow register write
+    ACMD_PB_REG_WRITE       = 0x23,
+    ACMD_PB_REG_READ        = 0x24,
 
 
 
