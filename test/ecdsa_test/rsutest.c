@@ -1,4 +1,4 @@
-// Last Update:2018-08-17 16:46:36
+// Last Update:2018-08-17 17:15:31
 /**
  * @file rstest.c
  * @brief 
@@ -142,6 +142,7 @@ static int ecdsa_test(RSContext *rs, int argc, char *argv[])
 	uint32_t pid = 0;
 	rlen = sizeof(rxa);
 	memset(last_hash, 0x0, sizeof(last_hash));
+    printf("-------------- start ecdsa test -------------------\n");
 
 	if (((fd1 = fopen(data_path1, "r")) == NULL)||((fd2 = fopen(data_path2, "r")) == NULL)||((fd3 = fopen(data_path3, "r")) == NULL))
 	{
@@ -238,7 +239,7 @@ static int ecdsa_test(RSContext *rs, int argc, char *argv[])
 
 			bf_cnt++;
 		}
-		ret = RSSelect(rs, 6000);
+		ret = RSSelect(rs, 4000);
 		rlen = sizeof(rxa);
 		if(ret > 0)
 		{
@@ -292,6 +293,12 @@ static int ecdsa_test(RSContext *rs, int argc, char *argv[])
 
 			}
 		}
+        else if(ret == 0)
+        {
+            // timeout
+            printf("ecc transport failed.\n");
+            return 1;
+        }
 
 		if((tx_cnt==TEST_NUMB)&&(rx_cnt==TEST_NUMB))
 		{
