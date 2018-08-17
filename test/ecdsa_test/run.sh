@@ -9,10 +9,9 @@ rm *.log -f
 for i in {1..20000}
 do
     echo test number is $i
-    ./rsutest $Ethname_1 rs0601_rsh.txt rs0601_v.txt rs0601_xy.txt 
-    #./rsutest $Ethname_1 rs0601_rsh.txt rs0601_v.txt rs0601_xy.txt >>$Ethname_1.log 2>&1 &
-    #./rsutest $Ethname_2 rs0601_rsh.txt rs0601_v.txt rs0601_xy.txt >>$Ethname_2.log 2>&1 &
-    #./rsutest $Ethname_3 rs0601_rsh.txt rs0601_v.txt rs0601_xy.txt >>$Ethname_3.log 2>&1 &
+    ./rsutest $Ethname_1 rs0601_rsh.txt rs0601_v.txt rs0601_xy.txt >>$Ethname_1.log 2>&1 &
+    ./rsutest $Ethname_2 rs0601_rsh.txt rs0601_v.txt rs0601_xy.txt >>$Ethname_2.log 2>&1 &
+    ./rsutest $Ethname_3 rs0601_rsh.txt rs0601_v.txt rs0601_xy.txt >>$Ethname_3.log 2>&1 &
     sleep 8
 done
 
