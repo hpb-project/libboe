@@ -1,4 +1,4 @@
-// Last Update:2018-08-15 22:20:16
+// Last Update:2018-08-17 16:46:36
 /**
  * @file rstest.c
  * @brief 
@@ -306,11 +306,22 @@ static int ecdsa_test(RSContext *rs, int argc, char *argv[])
 			fclose(fd1);
 			fclose(fd2);
 			fclose(fd3);
+            if(er_cnt == 699)
+            {
+                printf("ecc test failed.\n");
+                return 0;
+            }
+            else
+            {
+                printf("ecc test ok.\n");
+                return 1;
+            }
 			return 0;
 		}
 	}
 	return 0;
 }
+
 int main(int argc, char *argv[])
 {
 	char *ethname;
@@ -324,8 +335,13 @@ int main(int argc, char *argv[])
 	ethname = argv[1];
 	RSContext rs;
 	ret = RSCreate(ethname, type, &rs);
-	ecdsa_test(&rs, argc, argv);
+    if(ret != 0)
+    {
+        printf("rscreate error\n");
+        return 1;
+    }
 
+	ret = ecdsa_test(&rs, argc, argv);
 
 	RSRelease(&rs);
 
