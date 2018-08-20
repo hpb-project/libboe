@@ -612,7 +612,7 @@ BoeErr* doAXU_HW_Verify(unsigned char *hash, unsigned char *signature, unsigned 
 
 BoeErr* doAXU_Lock_PK()
 {
-    A_Package *p = make_query_simple(ACMD_PB_GET_PUBKEY);
+    A_Package *p = make_query_simple(ACMD_PB_LOCK_PRIKEY);
     BoeErr *ret = NULL;
     AQData *r = NULL;
     if(p)

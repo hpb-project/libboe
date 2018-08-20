@@ -1,4 +1,4 @@
-all:rstest msgctest axutest tstest mkimage boetest
+all:rstest msgctest axutest tstest mkimage boetest bwriteinfo bawriteinfo
 
 rstest:
 	gcc -g rstest.c ../rs.c -I ../ -o rstest
@@ -18,5 +18,11 @@ mkimage:
 boetest:
 	gcc -g  boetest.c -I ../ -L ../lib --static -lboe -lpthread -o boetest
 
+bwriteinfo:
+	gcc bwriteinfo.c -I ../ -L ../lib --static  -lboe -g -o bwriteinfo -lpthread
+
+bawriteinfo:
+	gcc advance_writeinfo.c -I ../ -L ../lib --static  -lboe -g -o bawriteinfo -lpthread
+
 clean:
-	rm rstest msgctest axutest tstest mkimage boetest
+	rm rstest msgctest axutest tstest mkimage boetest bwriteinfo bawriteinfo

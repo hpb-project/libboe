@@ -1,4 +1,4 @@
-// Last Update:2018-08-11 17:04:02
+// Last Update:2018-08-20 14:04:48
 /**
  * @file axutest.c
  * @brief 
@@ -177,6 +177,16 @@ int test_get_pubkey()
 }
 
 
+int test_lock_pk()
+{
+    BoeErr *ret = NULL;
+    ret = doAXU_Lock_PK();
+    if(ret == BOE_OK)
+    {
+        return 0;
+    }
+    return 1;
+}
 
 int test_set_mac()
 {
@@ -219,6 +229,7 @@ void printf_help()
     printf(" 0            test_get_random\n");
     printf(" 1            test_get_boesn\n");
     printf(" 2            test_get_version\n");
+    printf(" 3            test_lock_pk\n");
     printf(" 5            test_set_boesn\n");
     printf(" 6            test_set_account\n");
     printf(" 7            test_get_account\n");
@@ -269,6 +280,9 @@ int main(int argc, char *argv[])
                     break;
                 case 2:
                     pfunc = test_get_version;
+                    break;
+                case 3:
+                    pfunc = test_lock_pk;
                     break;
                 case 5:
                     pfunc = test_set_boesn;
