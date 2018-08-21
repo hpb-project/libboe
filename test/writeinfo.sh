@@ -8,7 +8,9 @@ fi
 
 SN_PREFIX=10001012018080800
 
-info_file=810_boardinfo.txt
+#info_file=810_boardinfo.txt
+#info_file=18_sea_info.txt
+info_file=9_internal_info.txt
 sn=$1
 SN=
 lensn=`expr length $sn`
@@ -57,7 +59,7 @@ then
             rmac=`echo $remote | awk '{print $2}'`
             raccount=`echo $remote | awk '{print $3}'`
             rcid=`echo $remote | awk '{print $4}'`
-            sed -i "${find_l_num}s/$/& $remote/g" $info_file
+            sed -i "${find_l_num}s/$/&\t$rsn\t$rmac\t$raccount\t$rcid/g" $info_file
         else
             echo "write info return value ($remote) error"
         fi
