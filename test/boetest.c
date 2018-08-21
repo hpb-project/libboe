@@ -1,4 +1,4 @@
-// Last Update:2018-08-16 20:53:39
+// Last Update:2018-08-21 15:40:45
 /**
  * @file boetest.c
  * @brief 
@@ -62,6 +62,14 @@ void *test_ecc(void *usrdata)
                 {
                     continue;
                 }
+                else
+                {
+                    printf("pubkey compare failed.\n");
+                }
+            }
+            else
+            {
+                printf("msg send/receive failed.\n");
             }
             gErrcnt++;
             printf("ecctest current = %d.\n",gCurrent);
@@ -215,6 +223,7 @@ int main(int argc, char *argv[])
     {
         printf("hw check success.\r\n");
     }
+#if 0
     {
         // phy test.
         unsigned int reg_02 = 0x02;
@@ -253,6 +262,7 @@ int main(int argc, char *argv[])
             return 1;
         }
     }
+#endif
     {
         // ecc test.
         if(0 == ecdsa_test(argc, argv))
