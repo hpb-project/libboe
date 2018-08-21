@@ -1,4 +1,4 @@
-// Last Update:2018-08-16 22:37:20
+// Last Update:2018-08-21 16:25:40
 /**
  * @file nboe.c
  * @brief 
@@ -258,6 +258,7 @@ BoeErr* boe_release(void)
         doAXU_Release();
         doTSU_Release();
     }
+    gIns.bInitCon = 0;
 
     return BOE_OK;
 }
