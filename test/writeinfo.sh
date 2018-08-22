@@ -49,7 +49,7 @@ then
     echo "sn=$ssn"
     echo "mac=$mac"
     #remote="$ssn $mac $account 111121231213213213213213213 "
-    remote=`./bawriteinfo $ssn $mac $account 2>/dev/null`
+    remote=`./bawriteinfo $ssn $mac $account `
     if [ $? -eq 0 ];
     then
         r_n=`echo $remote | awk '{print NF}'`

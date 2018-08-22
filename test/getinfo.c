@@ -1,4 +1,4 @@
-// Last Update:2018-08-17 11:56:53
+// Last Update:2018-08-21 11:07:44
 /**
  * @file bwriteinfo.c
  * @brief 
@@ -46,33 +46,7 @@ int main(int argc, char *argv[])
     unsigned char cid[64];
     memset(rsn, 0x0, sizeof(rsn));
     memset(raccount, 0x0, sizeof(raccount));
-    if(argc < 4)
-    {
-        printf("Usage: %s sn mac account\n", argv[0]);
-        return 1;
-    }
 
-    sn = atoi(argv[1]);
-    if(sn > 1000)
-    {
-        printf("sn(%d) is too bigger", sn);
-        return 1;
-    }
-
-    memset(lsn, 0x0, sizeof(lsn));
-    sprintf(lsn, "%s%03d",sn_pre, sn);
-    printf("sn:%s\n", lsn);
-
-    mac = argv[2];
-    mac_to_array(mac, lmac);
-
-    account = argv[3];
-    if(strlen(account) != 42)
-    {
-        printf("account format error.\n");
-        return 1;
-    }
-    memcpy(laccount, account, 42);
 
     BoeErr *ret = boe_init();
     if(ret != BOE_OK)
@@ -83,34 +57,10 @@ int main(int argc, char *argv[])
     ret = boe_hw_check();
     if(ret != BOE_OK)
     {
-        printf("hw check failed.\r\n");
-        return 1;
-    }
-    else
-    {
-        printf("hw check success.\r\n");
-    }
-
-    ret = boe_set_boesn(lsn);
-    if(ret != BOE_OK)
-    {
-        printf("set boesn failed.\r\n");
+        fprintf(stderr, "boe check failed.\n");
         return 1;
     }
 
-    ret = boe_set_mac(lmac);
-    if(ret != BOE_OK)
-    {
-        printf("set mac failed.\r\n");
-        return 1;
-    }
-
-    ret = boe_set_bind_account(laccount);
-    if(ret != BOE_OK)
-    {
-        printf("set account failed.\r\n");
-        return 1;
-    }
 
     ret = boe_get_boesn(rsn);
     if(ret != BOE_OK)
@@ -119,7 +69,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    ret = boe_genkey(cid);
+    ret = boe_get_pubkey(cid);
     if(ret != BOE_OK)
     {
         printf("genkey failed.\r\n");
@@ -142,23 +92,7 @@ int main(int argc, char *argv[])
     char rsmac[100];
     memset(rsmac, 0x0, sizeof(rsmac));
     array_to_mac(rsmac, rmac);
-    printf("mac = %s\n", mac);
-    printf("rsmac = %s\n", rsmac);
-    if(strncmp(lsn, rsn, strlen(lsn)) != 0)
-    {
-        printf("sn set and get not match.\n");
-        return 1;
-    }
-    if(strncmp(mac, rsmac, strlen(mac)) != 0)
-    {
-        printf("mac set and get not match.\n");
-        return 1;
-    }
-    if(strncmp(laccount, raccount, strlen(laccount)) != 0)
-    {
-        printf("account set and get not match.\n");
-        return 1;
-    }
+
     char scid[129];
     memset(scid, 0, sizeof(scid));
     for(int i = 0; i < sizeof(cid); i++)
@@ -166,7 +100,7 @@ int main(int argc, char *argv[])
         sprintf(scid+2*i, "%02x", cid[i]);
     }
 
-    printf("sn:%s\nmac:%s\naccount:%s\ncid:%s\n",rsn, rsmac, raccount, scid);
+    printf("%s\t%s\t%s\t%s\t\n",rsn, rsmac, raccount, scid);
     
     boe_release();
 

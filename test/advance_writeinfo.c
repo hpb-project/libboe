@@ -1,4 +1,4 @@
-// Last Update:2018-08-21 10:37:38
+// Last Update:2018-08-22 14:23:17
 /**
  * @file bwriteinfo.c
  * @brief 
@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
 
     if(argc < 4)
     {
-        printf("Usage: %s sn mac account\n", argv[0]);
+        fprintf(stderr, "Usage: %s sn mac account\n", argv[0]);
         return 1;
     }
 
@@ -60,75 +60,82 @@ int main(int argc, char *argv[])
 
     if(strlen(account) != 42)
     {
-        printf("account(%s) format error, shoule be 0x....\n",account);
+        fprintf(stderr, "account(%s) format error, shoule be 0x....\n",account);
         return 1;
     }
 
     BoeErr *ret = boe_init();
     if(ret != BOE_OK)
     {
-        printf("init failed.\r\n");
+        fprintf(stderr, "init failed.\r\n");
         return 1;
     }
     ret = boe_hw_check();
     if(ret != BOE_OK)
     {
-        printf("hw check failed.\r\n");
+        fprintf(stderr, "hw check failed.\r\n");
         return 1;
     }
 
     ret = boe_set_boesn(sn);
     if(ret != BOE_OK)
     {
-        printf("set boesn failed.\r\n");
+        fprintf(stderr, "set boesn failed.\r\n");
         return 1;
     }
 
     ret = boe_set_mac(lmac);
     if(ret != BOE_OK)
     {
-        printf("set mac failed.\r\n");
+        fprintf(stderr, "set mac failed.\r\n");
         return 1;
     }
 
     ret = boe_set_bind_account(account);
     if(ret != BOE_OK)
     {
-        printf("set account failed.\r\n");
+        fprintf(stderr, "set account failed.\r\n");
         return 1;
     }
 
     ret = boe_get_boesn(rsn);
     if(ret != BOE_OK)
     {
-        printf("get boesn failed.\r\n");
+        fprintf(stderr, "get boesn failed.\r\n");
         return 1;
     }
 
     ret = boe_genkey(cid);
     if(ret != BOE_OK)
     {
-        printf("genkey failed.\r\n");
-        return 1;
+        fprintf(stderr, "genkey failed.\r\n");
+        ret = boe_get_pubkey(cid);
+        if(ret != BOE_OK)
+        {
+            fprintf(stderr, "get pubkey failed.\r\n");
+            return 1;
+        }
     }
-    ret = boe_lock_pk();
-    if(ret != BOE_OK)
+    else
     {
-        printf("lock pk failed.\r\n");
-        return 1;
+        ret = boe_lock_pk();
+        if(ret != BOE_OK)
+        {
+            fprintf(stderr, "lock pk failed.\r\n");
+        }
     }
-    
+
     ret = boe_get_mac(rmac);
     if(ret != BOE_OK)
     {
-        printf("get boesn failed.\r\n");
+        fprintf(stderr, "get boesn failed.\r\n");
         return 1;
     }
 
     ret = boe_get_bind_account(raccount);
     if(ret != BOE_OK)
     {
-        printf("get boesn failed.\r\n");
+        fprintf(stderr, "get boesn failed.\r\n");
         return 1;
     }
 
@@ -137,17 +144,17 @@ int main(int argc, char *argv[])
     array_to_mac(rsmac, rmac);
     if(strncmp(sn, rsn, strlen(sn)) != 0)
     {
-        printf("sn set and get not match.\n");
+        fprintf(stderr, "sn set and get not match.\n");
         return 1;
     }
     if(strncmp(mac, rsmac, strlen(mac)) != 0)
     {
-        printf("mac set and get not match.\n");
+        fprintf(stderr, "mac set and get not match.\n");
         return 1;
     }
     if(strncmp(account, raccount, strlen(account)) != 0)
     {
-        printf("account set and get not match.\n");
+        fprintf(stderr, "account set and get not match.\n");
         return 1;
     }
     char scid[129];
@@ -157,7 +164,7 @@ int main(int argc, char *argv[])
         sprintf(scid+2*i, "%02x", cid[i]);
     }
 
-    printf("%s\t%s\t%s\t%s",rsn, rsmac, raccount, scid);
+    fprintf(stdout,"%s\t%s\t%s\t%s",rsn, rsmac, raccount, scid);
     
     boe_release();
 

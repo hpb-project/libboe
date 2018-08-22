@@ -1,7 +1,7 @@
 #!/bin/bash
 export PATH=$PATH:/bin:/sbin:/usr/bin
 
-Total=1000
+Total=100
 echo "1" >>/root/reboot/restart.ttl
 ln=`wc -l /root/reboot/restart.ttl|awk '{print $1}'`
 if [ $ln -lt $Total ];
