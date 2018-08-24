@@ -1,4 +1,4 @@
-all:rstest msgctest axutest tstest mkimage boetest bawriteinfo getinfo
+all:rstest msgctest axutest tstest mkimage boetest bawriteinfo getinfo boereg_test
 
 rstest:
 	gcc -g rstest.c ../rs.c -I ../ -o rstest
@@ -23,6 +23,8 @@ bawriteinfo:
 
 getinfo:
 	gcc getinfo.c -I ../ -L ../lib --static  -lboe -g -o getinfo -lpthread
+boereg_test:
+	gcc boereg_test.c -g -I ../ -L ../lib --static -lboe -o boereg_test -lpthread
 
 clean:
-	rm rstest msgctest axutest tstest mkimage boetest bwriteinfo bawriteinfo getinfo
+	rm rstest msgctest axutest tstest mkimage boetest bwriteinfo bawriteinfo getinfo boereg_test
