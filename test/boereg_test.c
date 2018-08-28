@@ -23,7 +23,7 @@ void string_to_int(char *str, unsigned int *data)
 	printf(" str addr len : %d\n",len);
 
 
-	if(('0' == *str)&&('x' == *(str+1)))
+	if(('0' == *str)&&(('x' == *(str+1))||('X' == *(str + 1))))
 	{
 		len = len - 2;
 		str = str + 2; 
