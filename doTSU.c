@@ -130,8 +130,8 @@ BoeErr* doTSU_RecoverPub(uint8_t *sig, uint8_t *pub)
             T_Package *q = (T_Package*)r->buf;
             memcpy(pub, q->payload, TX_PUB_LEN);
             aqd_free(r);
-            return &e_ok;
         }
+        return ret;
     }
     else
     {
@@ -155,8 +155,8 @@ BoeErr* doTSU_GetHash(uint8_t *hash, uint8_t *next_hash)
             T_Package *q = (T_Package*)r->buf;
             memcpy(next_hash, q->payload, TSU_HASH_LEN);
             aqd_free(r);
-            return &e_ok;
         }
+        return &e_ok;
     }
     else
     {
