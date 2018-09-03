@@ -1,4 +1,4 @@
-// Last Update:2018-08-22 14:23:17
+// Last Update:2018-09-03 10:47:30
 /**
  * @file bwriteinfo.c
  * @brief 
@@ -28,8 +28,16 @@ static void shex_dump_ln(unsigned char *buf, int len)
 
 static void mac_to_array(char *mac, unsigned char *addr)
 {
-    sscanf(mac,"%2x-%2x-%2x-%2x-%2x-%2x",addr,addr+1, addr+2,addr+3,addr+4,addr+5);
+    unsigned int i_addr[6];
+    sscanf(mac,"%2x-%2x-%2x-%2x-%2x-%2x",i_addr,i_addr+1, i_addr+2,i_addr+3,i_addr+4,i_addr+5);
+    addr[0] = i_addr[0]&0xff;
+    addr[1] = i_addr[1]&0xff;
+    addr[2] = i_addr[2]&0xff;
+    addr[3] = i_addr[3]&0xff;
+    addr[4] = i_addr[4]&0xff;
+    addr[5] = i_addr[5]&0xff;
 }
+
 static void array_to_mac(char *mac, unsigned char *addr)
 {
     sprintf(mac, "%02X-%02X-%02X-%02X-%02X-%02X", addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]);
