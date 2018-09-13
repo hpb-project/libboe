@@ -1,4 +1,4 @@
-all:rstest msgctest axutest tstest mkimage boetest bawriteinfo getinfo boereg_test
+all:rstest msgctest axutest tstest mkimage boetest bawriteinfo getinfo boereg_test boeupdate update_record_info
 
 rstest:
 	gcc -g rstest.c ../rs.c -I ../ -o rstest
@@ -18,6 +18,9 @@ mkimage:
 boetest:
 	gcc -g  boetest.c -I ../ -L ../lib --static -lboe -lpthread -o boetest
 
+boeupdate:
+	gcc -g  boeupdate.c -I ../ -L ../lib --static -lboe -lpthread -o boeupdate
+
 bawriteinfo:
 	gcc advance_writeinfo.c -I ../ -L ../lib --static  -lboe -g -o bawriteinfo -lpthread
 
@@ -26,5 +29,8 @@ getinfo:
 boereg_test:
 	gcc boereg_test.c -g -I ../ -L ../lib --static -lboe -o boereg_test -lpthread
 
+update_record_info:
+	gcc update_record_info.c -I ../ -L ../lib --static -lboe -g -o update_record_info -lpthread
+
 clean:
-	rm rstest msgctest axutest tstest mkimage boetest bwriteinfo bawriteinfo getinfo boereg_test
+	rm rstest msgctest axutest tstest mkimage boetest bawriteinfo getinfo boereg_test boeupdate update_record_info

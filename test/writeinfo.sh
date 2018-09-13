@@ -10,7 +10,8 @@ SN_PREFIX=10001012018080800
 
 #info_file=810_boardinfo.txt
 #info_file=18_sea_info.txt
-info_file=9_internal_info.txt
+#info_file=9_internal_info.txt
+info_file=china_info.txt
 sn=$1
 SN=
 lensn=`expr length $sn`

@@ -9,7 +9,7 @@ fi
 SN_PREFIX=10001012018080800
 
 sn_mac_file=sn_mac.txt
-info_file=18_sea_info.txt
+info_file=china_info.txt
 sn=$1
 SN=
 lensn=`expr length $sn`
@@ -70,7 +70,8 @@ then
             rcid=`echo $remote | awk '{print $4}'`
             sed -i "${find_sn_ln}s/$/& used/g" $sn_mac_file
             sed -i "1d" $info_file
-            echo -e "$raccount\t$hid\t$rsn\t$rmac\t$rcid" >> boardinfo.txt
+            echo -e "$raccount\t$hid\t$rsn\t$rmac\t$rcid" >> ${info_file}_full.txt
+            echo "write finished"
         else
             echo "write info return value ($remote) error"
         fi
