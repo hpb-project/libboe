@@ -1,4 +1,4 @@
-// Last Update:2018-08-21 16:25:40
+// Last Update:2018-09-13 10:09:14
 /**
  * @file nboe.c
  * @brief 
@@ -237,9 +237,7 @@ BoeErr* boe_init(void)
     gIns.bInitCon = 0;
     gIns.bConnected = 0;
     memset(gIns.methname, 0x0, sizeof(gIns.methname));
-    init_check();
-
-    return BOE_OK;
+    return init_check();
 }
 
 
@@ -580,10 +578,89 @@ BoeErr* boe_get_s_random(unsigned char *hash, unsigned char *nexthash)
         return doTSU_GetHash(hash, nexthash);
     return ret;
 }
+static unsigned char correct_pub[64] = {
+    0x40,
+    0x01,
+    0x54,
+    0xd3,
+    0xd0,
+    0xe3,
+    0x35,
+    0x75,
+    0xc6,
+    0x2e,
+    0xb7,
+    0x70,
+    0x5e,
+    0xa1,
+    0x3d,
+    0x21,
+    0xb6,
+    0x23,
+    0xd0,
+    0x4a,
+    0x5c,
+    0x0f,
+    0x60,
+    0xb8,
+    0xc6,
+    0x90,
+    0x1a,
+    0xec,
+    0x40,
+    0x58,
+    0x3b,
+    0x07,
+    0x1a,
+    0x7a,
+    0x86,
+    0x3d,
+    0xc1,
+    0xb1,
+    0xfe,
+    0x46,
+    0xea,
+    0xe3,
+    0x0e,
+    0x17,
+    0xd6,
+    0x87,
+    0x8b,
+    0xde,
+    0xe8,
+    0x68,
+    0x20,
+    0x2a,
+    0xd9,
+    0xb7,
+    0xea,
+    0xc2,
+    0x3c,
+    0xf6,
+    0x31,
+    0xb1,
+    0x6e,
+    0xa4,
+    0xbf,
+    0x54
+};
 BoeErr* boe_valid_sign(unsigned char *sig, unsigned char *pub)
 {
     BoeErr *ret = bConnected();
     if(ret == BOE_OK)
-        return doTSU_RecoverPub(sig, pub);
+    {
+        ret = doTSU_RecoverPub(sig, pub);
+        if(ret == BOE_OK)
+        {
+            if(memcmp(pub, correct_pub, 64) != 0)
+            {
+                printf("boe valid_sign sig:");
+                hex_dump_ln(sig, 97);
+                printf("boe valid_sign pub:");
+                hex_dump_ln(pub, 64);
+            }
+        }
+        return ret;
+    }
     return ret;
 }
