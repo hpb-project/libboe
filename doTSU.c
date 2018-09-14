@@ -142,21 +142,36 @@ BoeErr* doTSU_RecoverPub(uint8_t *sig, uint8_t *pub)
 
 BoeErr* doTSU_GetHash(uint8_t *hash, uint8_t *next_hash)
 {
-    int wlen = 0;
-    T_Package *p = make_query_get_hash(hash, &wlen);
-    BoeErr *ret = NULL;
-    AQData *r = NULL;
+	int wlen = 0;
+	T_Package *p = make_query_get_hash(hash, &wlen);
+	BoeErr *ret = NULL;
+	AQData *r = NULL;
+	char *env_time = NULL;
+	int sleep_time = 0; 
+
     if(p)
     {
-        ret = doCommand(p, &r, gLongTimeout, wlen);
-        free(p);
-        if(ret == &e_ok)
-        {
-            T_Package *q = (T_Package*)r->buf;
-            memcpy(next_hash, q->payload, TSU_HASH_LEN);
-            aqd_free(r);
-        }
-        return &e_ok;
+		env_time = getenv("time");
+		if(env_time != NULL)
+		{
+		sleep_time = atoi(env_time);
+		}
+		else
+		{
+		sleep_time = 5;
+		}
+		sleep(sleep_time);
+		
+		ret = doCommand(p, &r, gLongTimeout, wlen);
+		free(p);
+		if(ret == &e_ok)
+		{
+		    T_Package *q = (T_Package*)r->buf;
+		    memcpy(next_hash, q->payload, TSU_HASH_LEN);
+		    aqd_free(r);
+		}
+		 
+		return &ret;
     }
     else
     {
