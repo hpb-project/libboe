@@ -123,7 +123,7 @@ BoeErr* doTSU_RecoverPub(uint8_t *sig, uint8_t *pub)
     AQData *r = NULL;
     if(p)
     {
-        int try = 0;
+        int try = 3;
         do{
             ret = doCommand(p, &r, gShortTimeout, wlen);
             if(ret == &e_msgc_read_timeout)
