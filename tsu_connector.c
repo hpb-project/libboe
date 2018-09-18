@@ -26,8 +26,6 @@ static uint32_t  g_sequence = 0;
 static const unsigned char g_tsu_version = 0x10;
 
 #define fetch_tsu_package_sequence() atomic_fetch_and_add(&g_sequence,1)
-#define TSU_PAYLOAD_MAX_SIZE ( - sizeof(T_Package))
-#define TSU_PAYLOAD_SIZE ()
 
 T_Package* tsu_package_new(uint8_t fid, uint32_t len)
 {

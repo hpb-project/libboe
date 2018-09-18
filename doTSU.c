@@ -1,4 +1,4 @@
-// Last Update:2018-08-13 16:05:58
+// Last Update:2018-09-18 09:34:30
 /**
  * @file doTSU.c
  * @brief 
@@ -29,7 +29,7 @@ static TSUContext gTsu;
 #define TX_PUB_LEN (64)
 #define TSU_HASH_LEN (32)
 
-static int gShortTimeout = 1000; // 100ms
+static int gShortTimeout = 150; // 100ms
 static int gLongTimeout = 5000; // 5s
 
 int tsu_check_response(uint8_t* data, int plen, uint32_t uid)
@@ -123,7 +123,15 @@ BoeErr* doTSU_RecoverPub(uint8_t *sig, uint8_t *pub)
     AQData *r = NULL;
     if(p)
     {
-        ret = doCommand(p, &r, gShortTimeout, wlen);
+        int try = 0;
+        do{
+            ret = doCommand(p, &r, gShortTimeout, wlen);
+            if(ret == &e_msgc_read_timeout)
+                try--;
+            else
+                break;
+        }while(try > 0);
+
         free(p);
         if(ret == &e_ok)
         {

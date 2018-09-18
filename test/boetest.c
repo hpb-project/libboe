@@ -16,7 +16,7 @@
 #include <sys/time.h>
 
 #define BUF_THR   20       //缓存门限
-#define TEST_NUMB 10000   //测试次数
+#define TEST_NUMB 100000   //测试次数
 typedef struct rsv_t{
     uint8_t r[32];
     uint8_t s[32];
@@ -146,30 +146,30 @@ static int ecdsa_test(int argc, char *argv[])
     pthread_t th10;
 
     ret = pthread_create(&th1, NULL, test_ecc, NULL);
-//    ret = pthread_create(&th2, NULL, test_ecc, NULL);
-//    ret = pthread_create(&th3, NULL, test_ecc, NULL);
-//    ret = pthread_create(&th4, NULL, test_ecc, NULL);
-//    ret = pthread_create(&th5, NULL, test_ecc, NULL);
-//    ret = pthread_create(&th6, NULL, test_ecc, NULL);
-//    ret = pthread_create(&th7, NULL, test_ecc, NULL);
-//    ret = pthread_create(&th8, NULL, test_ecc, NULL);
-//    ret = pthread_create(&th9, NULL, test_ecc, NULL);
-//    ret = pthread_create(&th10, NULL, test_ecc, NULL);
+    ret = pthread_create(&th2, NULL, test_ecc, NULL);
+    ret = pthread_create(&th3, NULL, test_ecc, NULL);
+    ret = pthread_create(&th4, NULL, test_ecc, NULL);
+    ret = pthread_create(&th5, NULL, test_ecc, NULL);
+    ret = pthread_create(&th6, NULL, test_ecc, NULL);
+    ret = pthread_create(&th7, NULL, test_ecc, NULL);
+    ret = pthread_create(&th8, NULL, test_ecc, NULL);
+    ret = pthread_create(&th9, NULL, test_ecc, NULL);
+    ret = pthread_create(&th10, NULL, test_ecc, NULL);
 
 	gettimeofday(&start, &tz);
 
 
 	
     pthread_join(th1, NULL);
-//    pthread_join(th2, NULL);
-//    pthread_join(th3, NULL);
-//    pthread_join(th4, NULL);
-//    pthread_join(th5, NULL);
-//    pthread_join(th6, NULL);
-//    pthread_join(th7, NULL);
-//    pthread_join(th8, NULL);
-//    pthread_join(th9, NULL);
-//    pthread_join(th10, NULL);
+    pthread_join(th2, NULL);
+    pthread_join(th3, NULL);
+    pthread_join(th4, NULL);
+    pthread_join(th5, NULL);
+    pthread_join(th6, NULL);
+    pthread_join(th7, NULL);
+    pthread_join(th8, NULL);
+    pthread_join(th9, NULL);
+    pthread_join(th10, NULL);
 
 	gettimeofday(&stop, &tz);
     {
