@@ -1,4 +1,4 @@
-// Last Update:2018-09-18 09:34:30
+// Last Update:2018-09-19 11:03:58
 /**
  * @file doTSU.c
  * @brief 
@@ -195,7 +195,7 @@ BoeErr* doTSU_GetHash(uint8_t *hash, uint8_t *next_hash)
 		gettimeofday(&time, NULL);
 		gGetRandomLastTime = time.tv_sec;
 		
-		return &ret;
+		return ret;
 	}
 	else
 	{
