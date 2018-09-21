@@ -148,20 +148,21 @@ BoeErr* doTSU_RecoverPub(uint8_t *sig, uint8_t *pub)
     return &e_ok;
 }
 
-static long int gGetRandomLastTime = 0;
+//static long int gGetRandomLastTime = 0;
 BoeErr* doTSU_GetHash(uint8_t *hash, uint8_t *next_hash)
 {
 	int wlen = 0;
 	T_Package *p = make_query_get_hash(hash, &wlen);
 	BoeErr *ret = NULL;
 	AQData *r = NULL;
-	char *env_time = NULL;
-	int sleep_time = 0;
-	int interval_time = 0;
-	struct timeval time;
+	//char *env_time = NULL;
+	//int sleep_time = 0;
+	//int interval_time = 0;
+	//struct timeval time;
 
 	if(p)
 	{
+		/*
 		env_time = getenv("time");
 		if(env_time != NULL)
 		{
@@ -182,7 +183,7 @@ BoeErr* doTSU_GetHash(uint8_t *hash, uint8_t *next_hash)
 				sleep(sleep_time - interval_time);
 			}
 		}
-		
+		*/
 		ret = doCommand(p, &r, gLongTimeout, wlen);
 		free(p);
 		if(ret == &e_ok)
@@ -191,10 +192,11 @@ BoeErr* doTSU_GetHash(uint8_t *hash, uint8_t *next_hash)
 		    memcpy(next_hash, q->payload, TSU_HASH_LEN);
 		    aqd_free(r);
 		}
+		/*
 		memset(&time, 0, sizeof(time));
 		gettimeofday(&time, NULL);
 		gGetRandomLastTime = time.tv_sec;
-		
+		*/
 		return ret;
 	}
 	else

@@ -576,6 +576,7 @@ BoeErr* boe_get_s_random(unsigned char *hash, unsigned char *nexthash)
     BoeErr *ret = bConnected();
     if(ret == BOE_OK)
         return doTSU_GetHash(hash, nexthash);
+	
     return ret;
 }
 BoeErr* boe_valid_sign(unsigned char *sig, unsigned char *pub)
