@@ -41,7 +41,7 @@ typedef struct WMessage{
     CheckResponse cFunc; // check response is waited.
     AQData s;
     AQData *d;
-
+    uint32_t flag;//send msg async flag
 }WMessage;
 
 // wait list.
@@ -60,10 +60,13 @@ typedef struct IMsgContext{
     RSContext *rs;
     void*    userdata;
     pthread_mutex_t mlock; // 
+    AtomicQ  tx_q;
+    pthread_t tx_thread;
 }IMsgContext;
 
 static void *sorting_thread(void*userdata);
 static void *receive_thread(void*userdata);
+static void *send_msg_thread(void*userdata);
 
 WMessage* WMessageNew(uint32_t uid, CheckResponse cfunc, uint64_t timeoutms, uint8_t *data, int len)
 {
@@ -112,6 +115,7 @@ int WMessageFree(WMessage *m)
     free(m);
     return 0;
 }
+static int g_fpga_num = 0;
 
 int msgc_init(MsgContext *ctx, RSContext *rs, MsgHandle msghandle, void*userdata)
 {
@@ -122,6 +126,8 @@ int msgc_init(MsgContext *ctx, RSContext *rs, MsgHandle msghandle, void*userdata
 
     INIT_LIST_HEAD(&c->wList.list);
     ret = aq_init(&(c->r_q), 1000000); // 100w
+    ret += aq_init(&(c->tx_q), 1000000); // 100w
+    
     if(ret != 0)
     {
         free(c);
@@ -134,7 +140,9 @@ int msgc_init(MsgContext *ctx, RSContext *rs, MsgHandle msghandle, void*userdata
 
     ret = pthread_create(&c->r_thread, NULL, receive_thread, (void*)c);
     ret = pthread_create(&c->s_thread, NULL, sorting_thread, (void*)c);
-    c->th_flag = 1; // start thread.
+    ret = pthread_create(&c->tx_thread, NULL, send_msg_thread, (void*)c);
+
+	c->th_flag = 1; // start thread.
     *ctx = c;
 
     return 0;
@@ -146,12 +154,12 @@ int msgc_release(MsgContext *ctx)
     c->th_flag = 2;
     pthread_join(c->r_thread, NULL);
     pthread_join(c->s_thread, NULL);
+    pthread_join(c->tx_thread, NULL);
     pthread_mutex_destroy(&c->mlock);
     aq_free(&(c->r_q));
     
     return 0;
 }
-
 int msgc_send(MsgContext *ctx, WMessage *wmsg)
 {
     IMsgContext *c = *ctx;
@@ -161,7 +169,7 @@ int msgc_send(MsgContext *ctx, WMessage *wmsg)
         return -1;
     wmsg->sTime = get_timestamp_us();
     n->wmsg = wmsg;
-
+	
     if(RSWrite(c->rs, wmsg->s.buf, wmsg->s.len) < 0)
     {
         free(n);
@@ -180,7 +188,6 @@ AQData* msgc_read(MsgContext *ctx, WMessage *wmsg)
     sem_wait(&wmsg->sem);
     return wmsg->d;
 }
-
 static void *receive_thread(void*userdata)
 {
     IMsgContext *c = (IMsgContext*)userdata;
@@ -247,6 +254,11 @@ static void *sorting_thread(void*userdata)
                 if(d->len > 0 && d->buf != NULL &&
                         (1 == m->cFunc(d->buf, d->len, m->uid)))
                 {
+					  if(1 == m->flag)
+					  {
+                        atomic_fetch_and_sub(&g_fpga_num, 1);
+						  //callback
+					  }
                     bmatch = 1;
                     m->d = d;
                     sem_post(&m->sem);
@@ -301,4 +313,67 @@ static void *sorting_thread(void*userdata)
 
     return NULL;
 }
+#if 1
+int msgc_send_async(MsgContext *ctx, WMessage *wmsg)
+{
+    IMsgContext *c = *ctx;
+    AQData *data = NULL;
+    static uint8_t buf[64*1024];
+    int max_package_len = 0;
+	int ret = 0;
+		
+    WaitNode *n = (WaitNode*)malloc(sizeof(WaitNode));
+    if(n == NULL)
+        return -1;
+    wmsg->sTime = get_timestamp_us();
+    n->wmsg = wmsg;
+	max_package_len = wmsg->s.len;
+	data = aqd_new(max_package_len);
+	if(data != NULL)
+	{
+		memcpy(data->buf, wmsg->s.buf, wmsg->s.len);
+	}
+	if(1 == wmsg->flag)
+	{
+		atomic_fetch_and_add(&g_fpga_num, 1);
+	}
 
+	ret = aq_push(&c->tx_q, data);
+	if(0 != ret)
+	{
+		printf("msgc_send_async aq_push tx_q error\n");
+	}
+
+    pthread_mutex_lock(&c->mlock);
+    list_add_tail(&(n->list), &(c->wList.list));
+    pthread_mutex_unlock(&c->mlock);
+
+    return 0;
+}
+
+//send thread
+static void *send_msg_thread(void *userdata)
+{
+    IMsgContext *c = (IMsgContext*)userdata;
+    AQData *data= NULL;
+
+	while(c->th_flag == 0) ;
+	while(c->th_flag == 1)
+	{
+	    data = aq_pop(&(c->tx_q));
+		if(NULL != data)
+		{
+		    if(g_fpga_num >= 10)//8 sleep?
+		    {
+				//printf("##g_fpga_num==%d,data->len %d\n",g_fpga_num,data->len);
+				//Sleep(1);//1ms
+		    }
+		    if(RSWrite(c->rs, data->buf, data->len) < 0)
+			{
+			    printf("send_msg_thread RSWrite error\n");
+			}			
+		}
+	}
+
+}
+#endif

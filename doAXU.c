@@ -76,6 +76,15 @@ static BoeErr* get_error(A_Package *p)
     strncpy(ret->emsg, (char*)(p->data+1), sizeof(ret->emsg)-1);
     return ret;
 }
+static void hex_dump_ln(unsigned char *buf, int len)
+{
+    for(int i =0; i < len; i++)
+    {
+        printf("%02x", buf[i]);
+    }
+    printf("\n");
+
+}
 
 static BoeErr* doCommandWithTimeout(A_Package *p, AQData **d, uint64_t timeout_ms)
 {
@@ -121,6 +130,7 @@ end:
     }
     return ret;
 }
+
 static BoeErr* doCommand(A_Package *p, AQData **d)
 {
     BoeErr *ret = NULL;
@@ -132,19 +142,31 @@ static BoeErr* doCommand(A_Package *p, AQData **d)
         ret = &e_no_mem;
         goto end;
     }
+	printf("msg_send id =0x%x\n",p->header.package_id);
     if(msgc_send(wqc, wm) == 0)
     {
         AQData *q = msgc_read(wqc, wm);
         if(q == NULL || q->buf == NULL)
         {
             ret = &e_msgc_read_timeout;
+			printf("msgc_read ## msg read time out\n");
             goto end;
         }
 
         A_Package *r = (A_Package*)q->buf;
         if(isErr(r))
         {
+        	if(r!=NULL)
+        	{
+				hex_dump_ln(r,q->len);
+
+			}
+			else
+			{
+				printf("msgc_read data null\n");
+			}
             ret = get_error(r);
+			printf("msgc_read isErr %s\n",ret->ecode);
             aqd_free(q);
             goto end;
         }
@@ -157,6 +179,7 @@ static BoeErr* doCommand(A_Package *p, AQData **d)
     else
     {
         ret = &e_msgc_send_fail;
+		printf("send error \n");
     }
 end:
     if(wm != NULL)
@@ -400,6 +423,7 @@ int axu_check_response(uint8_t* data, int plen, uint32_t uid)
         if(p->header.magic_aacc == AXU_MAGIC_START &&
                 p->header.magic_ccaa == AXU_MAGIC_END)
         {
+        	printf("rcv id = 0x%x\n",p->header.package_id);
             if(p->header.package_id == uid && p->header.q_or_r == AP_RESPONSE)
                 return 1;
         }
@@ -420,6 +444,7 @@ BoeErr* doAXU_GetVersionInfo(unsigned char *H, unsigned char *M, unsigned char *
     AQData *r = NULL;
     if(p)
     {
+    
         ret = doCommand(p, &r);
         free(p);
         if(ret == &e_ok)

@@ -114,7 +114,47 @@ static BoeErr* doCommand(T_Package *p, AQData **d, int timeout, int wlen)
         return &e_msgc_send_fail;
     }
 }
-
+#if 1
+/*recover pub*/
+static BoeErr* doCommandRecoverPubAsync(T_Package *p, int timeout, int wlen)
+{
+    MsgContext *wqc = &gTsu.msgc;
+    WMessage * wm = WMessageNew(p->sequence, tsu_check_response, timeout, (uint8_t*)p, wlen);
+	
+    if(msgc_send_async(wqc, wm) == 0)
+    {
+        return &e_ok;
+    }
+    else
+    {
+        return &e_msgc_send_fail;
+    }
+}
+BoeErr* doTSU_RecoverPub_Async(uint8_t *sig)
+{
+    int wlen = 0;
+    T_Package *p = make_query_recover_key(sig, &wlen);
+    BoeErr *ret = NULL;
+    if(p)
+    {
+        ret = doCommandRecoverPubAsync(p, gShortTimeout, wlen);
+        free(p);
+        if(ret == &e_ok)
+        {
+            return &e_ok;
+        }
+		 else
+		 {
+			printf("doCommandRecoverPubAsync error %d\n",ret->ecode);
+		 }
+    }
+    else
+    {
+        return &e_no_mem;
+    }
+    return &e_ok;
+}
+#endif
 BoeErr* doTSU_RecoverPub(uint8_t *sig, uint8_t *pub)
 {
     int wlen = 0;
@@ -123,15 +163,23 @@ BoeErr* doTSU_RecoverPub(uint8_t *sig, uint8_t *pub)
     AQData *r = NULL;
     if(p)
     {
-        ret = doCommand(p, &r, gShortTimeout, wlen);
+        int try = 3;
+        do{
+            ret = doCommand(p, &r, gShortTimeout, wlen);
+            if(ret == &e_msgc_read_timeout)
+                try--;
+            else
+                break;
+        }while(try > 0);
+
         free(p);
         if(ret == &e_ok)
         {
             T_Package *q = (T_Package*)r->buf;
             memcpy(pub, q->payload, TX_PUB_LEN);
             aqd_free(r);
-            return &e_ok;
         }
+        return ret;
     }
     else
     {
@@ -140,28 +188,62 @@ BoeErr* doTSU_RecoverPub(uint8_t *sig, uint8_t *pub)
     return &e_ok;
 }
 
+//static long int gGetRandomLastTime = 0;
 BoeErr* doTSU_GetHash(uint8_t *hash, uint8_t *next_hash)
 {
-    int wlen = 0;
-    T_Package *p = make_query_get_hash(hash, &wlen);
-    BoeErr *ret = NULL;
-    AQData *r = NULL;
-    if(p)
-    {
-        ret = doCommand(p, &r, gLongTimeout, wlen);
-        free(p);
-        if(ret == &e_ok)
-        {
-            T_Package *q = (T_Package*)r->buf;
-            memcpy(next_hash, q->payload, TSU_HASH_LEN);
-            aqd_free(r);
-            return &e_ok;
-        }
-    }
-    else
-    {
-        return &e_no_mem;
-    }
+	int wlen = 0;
+	T_Package *p = make_query_get_hash(hash, &wlen);
+	BoeErr *ret = NULL;
+	AQData *r = NULL;
+	//char *env_time = NULL;
+	//int sleep_time = 0;
+	//int interval_time = 0;
+	//struct timeval time;
+
+	if(p)
+	{
+		/*
+		env_time = getenv("time");
+		if(env_time != NULL)
+		{
+			sleep_time = atoi(env_time);
+		}
+		else
+		{
+			sleep_time = 5;
+		}
+		
+		memset(&time, 0, sizeof(time));
+		gettimeofday(&time, NULL);
+		if(gGetRandomLastTime != 0)
+		{
+			interval_time = time.tv_sec - gGetRandomLastTime;
+			if(interval_time < sleep_time)
+			{
+				sleep(sleep_time - interval_time);
+			}
+		}
+		*/
+		ret = doCommand(p, &r, gLongTimeout, wlen);
+		free(p);
+		if(ret == &e_ok)
+		{
+		    T_Package *q = (T_Package*)r->buf;
+		    memcpy(next_hash, q->payload, TSU_HASH_LEN);
+		    aqd_free(r);
+		}
+		/*
+		memset(&time, 0, sizeof(time));
+		gettimeofday(&time, NULL);
+		gGetRandomLastTime = time.tv_sec;
+		*/
+		return ret;
+	}
+	else
+	{
+	    return &e_no_mem;
+	}
 
     return &e_result_invalid;
 }
+
