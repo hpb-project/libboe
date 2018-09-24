@@ -155,6 +155,9 @@ BoeErr* doTSU_GetHash(uint8_t *hash, uint8_t *next_hash)
 	T_Package *p = make_query_get_hash(hash, &wlen);
 	BoeErr *ret = NULL;
 	AQData *r = NULL;
+	int try = 3;
+	
+	/*
 	//char *env_time = NULL;
 	//int sleep_time = 0;
 	//int interval_time = 0;
@@ -162,7 +165,6 @@ BoeErr* doTSU_GetHash(uint8_t *hash, uint8_t *next_hash)
 
 	if(p)
 	{
-		/*
 		env_time = getenv("time");
 		if(env_time != NULL)
 		{
@@ -183,21 +185,29 @@ BoeErr* doTSU_GetHash(uint8_t *hash, uint8_t *next_hash)
 				sleep(sleep_time - interval_time);
 			}
 		}
-		*/
-		ret = doCommand(p, &r, gLongTimeout, wlen);
-		free(p);
-		if(ret == &e_ok)
-		{
+	*/
+	if(p)
+	{
+	    do{
+	        ret = doCommand(p, &r, gShortTimeout, wlen);
+	        if(ret == &e_msgc_read_timeout)
+	           try --;
+	        else
+	            break;
+	    }while(try > 0);
+	    free(p);
+	    if(ret == &e_ok)
+	    {
 		    T_Package *q = (T_Package*)r->buf;
 		    memcpy(next_hash, q->payload, TSU_HASH_LEN);
 		    aqd_free(r);
-		}
-		/*
-		memset(&time, 0, sizeof(time));
-		gettimeofday(&time, NULL);
-		gGetRandomLastTime = time.tv_sec;
-		*/
-		return ret;
+	    }
+	    /*
+	    memset(&time, 0, sizeof(time));
+	    gettimeofday(&time, NULL);
+	    gGetRandomLastTime = time.tv_sec;
+	    */
+	    return ret;
 	}
 	else
 	{
