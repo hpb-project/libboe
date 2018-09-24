@@ -531,7 +531,15 @@ BoeErr* doAXU_Get_MAC(unsigned char *mac)
     AQData *r = NULL;
     if(p)
     {
-        ret = doCommand(p, &r);
+        int try = 3;
+        do{
+            ret = doCommand(p, &r);
+            if(ret != &e_ok)
+                try--;
+            else
+                break;
+        }while(try > 0);
+
         free(p);
         if(ret == &e_ok)
         {
@@ -579,7 +587,14 @@ BoeErr* doAXU_Get_Pubkey(unsigned char *pubkey)
     AQData *r = NULL;
     if(p)
     {
-        ret = doCommand(p, &r);
+        int try = 3;
+        do{
+            ret = doCommand(p, &r);
+            if(ret != &e_ok)
+                try--;
+            else
+                break;
+        }while(try > 0);
         free(p);
         if(ret == &e_ok)
         {
@@ -603,7 +618,14 @@ BoeErr* doAXU_HW_Verify(unsigned char *hash, unsigned char *signature, unsigned 
     AQData *r = NULL;
     if(p)
     {
-        ret = doCommand(p, &r);
+        int try = 3;
+        do{
+            ret = doCommand(p, &r);
+            if(ret != &e_ok)
+                try--;
+            else
+                break;
+        }while(try > 0);
         free(p);
         if(ret == &e_ok)
         {
@@ -648,7 +670,15 @@ BoeErr* doAXU_GetBindAccount(uint8_t *account)
     AQData *r = NULL;
     if(p)
     {
-        ret = doCommand(p, &r);
+        int try = 3;
+        do{
+            ret = doCommand(p, &r);
+            if(ret != &e_ok)
+                try--;
+            else
+                break;
+        }while(try > 0);
+
         free(p);
         if(ret == &e_ok)
         {
@@ -816,7 +846,14 @@ BoeErr* doAXU_BindAccount(uint8_t *baccount)
     AQData *r = NULL;
     if(p)
     {
-        ret = doCommand(p, &r);
+        int try = 3;
+        do{
+            ret = doCommand(p, &r);
+            if(ret != &e_ok)
+                try--;
+            else
+                break;
+        }while(try > 0);
         free(p);
         if(ret == &e_ok)
         {
@@ -838,7 +875,15 @@ BoeErr* doAXU_HWSign(uint8_t *data, uint8_t *result)
     AQData *r = NULL;
     if(p)
     {
-        ret = doCommand(p, &r);
+        int try = 3;
+        do{
+            ret = doCommand(p, &r);
+            if(ret != &e_ok)
+                try--;
+            else
+                break;
+        }while(try > 0);
+
         free(p);
         if(ret == &e_ok)
         {
