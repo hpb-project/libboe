@@ -590,15 +590,15 @@ BoeErr* boe_valid_sign(unsigned char *sig, unsigned char *pub)
 }
 BoeErr* boe_valid_sign_recover_pub_async(unsigned char *sig)
 {
-	BoeErr *ret = bConnected();
-	if(ret == BOE_OK)
-	{
-		return doTSU_RecoverPub_Async(sig);
-	}
-	else
-	{
-		printf("boe_valid_sign_recover_pub bConnected error %d\n",ret->ecode);
-	}
+    BoeErr *ret = bConnected();
+    if(ret == BOE_OK)
+    {
+        return doTSU_RecoverPub_Async(sig);
+    }
+    else
+    {
+        printf("boe_valid_sign_recover_pub bConnected error %d\n",ret->ecode);
+    }
 	
 	return ret;
 }

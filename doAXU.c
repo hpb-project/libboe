@@ -142,7 +142,6 @@ static BoeErr* doCommand(A_Package *p, AQData **d)
         ret = &e_no_mem;
         goto end;
     }
-	printf("msg_send id =0x%x\n",p->header.package_id);
     if(msgc_send(wqc, wm) == 0)
     {
         AQData *q = msgc_read(wqc, wm);
@@ -423,7 +422,6 @@ int axu_check_response(uint8_t* data, int plen, uint32_t uid)
         if(p->header.magic_aacc == AXU_MAGIC_START &&
                 p->header.magic_ccaa == AXU_MAGIC_END)
         {
-        	printf("rcv id = 0x%x\n",p->header.package_id);
             if(p->header.package_id == uid && p->header.q_or_r == AP_RESPONSE)
                 return 1;
         }
@@ -1045,7 +1043,7 @@ BoeErr* doAXU_Init(char *ethname, MsgHandle msghandle, void*userdata)
     {
         return &e_init_fail;
     }
-    ret = msgc_init(&gAxu.wqc, &gAxu.rs, msghandle, userdata);
+    ret = msgc_init(&gAxu.wqc, &gAxu.rs, msghandle, userdata, 0);
     if(ret != 0)
     {
         RSRelease(&gAxu.rs);

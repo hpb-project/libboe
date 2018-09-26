@@ -54,7 +54,7 @@ BoeErr* doTSU_Init(char *ethname, MsgHandle msghandle, void*userdata)
     {
         return &e_init_fail;
     }
-    ret = msgc_init(&ctx->msgc, &ctx->rs, tsu_msg_handle, (void*)userdata);
+    ret = msgc_init(&ctx->msgc, &ctx->rs, tsu_msg_handle, (void*)userdata, 1);
     if(ret != 0)
     {
         RSRelease(&ctx->rs);
