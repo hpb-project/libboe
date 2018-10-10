@@ -41,8 +41,8 @@ static int axu_check_response(uint8_t* data, int plen, uint32_t uid)
 static int doCommand(uint8_t*p, int len, AQData **d)
 {
     MsgContext *wqc = &glb.wqc;
-    WMessage * wm = WMessageNew(0, axu_check_response, 10000000, (uint8_t*)p, len);
-    if(msgc_send(wqc, wm) == 0)
+    WMessage * wm = WMessageNew(0, axu_check_response, 10000000, (uint8_t*)p, len, 0);
+    if(msgc_send_async(wqc, wm) == 0)
     {
         AQData *q = msgc_read(wqc, wm);
         if(q == NULL || q->buf == NULL)
@@ -93,7 +93,7 @@ int msgc_test(char *ethname, int type)
     {
         return -1;
     }
-    ret = msgc_init(&ctx->wqc, &ctx->rs, NULL, NULL);
+    ret = msgc_init(&ctx->wqc, &ctx->rs, NULL, NULL,NULL);
     if(ret != 0)
     {
         RSRelease(&ctx->rs);

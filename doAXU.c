@@ -91,7 +91,7 @@ static BoeErr* doCommandWithTimeout(A_Package *p, AQData **d, uint64_t timeout_m
     BoeErr *ret = NULL;
     MsgContext *wqc = &gAxu.wqc;
     WMessage * wm = WMessageNew(p->header.package_id, axu_check_response, timeout_ms, (uint8_t*)p,
-            axu_package_len(p));
+            axu_package_len(p), 0);
     if(wm == NULL)
     {
         ret = &e_no_mem;
@@ -136,7 +136,7 @@ static BoeErr* doCommand(A_Package *p, AQData **d)
     BoeErr *ret = NULL;
     MsgContext *wqc = &gAxu.wqc;
     WMessage * wm = WMessageNew(p->header.package_id, axu_check_response, gShortTimeout, (uint8_t*)p,
-            axu_package_len(p));
+            axu_package_len(p), 0);
     if(wm == NULL)
     {
         ret = &e_no_mem;
@@ -1033,6 +1033,10 @@ BoeErr* doAXU_UpgradeAbort(uint32_t fid)
     }
 }
 
+static int asu_msg_callback(uint8_t *data, int len, void*userdata, uint8_t *old_data, int old_len)
+{
+    return 0;
+}
 
 BoeErr* doAXU_Init(char *ethname, MsgHandle msghandle, void*userdata)
 {
@@ -1043,7 +1047,7 @@ BoeErr* doAXU_Init(char *ethname, MsgHandle msghandle, void*userdata)
     {
         return &e_init_fail;
     }
-    ret = msgc_init(&gAxu.wqc, &gAxu.rs, msghandle, userdata, 0);
+    ret = msgc_init(&gAxu.wqc, &gAxu.rs, msghandle, userdata, asu_msg_callback);
     if(ret != 0)
     {
         RSRelease(&gAxu.rs);

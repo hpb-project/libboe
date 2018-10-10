@@ -46,6 +46,22 @@ static int tsu_msg_handle(uint8_t *data, int len, void*userdata)
     return 0;
 }
 
+static int tsu_msg_callback(uint8_t *data, int len, void*userdata, uint8_t *old_data, int old_len)
+{
+    T_Package *tsu_packet = NULL;
+
+	if(data == TIMEOUT)
+	{
+		printf("tsu_packet TIME out\n");
+		return 0;
+	}
+	tsu_packet = (T_Package *)data;
+
+	printf("tsu_packet id %d\n",tsu_packet->function_id);
+	// boe.go callback
+    return 0;
+}
+
 BoeErr* doTSU_Init(char *ethname, MsgHandle msghandle, void*userdata)
 {
     TSUContext *ctx = &gTsu;
@@ -54,7 +70,7 @@ BoeErr* doTSU_Init(char *ethname, MsgHandle msghandle, void*userdata)
     {
         return &e_init_fail;
     }
-    ret = msgc_init(&ctx->msgc, &ctx->rs, tsu_msg_handle, (void*)userdata, 1);
+    ret = msgc_init(&ctx->msgc, &ctx->rs, tsu_msg_handle, (void*)userdata, tsu_msg_callback);
     if(ret != 0)
     {
         RSRelease(&ctx->rs);
@@ -100,8 +116,8 @@ T_Package *make_query_get_hash(uint8_t *hash, int *len)
 static BoeErr* doCommand(T_Package *p, AQData **d, int timeout, int wlen)
 {
     MsgContext *wqc = &gTsu.msgc;
-    WMessage * wm = WMessageNew(p->sequence, tsu_check_response, timeout, (uint8_t*)p, wlen);
-    if(msgc_send(wqc, wm) == 0)
+    WMessage * wm = WMessageNew(p->sequence, tsu_check_response, timeout, (uint8_t*)p, wlen, 1);
+    if(msgc_send_async(wqc, wm) == 0)
     {
         AQData *q = msgc_read(wqc, wm);
         if(q == NULL || q->buf == NULL)
@@ -119,7 +135,7 @@ static BoeErr* doCommand(T_Package *p, AQData **d, int timeout, int wlen)
 static BoeErr* doCommandRecoverPubAsync(T_Package *p, int timeout, int wlen)
 {
     MsgContext *wqc = &gTsu.msgc;
-    WMessage * wm = WMessageNew(p->sequence, tsu_check_response, timeout, (uint8_t*)p, wlen);
+    WMessage * wm = WMessageNew(p->sequence, tsu_check_response, timeout, (uint8_t*)p, wlen, 1);
 	
     if(msgc_send_async(wqc, wm) == 0)
     {
