@@ -27,6 +27,7 @@ struct BoeInstance {
     uint8_t  bConnected;
     uint32_t updateFid;
     BoeUpgradeCallback updateCallback;
+    BoeValidSignCallback validsignCallback;
 };
 
 static struct BoeInstance gIns;
@@ -601,5 +602,10 @@ BoeErr* boe_valid_sign_recover_pub_async(unsigned char *sig)
     }
 	
 	return ret;
+}
+BoeErr* boe_valid_sign_callback(BoeValidSignCallback func)
+{
+    gIns.validsignCallback = func;
+    return BOE_OK;
 }
 

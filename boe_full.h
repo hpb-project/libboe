@@ -28,6 +28,7 @@ typedef struct BoeErr{
 
 BoeErr *BOE_OK;
 typedef int (*BoeUpgradeCallback)(int,char*);
+typedef int (*BoeValidSignCallback)(int,char*);
 
 void boe_err_free(BoeErr *e);
 
@@ -111,6 +112,7 @@ BoeErr* boe_get_s_random(unsigned char *hash, unsigned char *nexthash);
  * recover pubkey. if boe board is working, use hardware to do it. else will use soft alghorim.
  */
 BoeErr* boe_valid_sign(unsigned char *sig, unsigned char *pub);
+BoeErr* boe_valid_sign_callback(BoeValidSignCallback func);
 
 BoeErr* boe_genkey(unsigned char *pubkey);
 BoeErr* boe_get_pubkey(unsigned char *pubkey);

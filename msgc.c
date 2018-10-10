@@ -120,7 +120,6 @@ int WMessageFree(WMessage *m)
     free(m);
     return 0;
 }
-//static int g_fpga_num = 0;
 
 int msgc_init(MsgContext *ctx, RSContext *rs, MsgHandle msghandle, void*userdata, MsgHandleCallback callback)
 {
@@ -332,7 +331,6 @@ int msgc_send_async(MsgContext *ctx, WMessage *wmsg)
     int max_package_len = 0;
 	int ret = 0;
 
-    wmsg->flag = 1;
     WaitNode *n = (WaitNode*)malloc(sizeof(WaitNode));
     if(n == NULL)
         return -1;

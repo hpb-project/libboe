@@ -1035,6 +1035,7 @@ BoeErr* doAXU_UpgradeAbort(uint32_t fid)
 
 static int asu_msg_callback(uint8_t *data, int len, void*userdata, uint8_t *old_data, int old_len)
 {
+    printf("axu rcv \n");
     return 0;
 }
 

@@ -116,7 +116,7 @@ T_Package *make_query_get_hash(uint8_t *hash, int *len)
 static BoeErr* doCommand(T_Package *p, AQData **d, int timeout, int wlen)
 {
     MsgContext *wqc = &gTsu.msgc;
-    WMessage * wm = WMessageNew(p->sequence, tsu_check_response, timeout, (uint8_t*)p, wlen, 1);
+    WMessage * wm = WMessageNew(p->sequence, tsu_check_response, timeout, (uint8_t*)p, wlen, 0);
     if(msgc_send_async(wqc, wm) == 0)
     {
         AQData *q = msgc_read(wqc, wm);
