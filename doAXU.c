@@ -148,7 +148,6 @@ static BoeErr* doCommand(A_Package *p, AQData **d)
         if(q == NULL || q->buf == NULL)
         {
             ret = &e_msgc_read_timeout;
-			printf("msgc_read ## msg read time out\n");
             goto end;
         }
 

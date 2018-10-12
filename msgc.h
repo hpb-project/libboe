@@ -35,5 +35,10 @@ int msgc_init(MsgContext *c, RSContext *rs, MsgHandle msghandle, void*userdata, 
 int msgc_release(MsgContext *ctx);
 int msgc_send(MsgContext *ctx, WMessage *wmsg);
 AQData* msgc_read(MsgContext *ctx, WMessage *wmsg);
+long int g_send;
+long int g_rsvd;
+long int g_timeout;
+long int g_bmatch0;
+long int g_tsu_rcv;
 
 #endif  /*MSGC_H*/

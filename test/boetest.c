@@ -15,8 +15,18 @@
 #include <semaphore.h>
 #include <sys/time.h>
 
+static struct timeval gTs, gTe;
+static struct timezone gTz;
+
+#define PROFILE_START() \
+    gettimeofday(&gTs, &gTz);\
+
+#define PROFILE_END() \
+    gettimeofday(&gTe, &gTz);\
+    printf("--PROFILE-- cost time %ldus.\n", (gTe.tv_sec*1000000 + gTe.tv_usec - gTs.tv_sec*1000000 - gTs.tv_usec));
+
 #define BUF_THR   20       //缓存门限
-#define TEST_NUMB 10000   //测试次数
+#define TEST_NUMB 100000   
 typedef struct rsv_t{
     uint8_t r[32];
     uint8_t s[32];
@@ -30,6 +40,7 @@ static rsv_t rsv_array[TEST_NUMB+1];
 static uint32_t gTotal = 0;
 static uint32_t gErrcnt = 0;
 static volatile int gCurrent = 0;
+
 int get_data(rsv_t **data)
 {
     int pidx = gCurrent++;
@@ -40,6 +51,47 @@ int get_data(rsv_t **data)
     *data = &rsv_array[pidx];
     return 0;
 }
+static int res_num = 0;
+
+int success_num = 0;
+int error_num = 0;
+int ecc_callback(unsigned char *pubkey, unsigned char *sig, void *userdata)
+{	
+	//PROFILE_START();
+
+	int pid = 0;
+	res_num++;
+	//printf("### res_num %d\n",res_num);
+	pid = *(int*)userdata;
+	//printf("### pid %d\n",pid);
+
+	rsv_t *pdata;
+	pdata = &rsv_array[pid];
+	if(pdata == NULL)
+	{
+		printf("pdata NULL ###\n");
+		return 1;
+	}
+	
+   if(memcmp(pdata->x, pubkey, 32) == 0 &&
+        memcmp(pdata->y, pubkey+32, 32) == 0)
+   	{
+	    success_num ++;
+			//PROFILE_END();
+		//printf("success_num %d\n",success_num);
+		 return 0;
+   }
+   else
+   {
+	   error_num ++;
+	   //printf("error _num %d\n",error_num);
+		return 0;
+   }
+
+	return 0;
+}
+
+
 void *test_ecc(void *usrdata)
 {
     unsigned char sig[97];
@@ -54,9 +106,12 @@ void *test_ecc(void *usrdata)
             memcpy(sig+32, pdata->s, 32);
             memcpy(sig+64, pdata->h, 32);
             sig[96] = pdata->v;
-            BoeErr *bret = boe_valid_sign(sig, pub);
+           // BoeErr *bret = boe_valid_sign(sig, pub);
+            BoeErr *bret = boe_valid_sign_recover_pub_async(sig);
             if(bret == BOE_OK)
             {
+            	  continue;
+            /*
                 if(memcmp(pdata->x, pub, 32) == 0 &&
                         memcmp(pdata->y, pub+32, 32) == 0)
                 {
@@ -65,7 +120,7 @@ void *test_ecc(void *usrdata)
                 else
                 {
                     printf("pubkey compare failed.\n");
-                }
+                }*/
             }
             else
             {
@@ -118,6 +173,7 @@ static void load_data(int argc, char *argv[])
         p->v = v;
         gTotal++;
     }
+	printf("######gTotal = %d\n",gTotal);
     fclose(fd1);
     fclose(fd2);
     fclose(fd3);
@@ -135,7 +191,7 @@ static int ecdsa_test(int argc, char *argv[])
     // read all data to array.
     load_data(argc, argv);
     pthread_t th1;
-    pthread_t th2;
+    /*pthread_t th2;
     pthread_t th3;
     pthread_t th4;
     pthread_t th5;
@@ -143,7 +199,7 @@ static int ecdsa_test(int argc, char *argv[])
     pthread_t th7;
     pthread_t th8;
     pthread_t th9;
-    pthread_t th10;
+    pthread_t th10;*/
 
     ret = pthread_create(&th1, NULL, test_ecc, NULL);
 //    ret = pthread_create(&th2, NULL, test_ecc, NULL);
@@ -172,12 +228,21 @@ static int ecdsa_test(int argc, char *argv[])
 //    pthread_join(th10, NULL);
 
 	gettimeofday(&stop, &tz);
+   duration = ((stop.tv_sec - start.tv_sec)*1000000 + stop.tv_usec - start.tv_usec)/1000;
+   printf("send data time : %ldms\n",duration);
+   while(res_num < TEST_NUMB)
+	{
+		usleep(500);
+	}
     {
         gettimeofday(&stop, NULL);
         duration = ((stop.tv_sec - start.tv_sec)*1000000 + stop.tv_usec - start.tv_usec)/1000;
         printf("ECDSA test finished,static results are fellow:\n");
         printf("ECDSA ERROR count : %d\n",gErrcnt);
         printf("ECDSA test time : %ldms\n",duration);
+        printf("success_num : %ld\n",success_num);
+		
+        printf("error_num : %ld\n",error_num);
         if(gErrcnt != 0)
         {
             printf("ECDSA Error count : %d\n", gErrcnt);
@@ -186,16 +251,6 @@ static int ecdsa_test(int argc, char *argv[])
 
     }
 	return 0;
-}
-
-static void shex_dump_ln(unsigned char *buf, int len)
-{
-    for(int i =0; i < len; i++)
-    {
-        printf("%02x", buf[i]);
-    }
-    printf("\n");
-
 }
 
 int main(int argc, char *argv[])
@@ -265,6 +320,7 @@ int main(int argc, char *argv[])
 #endif
     {
         // ecc test.
+        boe_valid_sign_callback(ecc_callback);
         if(0 == ecdsa_test(argc, argv))
         {
             printf("ecc test ok.\n");

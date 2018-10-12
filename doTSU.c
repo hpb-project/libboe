@@ -17,6 +17,8 @@
 
 
 typedef struct TSUContext{
+	AsyncCallback asyncCallback;
+	void *userdata;
     RSContext  rs;
     MsgContext msgc;
 }TSUContext;
@@ -48,18 +50,39 @@ static int tsu_msg_handle(uint8_t *data, int len, void*userdata)
 
 static int tsu_msg_callback(uint8_t *data, int len, void*userdata, uint8_t *old_data, int old_len)
 {
+	TSUContext *ctx = &gTsu;
+
     T_Package *tsu_packet = NULL;
+    T_Package *tsu_packet_old = NULL;
 
-	if(data == TIMEOUT)
-	{
-		printf("tsu_packet TIME out\n");
-		return 0;
-	}
 	tsu_packet = (T_Package *)data;
+	tsu_packet_old =  (T_Package *)old_data;
+	int type = tsu_packet_old->function_id;
+	
 
-	printf("tsu_packet id %d\n",tsu_packet->function_id);
-	// boe.go callback
+	if(ctx->asyncCallback != NULL)
+	{
+		if(tsu_packet == NULL || tsu_packet == TIMEOUT)
+		{
+			ctx->asyncCallback(type, NULL, 0, tsu_packet_old->payload, ctx->userdata);
+		}
+		else
+		{
+			//ctx->asyncCallback(type, tsu_packet->payload, len - sizeof(T_Package), tsu_packet_old->payload, ctx->userdata);
+
+			#warning for ecc test, response packet sequence instead of response length.
+			ctx->asyncCallback(type, tsu_packet->payload, tsu_packet_old->sequence, tsu_packet_old->payload, ctx->userdata);
+		}
+	}
+
     return 0;
+}
+
+void doTSU_RegisAsyncCallback(AsyncCallback afun, void *data)
+{
+	TSUContext *ctx = &gTsu;
+	ctx->asyncCallback = afun;
+	ctx->userdata = data;
 }
 
 BoeErr* doTSU_Init(char *ethname, MsgHandle msghandle, void*userdata)
@@ -70,7 +93,7 @@ BoeErr* doTSU_Init(char *ethname, MsgHandle msghandle, void*userdata)
     {
         return &e_init_fail;
     }
-    ret = msgc_init(&ctx->msgc, &ctx->rs, tsu_msg_handle, (void*)userdata, tsu_msg_callback);
+    ret = msgc_init(&ctx->msgc, &ctx->rs, tsu_msg_handle, (void*)ctx, tsu_msg_callback);
     if(ret != 0)
     {
         RSRelease(&ctx->rs);
@@ -84,6 +107,13 @@ BoeErr* doTSU_Release()
     TSUContext *ctx = &gTsu;
     msgc_release(&ctx->msgc);
 
+	printf("send thread g_send %d\n",g_send);
+	printf("rcv thread g_rsv %d\n",g_rsvd);
+	printf("sorting thread g_timeout %d\n",g_timeout);
+	printf("sorting thread g_tsu_rcv %d\n",g_tsu_rcv);
+	printf("sorting thread g_bmatch0 %d\n",g_bmatch0);
+
+	
     return &e_ok;
 }
 
@@ -117,7 +147,7 @@ static BoeErr* doCommand(T_Package *p, AQData **d, int timeout, int wlen)
 {
     MsgContext *wqc = &gTsu.msgc;
     WMessage * wm = WMessageNew(p->sequence, tsu_check_response, timeout, (uint8_t*)p, wlen, 0);
-    if(msgc_send_async(wqc, wm) == 0)
+    if(msgc_send(wqc, wm) == 0)
     {
         AQData *q = msgc_read(wqc, wm);
         if(q == NULL || q->buf == NULL)

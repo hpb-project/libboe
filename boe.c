@@ -66,6 +66,17 @@ static int tsu_msg_handle(uint8_t *data, int len, void *userdata)
     return 0;
 }
 
+static int async_tsu_callback(int type, unsigned char * response, unsigned int pid, unsigned char * source, void * userdata)
+{
+    struct BoeInstance *ins = (struct BoeInstance*)userdata;
+	if(type == FUNCTION_ECSDA_CHECK && ins->validsignCallback != NULL)
+	{
+		ins->validsignCallback(response, source, (void*)&pid);
+	}
+
+    return 0;
+}
+
 static int connected(struct BoeInstance *ins)
 {
     if(doAXU_GetVersionInfo(&ins->version.H, &ins->version.M, &ins->version.F, &ins->version.D) == BOE_OK)
@@ -135,6 +146,7 @@ BoeErr* boe_inner_init(char *ethname)
     {
         return ret;
     }
+	doTSU_RegisAsyncCallback(async_tsu_callback, (void *)&gIns);
     ret = doTSU_Init(ethname, tsu_msg_handle, (void*)&gIns);
     if(ret != BOE_OK)
     {

@@ -28,7 +28,7 @@ typedef struct BoeErr{
 
 BoeErr *BOE_OK;
 typedef int (*BoeUpgradeCallback)(int,char*);
-typedef int (*BoeValidSignCallback)(int,char*);
+typedef int (*BoeValidSignCallback)(unsigned char *pub, unsigned char *sig, void *userdata);
 
 void boe_err_free(BoeErr *e);
 

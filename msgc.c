@@ -71,6 +71,11 @@ uint8_t	 *MTIMEOUT = &TIMEOUT;
 static void *sorting_thread(void*userdata);
 static void *receive_thread(void*userdata);
 static void *send_msg_thread(void*userdata);
+long int g_send =0;
+long int g_rsvd =0;
+long int g_timeout =0;
+long int g_tsu_rcv = 0;
+long int g_bmatch0 = 0;
 
 WMessage* WMessageNew(uint32_t uid, CheckResponse cfunc, uint64_t timeoutms, uint8_t *data, int len, int flag)
 {
@@ -218,7 +223,8 @@ static void *receive_thread(void*userdata)
         else {
             ret = RSRead(c->rs, buf, &max_package_len);
             if(ret == 0)
-            {
+            {	  
+           	    g_rsvd ++;
                 atomic_fetch_and_sub(&(c->msg_num), 1);
                 AQData *d = aqd_new(max_package_len);
                 memcpy(d->buf, buf, max_package_len);
@@ -261,6 +267,7 @@ static void *sorting_thread(void*userdata)
                 {
                     if(m->flag == 1)
                     {
+                    	g_tsu_rcv ++;
                         c->callback(d->buf, d->len, userdata, m->s.buf, m->s.len);
 						   
                     }
@@ -280,6 +287,7 @@ static void *sorting_thread(void*userdata)
             } 
             if(bmatch == 0 && c->msgHandleFunc != NULL)
             {
+                g_bmatch0 ++;
                 c->msgHandleFunc(d->buf, d->len, c->userdata);
                 aqd_free(d);
             }
@@ -294,6 +302,7 @@ static void *sorting_thread(void*userdata)
             {
                 m->d = NULL;
                 // timeout.
+				  g_timeout ++;
                 c->callback(&TIMEOUT, 0, userdata, m->s.buf, m->s.len);
                 sem_post(&m->sem);
                 pthread_mutex_lock(&c->mlock);
@@ -369,19 +378,25 @@ static void *send_msg_thread(void *userdata)
 		 //printf("send_msg##c->msg_num %d\n",c->msg_num);
         if(c->msg_num >= 10)
         {
-            usleep(100);
+            usleep(200);
+		    printf(" msg_num>=10, send_msg##c->msg_num %d\n",c->msg_num);
             continue;
         }
         data = aq_pop(&(c->tx_q));
         if(NULL != data)
         {
-            atomic_fetch_and_add(&(c->msg_num), 1);
 
             if(RSWrite(c->rs, data->buf, data->len) < 0)
             {
                 printf("send_msg_thread RSWrite error\n");
-            }	
-            usleep(100);//must add 
+            }
+            else
+            {
+                atomic_fetch_and_add(&(c->msg_num), 1);
+				  g_send++;
+            }
+			
+            usleep(200);//must add 
         }
     }
 
