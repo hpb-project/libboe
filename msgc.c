@@ -235,6 +235,7 @@ static void *receive_thread(void*userdata)
     return NULL;
 
 }
+uint64_t time_log = 0;
 static void *sorting_thread(void*userdata)
 {
     IMsgContext *c = (IMsgContext*)userdata;
@@ -246,6 +247,7 @@ static void *sorting_thread(void*userdata)
     uint8_t bmatch = 0;
     uint64_t ts, te;
     int cycle_ms = 1;
+    uint64_t time_temp;
 
 
     while(c->th_flag == 0) ; // wait thread start.
@@ -293,26 +295,43 @@ static void *sorting_thread(void*userdata)
             }
 
         }
+#if 1
+		time_temp = get_timestamp_us();
+		if((time_temp - time_log) >= 10000)
+		{
+			time_log = time_temp;
+			list_for_each_safe(pos, next, &head->list) 
+			{ 
+				pnode = list_entry(pos, WaitNode, list); 
+				m = pnode->wmsg;
+				 uint64_t st = get_timestamp_us();
+				if((m->sTime + m->timeout) <= st)
+				{
+					if(m->flag == 1)
+					{
+						c->callback(&TIMEOUT, 0, userdata, m->s.buf, m->s.len);
+					}
+					else 
+					{
+						m->d = NULL;
+						sem_post(&m->sem);
+					}
+					// timeout.
+					g_timeout ++;
+					pthread_mutex_lock(&c->mlock);
+					list_del_init(pos);
+					pthread_mutex_unlock(&c->mlock);
+					free(pnode);
+					break;
+				}
+			}
 
-        list_for_each_safe(pos, next, &head->list) 
-        { 
-            pnode = list_entry(pos, WaitNode, list); 
-            m = pnode->wmsg;
-            if((m->sTime + m->timeout) <= (get_timestamp_us()))
-            {
-                m->d = NULL;
-                // timeout.
-				  g_timeout ++;
-                c->callback(&TIMEOUT, 0, userdata, m->s.buf, m->s.len);
-                sem_post(&m->sem);
-                pthread_mutex_lock(&c->mlock);
-                list_del_init(pos);
-                pthread_mutex_unlock(&c->mlock);
-                free(pnode);
-            }
-        } 
+		}
+
+#endif
+
         te = get_timestamp_us();
-        usleep(100);
+        usleep(2);
     }
     {
         
@@ -374,12 +393,10 @@ static void *send_msg_thread(void *userdata)
     while(c->th_flag == 0) ;
     while(c->th_flag == 1)
     {
-    
-		 //printf("send_msg##c->msg_num %d\n",c->msg_num);
         if(c->msg_num >= 10)
         {
-            usleep(200);
-		    printf(" msg_num>=10, send_msg##c->msg_num %d\n",c->msg_num);
+            usleep(2);
+		    //printf(" msg_num>=10, send_msg##c->msg_num %d\n",c->msg_num);
             continue;
         }
         data = aq_pop(&(c->tx_q));
@@ -394,11 +411,10 @@ static void *send_msg_thread(void *userdata)
             {
                 atomic_fetch_and_add(&(c->msg_num), 1);
 				  g_send++;
-            }
-			
-            usleep(200);//must add 
+			 }
         }
+        usleep(2);//must add 
     }
-
 }
+
 #endif

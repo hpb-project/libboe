@@ -21,6 +21,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "type.h"
+#include <sys/time.h> 
 
 
 typedef struct SignResult_t{
@@ -62,6 +63,17 @@ void delete_signresult(SignResult_t *result);
 uint32_t checksum(uint8_t *data, uint32_t len);
 uint64_t get_timestamp_us();
 typedef int (*AsyncCallback)(int type, unsigned char * response, int len, unsigned char * source, void * userdata);
+
+static struct timeval gTs, gTe;
+static struct timezone gTz;
+
+#define PROFILE_START() \
+    gettimeofday(&gTs, &gTz);\
+
+#define PROFILE_END() \
+    gettimeofday(&gTe, &gTz);\
+    printf("--PROFILE-- cost time %ld us.\n", (gTe.tv_sec*1000000 + gTe.tv_usec - gTs.tv_sec*1000000 - gTs.tv_usec));
+
 
 
 #endif  /*COMMON_H*/

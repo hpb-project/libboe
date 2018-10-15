@@ -14,16 +14,11 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <sys/time.h>
-
+#include "../common.h"
 static struct timeval gTs, gTe;
 static struct timezone gTz;
 
-#define PROFILE_START() \
-    gettimeofday(&gTs, &gTz);\
 
-#define PROFILE_END() \
-    gettimeofday(&gTe, &gTz);\
-    printf("--PROFILE-- cost time %ldus.\n", (gTe.tv_sec*1000000 + gTe.tv_usec - gTs.tv_sec*1000000 - gTs.tv_usec));
 
 #define BUF_THR   20       //缓存门限
 #define TEST_NUMB 100000   
@@ -57,7 +52,6 @@ int success_num = 0;
 int error_num = 0;
 int ecc_callback(unsigned char *pubkey, unsigned char *sig, void *userdata)
 {	
-	//PROFILE_START();
 
 	int pid = 0;
 	res_num++;
@@ -77,7 +71,6 @@ int ecc_callback(unsigned char *pubkey, unsigned char *sig, void *userdata)
         memcmp(pdata->y, pubkey+32, 32) == 0)
    	{
 	    success_num ++;
-			//PROFILE_END();
 		//printf("success_num %d\n",success_num);
 		 return 0;
    }
@@ -240,6 +233,7 @@ static int ecdsa_test(int argc, char *argv[])
         printf("ECDSA test finished,static results are fellow:\n");
         printf("ECDSA ERROR count : %d\n",gErrcnt);
         printf("ECDSA test time : %ldms\n",duration);
+		 printf("### res_num %d\n",res_num);
         printf("success_num : %ld\n",success_num);
 		
         printf("error_num : %ld\n",error_num);

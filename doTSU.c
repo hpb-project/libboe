@@ -14,6 +14,7 @@
 #include "doTSU.h"
 #include "msgc.h"
 #include "serror.h"
+#include "common.h"
 
 
 typedef struct TSUContext{
@@ -108,7 +109,7 @@ BoeErr* doTSU_Release()
     msgc_release(&ctx->msgc);
 
 	printf("send thread g_send %d\n",g_send);
-	printf("rcv thread g_rsv %d\n",g_rsvd);
+	printf("rcv thread g_rsvd %d\n",g_rsvd);
 	printf("sorting thread g_timeout %d\n",g_timeout);
 	printf("sorting thread g_tsu_rcv %d\n",g_tsu_rcv);
 	printf("sorting thread g_bmatch0 %d\n",g_bmatch0);
