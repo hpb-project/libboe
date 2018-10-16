@@ -18,6 +18,7 @@
 #ifndef BOE_H
 #define BOE_H
 #include <stdint.h>
+#include <boe_full.h>
 
 
 typedef struct BoeErr{
