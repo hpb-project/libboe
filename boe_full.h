@@ -113,6 +113,7 @@ BoeErr* boe_get_s_random(unsigned char *hash, unsigned char *nexthash);
  */
 BoeErr* boe_valid_sign(unsigned char *sig, unsigned char *pub);
 BoeErr* boe_valid_sign_callback(BoeValidSignCallback func);
+BoeErr* boe_valid_sign_recover_pub_async(unsigned char *sig);
 
 BoeErr* boe_genkey(unsigned char *pubkey);
 BoeErr* boe_get_pubkey(unsigned char *pubkey);
