@@ -97,7 +97,7 @@ static BoeErr* doCommandWithTimeout(A_Package *p, AQData **d, uint64_t timeout_m
         ret = &e_no_mem;
         goto end;
     }
-    if(msgc_send(wqc, wm) == 0)
+    if(msgc_send_async(wqc, wm) == 0)
     {
         AQData *q = msgc_read(wqc, wm);
         if(q == NULL || q->buf == NULL)
@@ -142,7 +142,7 @@ static BoeErr* doCommand(A_Package *p, AQData **d)
         ret = &e_no_mem;
         goto end;
     }
-    if(msgc_send(wqc, wm) == 0)
+    if(msgc_send_async(wqc, wm) == 0)
     {
         AQData *q = msgc_read(wqc, wm);
         if(q == NULL || q->buf == NULL)

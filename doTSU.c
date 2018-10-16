@@ -148,7 +148,7 @@ static BoeErr* doCommand(T_Package *p, AQData **d, int timeout, int wlen)
 {
     MsgContext *wqc = &gTsu.msgc;
     WMessage * wm = WMessageNew(p->sequence, tsu_check_response, timeout, (uint8_t*)p, wlen, 0);
-    if(msgc_send(wqc, wm) == 0)
+    if(msgc_send_async(wqc, wm) == 0)
     {
         AQData *q = msgc_read(wqc, wm);
         if(q == NULL || q->buf == NULL)
