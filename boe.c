@@ -600,6 +600,8 @@ BoeErr* boe_valid_sign(unsigned char *sig, unsigned char *pub)
         ret = doTSU_RecoverPub(sig, pub);
         return ret;
     }
+
+    return ret;
 }
 BoeErr* boe_valid_sign_recover_pub_async(unsigned char *sig)
 {
