@@ -1,4 +1,4 @@
-// Last Update:2018-08-24 14:06:26
+// Last Update:2018-10-22 16:01:22
 /**
  * @file boetest.c
  * @brief 
@@ -16,7 +16,18 @@
 #include <sys/time.h>
 
 #define BUF_THR   20       //缓存门限
-#define TEST_NUMB 100000   //测试次数
+#define TEST_NUMB 10000   //测试次数
+
+static struct timeval gTs, gTe;
+static struct timezone gTz;
+
+#define PROFILE_START() \
+    gettimeofday(&gTs, &gTz);\
+
+#define PROFILE_END() \
+    gettimeofday(&gTe, &gTz);\
+    printf("--PROFILE-- cost time %ldms.\n", (gTe.tv_sec*1000000 + gTe.tv_usec - gTs.tv_sec*1000000 - gTs.tv_usec)/1000);
+
 typedef struct rsv_t{
     uint8_t r[32];
     uint8_t s[32];
@@ -135,41 +146,41 @@ static int ecdsa_test(int argc, char *argv[])
     // read all data to array.
     load_data(argc, argv);
     pthread_t th1;
-    pthread_t th2;
-    pthread_t th3;
-    pthread_t th4;
-    pthread_t th5;
-    pthread_t th6;
-    pthread_t th7;
-    pthread_t th8;
-    pthread_t th9;
-    pthread_t th10;
+    //pthread_t th2;
+    //pthread_t th3;
+    //pthread_t th4;
+    //pthread_t th5;
+    //pthread_t th6;
+    //pthread_t th7;
+    //pthread_t th8;
+    //pthread_t th9;
+    //pthread_t th10;
 
     ret = pthread_create(&th1, NULL, test_ecc, NULL);
-    ret = pthread_create(&th2, NULL, test_ecc, NULL);
-    ret = pthread_create(&th3, NULL, test_ecc, NULL);
-    ret = pthread_create(&th4, NULL, test_ecc, NULL);
-    ret = pthread_create(&th5, NULL, test_ecc, NULL);
-    ret = pthread_create(&th6, NULL, test_ecc, NULL);
-    ret = pthread_create(&th7, NULL, test_ecc, NULL);
-    ret = pthread_create(&th8, NULL, test_ecc, NULL);
-    ret = pthread_create(&th9, NULL, test_ecc, NULL);
-    ret = pthread_create(&th10, NULL, test_ecc, NULL);
+    //ret = pthread_create(&th2, NULL, test_ecc, NULL);
+    //ret = pthread_create(&th3, NULL, test_ecc, NULL);
+    //ret = pthread_create(&th4, NULL, test_ecc, NULL);
+    //ret = pthread_create(&th5, NULL, test_ecc, NULL);
+    //ret = pthread_create(&th6, NULL, test_ecc, NULL);
+    //ret = pthread_create(&th7, NULL, test_ecc, NULL);
+    //ret = pthread_create(&th8, NULL, test_ecc, NULL);
+    //ret = pthread_create(&th9, NULL, test_ecc, NULL);
+    //ret = pthread_create(&th10, NULL, test_ecc, NULL);
 
 	gettimeofday(&start, &tz);
 
 
 	
     pthread_join(th1, NULL);
-    pthread_join(th2, NULL);
-    pthread_join(th3, NULL);
-    pthread_join(th4, NULL);
-    pthread_join(th5, NULL);
-    pthread_join(th6, NULL);
-    pthread_join(th7, NULL);
-    pthread_join(th8, NULL);
-    pthread_join(th9, NULL);
-    pthread_join(th10, NULL);
+    //pthread_join(th2, NULL);
+    //pthread_join(th3, NULL);
+    //pthread_join(th4, NULL);
+    //pthread_join(th5, NULL);
+    //pthread_join(th6, NULL);
+    //pthread_join(th7, NULL);
+    //pthread_join(th8, NULL);
+    //pthread_join(th9, NULL);
+    //pthread_join(th10, NULL);
 
 	gettimeofday(&stop, &tz);
     {
@@ -196,6 +207,57 @@ static void shex_dump_ln(unsigned char *buf, int len)
     }
     printf("\n");
 
+}
+
+static int hwsigntest(void)
+{
+    unsigned char random[32];
+    unsigned char sig[64];
+
+    BoeErr *ret = boe_get_random(random);
+    if(ret != BOE_OK)
+    {
+        printf("get random failed.\n");
+        return 1;
+    }
+    unsigned int i = 0;
+    while(1)
+    {
+        PROFILE_START();
+        ret = boe_hw_sign(random, sig);
+        i++;
+        if(ret != BOE_OK)
+        {
+            printf("get hw sign failed, i = %u.\n", i);
+        }
+        PROFILE_END();
+        usleep(20000);
+    }
+    return 0;
+}
+
+static int hash_test()
+{
+    unsigned char shash[32];
+    unsigned char last[32];
+    memset(shash, 0x00, sizeof(shash));
+    memset(last, 0x00, sizeof(last));
+    int err = 0;
+
+    for(int i = 0; i < 10; i++)
+    {
+        BoeErr *ret = boe_get_s_random(last, shash);
+        if(ret != BOE_OK)
+        {
+            err++;
+        }
+        memcpy(last, shash, sizeof(shash));
+        printf("last = ");
+        shex_dump_ln(last, sizeof(last));
+        printf("hash = ");
+        shex_dump_ln(shash, sizeof(shash));
+    }
+    return err;
 }
 
 int main(int argc, char *argv[])
@@ -265,15 +327,34 @@ int main(int argc, char *argv[])
 #endif
     {
         // ecc test.
-        if(0 == ecdsa_test(argc, argv))
+        //if(0 == ecdsa_test(argc, argv))
+        //{
+        //    printf("ecc test ok.\n");
+        //}
+        //else
+        //{
+        //    printf("ecc test failed.\n");
+        //    return 1;
+        //}
+        //sleep(5);
+        // hash test 
+        if(0 == hash_test())
         {
-            printf("ecc test ok.\n");
+            printf("hash test ok.\n");
         }
         else
         {
-            printf("ecc test failed.\n");
-            return 1;
+            printf("hash test failed.\n");
+            return 3;
         }
+        //if(0 == hwsigntest())
+        //{
+        //    printf("hwsigntest ok.\n");
+        //}
+        //else 
+        //{
+        //    printf("hwsigntest failed.\n");
+        //}
     }
 
 
