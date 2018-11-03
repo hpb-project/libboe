@@ -1,4 +1,4 @@
-// Last Update:2018-09-13 19:24:32
+// Last Update:2018-11-02 17:08:11
 /**
  * @file nboe.c
  * @brief 
@@ -436,6 +436,11 @@ BoeErr* boe_hw_sign(unsigned char *p_random, unsigned char *sig)
     // sha3_256 generate hash.
     // use hash to signature.
     BoeErr *ret = bConnected();
+    if(p_random == NULL || sig == NULL)
+    {
+        printf("boe_hw_sign p_random == NULL || sig == NULL, return\n");
+        return &e_param_invalid;
+    }
     if(ret == BOE_OK)
     {
         int len = 32 + 32;
