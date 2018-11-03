@@ -20,6 +20,7 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <errno.h>
 #include "sha3.h"
 
 #define BUFFER_LEN (8*1024)
@@ -66,6 +67,11 @@ static int exec_shell(const char *cmd, char * buff)
     memset(buff, 0, BUFFER_LEN);
     FILE *fp = popen(cmd, "r");
     int cnt = 0, redn = 0;
+    if(fp == NULL)
+    {
+        printf("xxxxxxxxxxxxxxxx popen failed and fp is NULL, cmd = %s, errors:%s .\n", cmd, strerror(errno));
+        return 1;
+    }
     do{
         cnt += redn;
         redn = fread(buff+cnt, BUFFER_LEN-cnt, 1, fp);
@@ -92,7 +98,11 @@ static int scan_mac(MacInfo *macinfo, char *cmd_buf)
     char cmd[1024] = {0};
     char *str1 = NULL, *token = NULL, *saveptr1 = NULL;
     // get all mac addr
-    exec_shell("ls /sys/class/net/ -l | grep -v 'virtual' | grep -v 'total' | awk '{print $9}'", cmd_buf);
+    if(0 != exec_shell("ls /sys/class/net/ -l | grep -v 'virtual' | grep -v 'total' | awk '{print $9}'", cmd_buf))
+    {
+        printf("Boe genid get mac addr failed.\n");
+        return 1;
+    }
     strcpy(tmp_buf, cmd_buf);
     for (str1 = tmp_buf; ; str1 = NULL) 
     {
@@ -100,14 +110,17 @@ static int scan_mac(MacInfo *macinfo, char *cmd_buf)
         if (token == NULL)
             break;
         sprintf(cmd, "ifconfig %s| grep -Eo '[0-9a-fA-F]{2,2}:[0-9a-fA-F]{2,2}:[0-9a-fA-F]{2,2}:[0-9a-fA-F]{2,2}:[0-9a-fA-F]{2,2}:[0-9a-fA-F]{2,2}'", token);
-        exec_shell(cmd, cmd_buf);
-        cmd_buf[strlen(cmd_buf)-1] = '\0';
-        // filter virtual mac.
-        if(!is_virtual_mac(cmd_buf))
+        if(0 == exec_shell(cmd, cmd_buf))
         {
-            memcpy(macinfo->mac_list[macinfo->mac_num], cmd_buf, strlen(cmd_buf));
-            macinfo->mac_num++;
+            cmd_buf[strlen(cmd_buf)-1] = '\0';
+            // filter virtual mac.
+            if(!is_virtual_mac(cmd_buf))
+            {
+                memcpy(macinfo->mac_list[macinfo->mac_num], cmd_buf, strlen(cmd_buf));
+                macinfo->mac_num++;
+            }
         }
+
     }
     if(macinfo->mac_num <= 0)
     {
