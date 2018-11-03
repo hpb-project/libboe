@@ -323,7 +323,7 @@ BoeErr* boe_upgrade(unsigned char*image, int imagelen)
             uint32_t chk = checksum(p_data, header.len);
             if(chk != header.chk)
             {
-                printf("boe_upgrade: checksum not match\n");
+                //printf("boe_upgrade: checksum not match\n");
                 return &e_image_chk_error;
             }
             gIns.updateFid = header.chk;
@@ -347,12 +347,12 @@ BoeErr* boe_upgrade(unsigned char*image, int imagelen)
                         if(version.H==header.version.H && version.M == header.version.M 
                             && version.F==header.version.F && version.D == header.version.D)
                         {
-                            printf("upgrade successed\r\n");
+                            //printf("upgrade successed\r\n");
                             return BOE_OK;
                         }
                         else
                         {
-                            printf("version not update, upgrade failed\r\n");
+                            //printf("version not update, upgrade failed\r\n");
                             return &e_update_ver_not_match;
                         }
                     }
@@ -612,7 +612,7 @@ BoeErr* boe_valid_sign_recover_pub_async(unsigned char *sig)
     }
     else
     {
-        printf("boe_valid_sign_recover_pub bConnected error %d\n",ret->ecode);
+        //printf("boe_valid_sign_recover_pub bConnected error %d\n",ret->ecode);
     }
 	
 	return ret;
