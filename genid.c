@@ -62,35 +62,43 @@ static int is_virtual_mac(const char* mac)
     return isvirtual;
 }
 
-static int exec_shell(const char *cmd, char * buff)
+static int exec_shell(const char *cmd, char * buf, int buflen)
 {
-    memset(buff, 0, BUFFER_LEN);
     FILE *fp = popen(cmd, "r");
-    int cnt = 0, redn = 0;
+    int cnt = 0, readn = 0;
     if(fp == NULL)
     {
         printf("xxxxxxxxxxxxxxxx popen failed and fp is NULL, cmd = %s, errors:%s .\n", cmd, strerror(errno));
         return 1;
     }
-    do{
-        cnt += redn;
-        redn = fread(buff+cnt, BUFFER_LEN-cnt, 1, fp);
-    }while(redn > 0 && (cnt+redn < BUFFER_LEN));
+    while(cnt < buflen)
+    {
+        readn = fread(buf+cnt, buflen-cnt, 1, fp);
+        if(readn <= 0)
+            break;
+        else 
+            cnt += readn;
+    }
     pclose(fp);
     return 0;
+
 }
 
-static int scan_board(BoardInfo *board, char *cmd_buf)
+static int scan_board(BoardInfo *board, char *cmd_buf, int buflen)
 {
-    memset(board, 0x0, sizeof(*board));
+    memset(board, 0x0, sizeof(BoardInfo));
     /* board id */
-    exec_shell("dmidecode -s system-serial-number", cmd_buf);
-    strcpy(board->board_id, cmd_buf);
-    board->board_id[strlen(cmd_buf)-1] = '\0';
-    return 0;
+    int ret = exec_shell("dmidecode -s system-serial-number", cmd_buf, buflen);
+    if(ret == 0)
+    {
+        strcpy(board->board_id, cmd_buf);
+        board->board_id[strlen(cmd_buf)-1] = '\0';
+    }
+
+    return ret;
 }
 
-static int scan_mac(MacInfo *macinfo, char *cmd_buf)
+static int scan_mac(MacInfo *macinfo, char *cmd_buf, int buflen)
 {
     memset(macinfo, 0, sizeof(MacInfo));
     /* mac address */
@@ -98,9 +106,9 @@ static int scan_mac(MacInfo *macinfo, char *cmd_buf)
     char cmd[1024] = {0};
     char *str1 = NULL, *token = NULL, *saveptr1 = NULL;
     // get all mac addr
-    if(0 != exec_shell("ls /sys/class/net/ -l | grep -v 'virtual' | grep -v 'total' | awk '{print $9}'", cmd_buf))
+    if(0 != exec_shell("ls /sys/class/net/ -l | grep -v 'virtual' | grep -v 'total' | awk '{print $9}'", cmd_buf, buflen))
     {
-        printf("Boe genid get mac addr failed.\n");
+        printf("Boe genid get mac list failed.\n");
         return 1;
     }
     strcpy(tmp_buf, cmd_buf);
@@ -110,7 +118,7 @@ static int scan_mac(MacInfo *macinfo, char *cmd_buf)
         if (token == NULL)
             break;
         sprintf(cmd, "ifconfig %s| grep -Eo '[0-9a-fA-F]{2,2}:[0-9a-fA-F]{2,2}:[0-9a-fA-F]{2,2}:[0-9a-fA-F]{2,2}:[0-9a-fA-F]{2,2}:[0-9a-fA-F]{2,2}'", token);
-        if(0 == exec_shell(cmd, cmd_buf))
+        if(0 == exec_shell(cmd, cmd_buf, buflen))
         {
             cmd_buf[strlen(cmd_buf)-1] = '\0';
             // filter virtual mac.
@@ -120,7 +128,11 @@ static int scan_mac(MacInfo *macinfo, char *cmd_buf)
                 macinfo->mac_num++;
             }
         }
-
+        else
+        {
+            printf("Boe get mac addr failed.\n");
+            return 1;
+        }
     }
     if(macinfo->mac_num <= 0)
     {
@@ -156,17 +168,30 @@ static int s_general_id(MacInfo *macinfo, BoardInfo *board, unsigned char *id)
     return 0;
 }
 
+static unsigned char *g_id = NULL;
 int general_id(unsigned char *genid)
 {
     BoardInfo       board;
     MacInfo         mac;
     char cmd_buf[BUFFER_LEN];
     int ret = 0;
-    ret += scan_board(&board, cmd_buf);
-    ret += scan_mac(&mac, cmd_buf);
-    if(ret == 0)
+    if(g_id != NULL)
     {
-        ret += s_general_id(&mac, &board, genid);
+        memcpy(genid, g_id, 32);
+    }
+    else
+    {
+        ret += scan_board(&board, cmd_buf, sizeof(cmd_buf));
+        ret += scan_mac(&mac, cmd_buf, sizeof(cmd_buf));
+        if(ret == 0)
+        {
+            ret = s_general_id(&mac, &board, genid);
+            if(ret == 0)
+            {
+                g_id = (unsigned char *)malloc(32);
+                memcpy(g_id, genid, 32);
+            }
+        }
     }
 
     return ret;
