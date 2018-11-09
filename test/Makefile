@@ -1,4 +1,4 @@
-all:rstest msgctest axutest tstest mkimage boetest bawriteinfo getinfo boereg_test boeupdate update_record_info
+all:rstest msgctest axutest tstest mkimage boetest bawriteinfo getinfo boereg_test boeupdate update_record_info genidtest
 
 rstest:
 	gcc -g rstest.c ../rs.c -I ../ -o rstest
@@ -32,5 +32,8 @@ boereg_test:
 update_record_info:
 	gcc update_record_info.c -I ../ -L ../lib --static -lboe -g -o update_record_info -lpthread
 
+genidtest:
+	gcc ../sha3.c ../genid.c genidtest.c -I ../ -o genidtest
+
 clean:
-	rm rstest msgctest axutest tstest mkimage boetest bawriteinfo getinfo boeupdate boereg_test update_record_info
+	rm rstest msgctest axutest tstest mkimage boetest bawriteinfo getinfo boeupdate boereg_test update_record_info genidtest
