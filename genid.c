@@ -66,6 +66,7 @@ static int exec_shell(const char *cmd, char * buf, int buflen)
 {
     FILE *fp = popen(cmd, "r");
     int cnt = 0, readn = 0;
+    memset(buf, 0x0, buflen);
     if(fp == NULL)
     {
         printf("xxxxxxxxxxxxxxxx popen failed and fp is NULL, cmd = %s, errors:%s .\n", cmd, strerror(errno));
