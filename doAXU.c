@@ -164,7 +164,7 @@ static BoeErr* doCommand(A_Package *p, AQData **d)
 				printf("msgc_read data null\n");
 			}
             ret = get_error(r);
-			printf("msgc_read isErr %s\n",ret->ecode);
+			printf("msgc_read isErr %d\n",ret->ecode);
             aqd_free(q);
             goto end;
         }
