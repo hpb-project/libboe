@@ -97,6 +97,19 @@ T_Package *make_query_get_hash(uint8_t *hash, int *len)
     return p;
 }
 
+T_Package *make_query_get_new_hash(uint8_t *hash, int *len)
+{
+    T_Package *p = tsu_package_new(FUNCTION_GEN_NEW_HASH, TSU_HASH_LEN);
+    if(p)
+    {
+        tsu_set_data(p, 0, hash, TSU_HASH_LEN);
+        tsu_finish_package(p);
+        *len = TSU_HASH_LEN + sizeof(T_Package);
+    }
+
+    return p;
+}
+
 static BoeErr* doCommand(T_Package *p, AQData **d, int timeout, int wlen)
 {
     MsgContext *wqc = &gTsu.msgc;
@@ -153,6 +166,75 @@ BoeErr* doTSU_GetHash(uint8_t *hash, uint8_t *next_hash)
 {
 	int wlen = 0;
 	T_Package *p = make_query_get_hash(hash, &wlen);
+	BoeErr *ret = NULL;
+	AQData *r = NULL;
+	int try = 3;
+	
+	/*
+	//char *env_time = NULL;
+	//int sleep_time = 0;
+	//int interval_time = 0;
+	//struct timeval time;
+
+	if(p)
+	{
+		env_time = getenv("time");
+		if(env_time != NULL)
+		{
+			sleep_time = atoi(env_time);
+		}
+		else
+		{
+			sleep_time = 5;
+		}
+		
+		memset(&time, 0, sizeof(time));
+		gettimeofday(&time, NULL);
+		if(gGetRandomLastTime != 0)
+		{
+			interval_time = time.tv_sec - gGetRandomLastTime;
+			if(interval_time < sleep_time)
+			{
+				sleep(sleep_time - interval_time);
+			}
+		}
+	*/
+	if(p)
+	{
+	    do{
+	        ret = doCommand(p, &r, gShortTimeout, wlen);
+	        if(ret == &e_msgc_read_timeout)
+	           try --;
+	        else
+	            break;
+	    }while(try > 0);
+	    free(p);
+	    if(ret == &e_ok)
+	    {
+		    T_Package *q = (T_Package*)r->buf;
+		    memcpy(next_hash, q->payload, TSU_HASH_LEN);
+		    aqd_free(r);
+	    }
+	    /*
+	    memset(&time, 0, sizeof(time));
+	    gettimeofday(&time, NULL);
+	    gGetRandomLastTime = time.tv_sec;
+	    */
+	    return ret;
+	}
+	else
+	{
+	    return &e_no_mem;
+	}
+
+    return &e_result_invalid;
+}
+
+//static long int gGetRandomLastTime = 0;
+BoeErr* doTSU_GetNewHash(uint8_t *hash, uint8_t *next_hash)
+{
+	int wlen = 0;
+	T_Package *p = make_query_get_new_hash(hash, &wlen);
 	BoeErr *ret = NULL;
 	AQData *r = NULL;
 	int try = 3;

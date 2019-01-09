@@ -31,6 +31,7 @@ typedef struct T_PACKAGE{
 
 #define FUNCTION_GEN_HASH 0x1
 #define FUNCTION_ECSDA_CHECK 0x2 
+#define FUNCTION_GEN_NEW_HASH 0x3 
 
 
 T_Package* tsu_package_new(uint8_t fid, uint32_t len);
