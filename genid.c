@@ -64,25 +64,35 @@ static int is_virtual_mac(const char* mac)
 
 static int exec_shell(const char *cmd, char * buf, int buflen)
 {
-    FILE *fp = popen(cmd, "r");
-    int cnt = 0, readn = 0;
-    memset(buf, 0x0, buflen);
-    if(fp == NULL)
+    int retry = 4, ret = 0;
+    // add retry when cmd failed.
+    while(retry-- > 0)
     {
-        printf("xxxxxxxxxxxxxxxx popen failed and fp is NULL, cmd = %s, errors:%s .\n", cmd, strerror(errno));
-        return 1;
-    }
-    while(cnt < buflen)
-    {
-        readn = fread(buf+cnt, buflen-cnt, 1, fp);
-        if(readn <= 0)
-            break;
-        else 
-            cnt += readn;
-    }
-    pclose(fp);
-    return 0;
+        FILE *fp = popen(cmd, "r");
+        int cnt = 0, readn = 0;
+        memset(buf, 0x0, buflen);
 
+        ret = 0;
+        if(fp == NULL)
+        {
+            printf("xxxxxxxxxxxxxxxx popen failed and fp is NULL, cmd = %s, errors:%s .\n", cmd, strerror(errno));
+            ret = 1;
+            continue;
+        }
+
+        while(cnt < buflen)
+        {
+            readn = fread(buf+cnt, buflen-cnt, 1, fp);
+            if(readn <= 0)
+                break;
+            else 
+                cnt += readn;
+        }
+        pclose(fp);
+
+        break;
+    }
+    return ret;
 }
 
 static int scan_board(BoardInfo *board, char *cmd_buf, int buflen)

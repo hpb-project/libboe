@@ -41,7 +41,7 @@ typedef struct WMessage{
     CheckResponse cFunc; // check response is waited.
     AQData s;
     AQData *d;
-
+    int flag;//send msg async flag
 }WMessage;
 
 // wait list.
@@ -60,12 +60,23 @@ typedef struct IMsgContext{
     RSContext *rs;
     void*    userdata;
     pthread_mutex_t mlock; // 
+    AtomicQ  tx_q;
+    pthread_t tx_thread;
+    int msg_num;
+    MsgHandleCallback callback;
 }IMsgContext;
 
+uint8_t	 *MTIMEOUT = &TIMEOUT;
 static void *sorting_thread(void*userdata);
 static void *receive_thread(void*userdata);
+static void *send_msg_thread(void*userdata);
+long int g_send =0;
+long int g_rsvd =0;
+long int g_timeout =0;
+long int g_tsu_rcv = 0;
+long int g_bmatch0 = 0;
 
-WMessage* WMessageNew(uint32_t uid, CheckResponse cfunc, uint64_t timeoutms, uint8_t *data, int len)
+WMessage* WMessageNew(uint32_t uid, CheckResponse cfunc, uint64_t timeoutms, uint8_t *data, int len, int flag)
 {
     WMessage *msg = (WMessage*)malloc(sizeof(WMessage));
     int align = len;
@@ -77,6 +88,7 @@ WMessage* WMessageNew(uint32_t uid, CheckResponse cfunc, uint64_t timeoutms, uin
     msg->cFunc = cfunc;
     msg->timeout = timeoutms*1000;
     msg->d = NULL;
+    msg->flag = flag;
     if(align%4 != 0)
     {
         align += (4-align%4);
@@ -113,7 +125,7 @@ int WMessageFree(WMessage *m)
     return 0;
 }
 
-int msgc_init(MsgContext *ctx, RSContext *rs, MsgHandle msghandle, void*userdata)
+int msgc_init(MsgContext *ctx, RSContext *rs, MsgHandle msghandle, void*userdata, MsgHandleCallback callback)
 {
     int ret = 0;
     IMsgContext *c = (IMsgContext*)malloc(sizeof(IMsgContext));
@@ -122,6 +134,8 @@ int msgc_init(MsgContext *ctx, RSContext *rs, MsgHandle msghandle, void*userdata
 
     INIT_LIST_HEAD(&c->wList.list);
     ret = aq_init(&(c->r_q), 1000000); // 100w
+    ret += aq_init(&(c->tx_q), 1000000); // 100w
+    
     if(ret != 0)
     {
         free(c);
@@ -131,10 +145,13 @@ int msgc_init(MsgContext *ctx, RSContext *rs, MsgHandle msghandle, void*userdata
     c->rs = rs;
     c->th_flag = 0; // post thread.
     c->userdata = userdata;
+    c->callback = callback;
 
     ret = pthread_create(&c->r_thread, NULL, receive_thread, (void*)c);
     ret = pthread_create(&c->s_thread, NULL, sorting_thread, (void*)c);
-    c->th_flag = 1; // start thread.
+    ret = pthread_create(&c->tx_thread, NULL, send_msg_thread, (void*)c);
+
+	c->th_flag = 1; // start thread.
     *ctx = c;
 
     return 0;
@@ -146,12 +163,12 @@ int msgc_release(MsgContext *ctx)
     c->th_flag = 2;
     pthread_join(c->r_thread, NULL);
     pthread_join(c->s_thread, NULL);
+    pthread_join(c->tx_thread, NULL);
     pthread_mutex_destroy(&c->mlock);
     aq_free(&(c->r_q));
     
     return 0;
 }
-
 int msgc_send(MsgContext *ctx, WMessage *wmsg)
 {
     IMsgContext *c = *ctx;
@@ -161,7 +178,7 @@ int msgc_send(MsgContext *ctx, WMessage *wmsg)
         return -1;
     wmsg->sTime = get_timestamp_us();
     n->wmsg = wmsg;
-
+	
     if(RSWrite(c->rs, wmsg->s.buf, wmsg->s.len) < 0)
     {
         free(n);
@@ -206,7 +223,9 @@ static void *receive_thread(void*userdata)
         else {
             ret = RSRead(c->rs, buf, &max_package_len);
             if(ret == 0)
-            {
+            {	  
+           	    g_rsvd ++;
+                atomic_fetch_and_sub(&(c->msg_num), 1);
                 AQData *d = aqd_new(max_package_len);
                 memcpy(d->buf, buf, max_package_len);
                 aq_push(&c->r_q, d);
@@ -216,7 +235,7 @@ static void *receive_thread(void*userdata)
     return NULL;
 
 }
-
+uint64_t time_log = 0;
 static void *sorting_thread(void*userdata)
 {
     IMsgContext *c = (IMsgContext*)userdata;
@@ -228,6 +247,7 @@ static void *sorting_thread(void*userdata)
     uint8_t bmatch = 0;
     uint64_t ts, te;
     int cycle_ms = 1;
+    uint64_t time_temp;
 
 
     while(c->th_flag == 0) ; // wait thread start.
@@ -247,10 +267,19 @@ static void *sorting_thread(void*userdata)
                 if(d->len > 0 && d->buf != NULL &&
                         (1 == m->cFunc(d->buf, d->len, m->uid)))
                 {
+                    if(m->flag == 1)
+                    {
+                    	g_tsu_rcv ++;
+                        c->callback(d->buf, d->len, userdata, m->s.buf, m->s.len);
+						   
+                    }
+                    else
+                    {
+                        m->d = d;
+                        sem_post(&m->sem);
+                    }
+						
                     bmatch = 1;
-                    m->d = d;
-                    sem_post(&m->sem);
-
                     pthread_mutex_lock(&c->mlock);
                     list_del_init(pos);
                     pthread_mutex_unlock(&c->mlock);
@@ -260,29 +289,49 @@ static void *sorting_thread(void*userdata)
             } 
             if(bmatch == 0 && c->msgHandleFunc != NULL)
             {
+                g_bmatch0 ++;
                 c->msgHandleFunc(d->buf, d->len, c->userdata);
                 aqd_free(d);
             }
 
         }
+#if 1
+		time_temp = get_timestamp_us();
+		if((time_temp - time_log) >= 10000)
+		{
+			time_log = time_temp;
+			list_for_each_safe(pos, next, &head->list) 
+			{ 
+				pnode = list_entry(pos, WaitNode, list); 
+				m = pnode->wmsg;
+				 uint64_t st = get_timestamp_us();
+				if((m->sTime + m->timeout) <= st)
+				{
+					if(m->flag == 1)
+					{
+						c->callback(TIMEOUT, 0, userdata, m->s.buf, m->s.len);
+					}
+					else 
+					{
+						m->d = NULL;
+						sem_post(&m->sem);
+					}
+					// timeout.
+					g_timeout ++;
+					pthread_mutex_lock(&c->mlock);
+					list_del_init(pos);
+					pthread_mutex_unlock(&c->mlock);
+					free(pnode);
+					break;
+				}
+			}
 
-        list_for_each_safe(pos, next, &head->list) 
-        { 
-            pnode = list_entry(pos, WaitNode, list); 
-            m = pnode->wmsg;
-            if((m->sTime + m->timeout) <= (get_timestamp_us()))
-            {
-                m->d = NULL;
-                // timeout.
-                sem_post(&m->sem);
-                pthread_mutex_lock(&c->mlock);
-                list_del_init(pos);
-                pthread_mutex_unlock(&c->mlock);
-                free(pnode);
-            }
-        } 
+		}
+
+#endif
+
         te = get_timestamp_us();
-        usleep(100);
+        usleep(2);
     }
     {
         
@@ -301,4 +350,71 @@ static void *sorting_thread(void*userdata)
 
     return NULL;
 }
+#if 1
+int msgc_send_async(MsgContext *ctx, WMessage *wmsg)
+{
+    IMsgContext *c = *ctx;
+    AQData *data = NULL;
+    static uint8_t buf[64*1024];
+    int max_package_len = 0;
+	int ret = 0;
 
+    WaitNode *n = (WaitNode*)malloc(sizeof(WaitNode));
+    if(n == NULL)
+        return -1;
+    wmsg->sTime = get_timestamp_us();
+    n->wmsg = wmsg;
+	max_package_len = wmsg->s.len;
+	data = aqd_new(max_package_len);
+	if(data != NULL)
+	{
+		memcpy(data->buf, wmsg->s.buf, wmsg->s.len);
+	}
+
+	ret = aq_push(&c->tx_q, data);
+	if(0 != ret)
+	{
+		printf("msgc_send_async aq_push tx_q error\n");
+	}
+
+    pthread_mutex_lock(&c->mlock);
+    list_add_tail(&(n->list), &(c->wList.list));
+    pthread_mutex_unlock(&c->mlock);
+
+    return 0;
+}
+
+//send thread
+static void *send_msg_thread(void *userdata)
+{
+    IMsgContext *c = (IMsgContext*)userdata;
+    AQData *data= NULL;
+
+    while(c->th_flag == 0) ;
+    while(c->th_flag == 1)
+    {
+        if(c->msg_num >= 10)
+        {
+            usleep(2);
+		    //printf(" msg_num>=10, send_msg##c->msg_num %d\n",c->msg_num);
+            continue;
+        }
+        data = aq_pop(&(c->tx_q));
+        if(NULL != data)
+        {
+
+            if(RSWrite(c->rs, data->buf, data->len) < 0)
+            {
+                printf("send_msg_thread RSWrite error\n");
+            }
+            else
+            {
+                atomic_fetch_and_add(&(c->msg_num), 1);
+				  g_send++;
+			 }
+        }
+        usleep(2);//must add 
+    }
+}
+
+#endif

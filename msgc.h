@@ -23,15 +23,22 @@
 
 typedef int (*CheckResponse)(uint8_t *res, int len, uint32_t uid);
 typedef int (*MsgHandle)(uint8_t *data, int len, void *userdata);
+typedef int (*MsgHandleCallback)(uint8_t *data, int len, void *userdata, uint8_t *old_data, int old_len);
 
 typedef struct WMessage WMessage;
 typedef void*  MsgContext;
-WMessage* WMessageNew(uint32_t uid, CheckResponse cfunc, uint64_t timeout, uint8_t *data, int len);
+uint8_t *TIMEOUT;
+WMessage* WMessageNew(uint32_t uid, CheckResponse cfunc, uint64_t timeout, uint8_t *data, int len, int flag);
 int WMessageFree(WMessage *m);
 
-int msgc_init(MsgContext *c, RSContext *rs, MsgHandle msghandle, void*userdata);
+int msgc_init(MsgContext *c, RSContext *rs, MsgHandle msghandle, void*userdata, MsgHandleCallback callback);
 int msgc_release(MsgContext *ctx);
 int msgc_send(MsgContext *ctx, WMessage *wmsg);
 AQData* msgc_read(MsgContext *ctx, WMessage *wmsg);
+long int g_send;
+long int g_rsvd;
+long int g_timeout;
+long int g_bmatch0;
+long int g_tsu_rcv;
 
 #endif  /*MSGC_H*/

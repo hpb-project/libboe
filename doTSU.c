@@ -14,9 +14,12 @@
 #include "doTSU.h"
 #include "msgc.h"
 #include "serror.h"
+#include "common.h"
 
 
 typedef struct TSUContext{
+	AsyncCallback asyncCallback;
+	void *userdata;
     RSContext  rs;
     MsgContext msgc;
 }TSUContext;
@@ -46,6 +49,43 @@ static int tsu_msg_handle(uint8_t *data, int len, void*userdata)
     return 0;
 }
 
+static int tsu_msg_callback(uint8_t *data, int len, void*userdata, uint8_t *old_data, int old_len)
+{
+	TSUContext *ctx = &gTsu;
+
+    T_Package *tsu_packet = NULL;
+    T_Package *tsu_packet_old = NULL;
+
+	tsu_packet = (T_Package *)data;
+	tsu_packet_old =  (T_Package *)old_data;
+	int type = tsu_packet_old->function_id;
+	
+
+	if(ctx->asyncCallback != NULL)
+	{
+		if(tsu_packet == NULL || tsu_packet == TIMEOUT)
+		{
+			ctx->asyncCallback(type, NULL, 0, tsu_packet_old->payload, ctx->userdata);
+		}
+		else
+		{
+			//ctx->asyncCallback(type, tsu_packet->payload, len - sizeof(T_Package), tsu_packet_old->payload, ctx->userdata);
+
+			#warning for ecc test, response packet sequence instead of response length.
+			ctx->asyncCallback(type, tsu_packet->payload, tsu_packet_old->sequence, tsu_packet_old->payload, ctx->userdata);
+		}
+	}
+
+    return 0;
+}
+
+void doTSU_RegisAsyncCallback(AsyncCallback afun, void *data)
+{
+	TSUContext *ctx = &gTsu;
+	ctx->asyncCallback = afun;
+	ctx->userdata = data;
+}
+
 BoeErr* doTSU_Init(char *ethname, MsgHandle msghandle, void*userdata)
 {
     TSUContext *ctx = &gTsu;
@@ -54,7 +94,7 @@ BoeErr* doTSU_Init(char *ethname, MsgHandle msghandle, void*userdata)
     {
         return &e_init_fail;
     }
-    ret = msgc_init(&ctx->msgc, &ctx->rs, tsu_msg_handle, (void*)userdata);
+    ret = msgc_init(&ctx->msgc, &ctx->rs, tsu_msg_handle, (void*)ctx, tsu_msg_callback);
     if(ret != 0)
     {
         RSRelease(&ctx->rs);
@@ -113,8 +153,8 @@ T_Package *make_query_get_new_hash(uint8_t *hash, int *len)
 static BoeErr* doCommand(T_Package *p, AQData **d, int timeout, int wlen)
 {
     MsgContext *wqc = &gTsu.msgc;
-    WMessage * wm = WMessageNew(p->sequence, tsu_check_response, timeout, (uint8_t*)p, wlen);
-    if(msgc_send(wqc, wm) == 0)
+    WMessage * wm = WMessageNew(p->sequence, tsu_check_response, timeout, (uint8_t*)p, wlen, 0);
+    if(msgc_send_async(wqc, wm) == 0)
     {
         AQData *q = msgc_read(wqc, wm);
         if(q == NULL || q->buf == NULL)
@@ -127,7 +167,47 @@ static BoeErr* doCommand(T_Package *p, AQData **d, int timeout, int wlen)
         return &e_msgc_send_fail;
     }
 }
-
+#if 1
+/*recover pub*/
+static BoeErr* doCommandRecoverPubAsync(T_Package *p, int timeout, int wlen)
+{
+    MsgContext *wqc = &gTsu.msgc;
+    WMessage * wm = WMessageNew(p->sequence, tsu_check_response, timeout, (uint8_t*)p, wlen, 1);
+	
+    if(msgc_send_async(wqc, wm) == 0)
+    {
+        return &e_ok;
+    }
+    else
+    {
+        return &e_msgc_send_fail;
+    }
+}
+BoeErr* doTSU_RecoverPub_Async(uint8_t *sig)
+{
+    int wlen = 0;
+    T_Package *p = make_query_recover_key(sig, &wlen);
+    BoeErr *ret = NULL;
+    if(p)
+    {
+        ret = doCommandRecoverPubAsync(p, gShortTimeout, wlen);
+        free(p);
+        if(ret == &e_ok)
+        {
+            return &e_ok;
+        }
+		 else
+		 {
+			printf("doCommandRecoverPubAsync error %d\n",ret->ecode);
+		 }
+    }
+    else
+    {
+        return &e_no_mem;
+    }
+    return &e_ok;
+}
+#endif
 BoeErr* doTSU_RecoverPub(uint8_t *sig, uint8_t *pub)
 {
     int wlen = 0;
