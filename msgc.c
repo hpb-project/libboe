@@ -309,7 +309,7 @@ static void *sorting_thread(void*userdata)
 				{
 					if(m->flag == 1)
 					{
-						c->callback(&TIMEOUT, 0, userdata, m->s.buf, m->s.len);
+						c->callback(TIMEOUT, 0, userdata, m->s.buf, m->s.len);
 					}
 					else 
 					{
