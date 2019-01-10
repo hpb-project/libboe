@@ -7,7 +7,7 @@ CROSS=
 INC= -I . 
 
 CC=${CROSS}gcc
-CFLAGS  := -Wall -g -fPIC -c 
+CFLAGS  := -Wall -g -fPIC -c  -std=gnu99
 
 OBJ_DIR=./obj
 OUT_DIR=./lib
