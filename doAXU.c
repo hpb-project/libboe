@@ -47,6 +47,7 @@ static AXUContext gAxu;
         o += l;\
     }
 
+#define MajorHVer(hv) ((hv)&0xf0>>4)
 static int axu_check_response(uint8_t* data, int plen, uint32_t uid);
 
 static inline int isAck(A_Package *p)
@@ -419,12 +420,12 @@ BoeErr* doAXU_GetVersionInfo(unsigned char *H, unsigned char *M, unsigned char *
     A_Package *p = make_query_simple(ACMD_PB_GET_VERSION_INFO);
     BoeErr *ret = NULL;
     AQData *r = NULL;
-    int try = 3;
+    int try = 1;
 	
     if(p)
     {
         do{
-            ret = doCommand(p, &r);
+            ret = doCommandWithTimeout(p, &r,50);
             if(ret == &e_msgc_read_timeout)
                 try--;
             else
@@ -435,7 +436,7 @@ BoeErr* doAXU_GetVersionInfo(unsigned char *H, unsigned char *M, unsigned char *
         {
             A_Package *q = (A_Package*)(r->buf);
 
-            *H = BPGetHVersion(q);
+            *H = MajorHVer(BPGetHVersion(q));
             *M = BPGetMVersion(q);
             *F = BPGetFVersion(q);
             *D = BPGetDVersion(q);
