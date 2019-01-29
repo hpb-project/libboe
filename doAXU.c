@@ -420,7 +420,7 @@ BoeErr* doAXU_GetVersionInfo(unsigned char *H, unsigned char *M, unsigned char *
     A_Package *p = make_query_simple(ACMD_PB_GET_VERSION_INFO);
     BoeErr *ret = NULL;
     AQData *r = NULL;
-    int try = 1;
+    int try = 3;
 	
     if(p)
     {
