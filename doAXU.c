@@ -425,7 +425,7 @@ BoeErr* doAXU_GetVersionInfo(unsigned char *H, unsigned char *M, unsigned char *
     if(p)
     {
         do{
-            ret = doCommandWithTimeout(p, &r,50);
+            ret = doCommandWithTimeout(p, &r,200);
             if(ret == &e_msgc_read_timeout)
                 try--;
             else
