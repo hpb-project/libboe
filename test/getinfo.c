@@ -8,6 +8,7 @@
  */
 
 #include "boe_full.h"
+#include "genid.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -107,7 +108,17 @@ int main(int argc, char *argv[])
         sprintf(scid+2*i, "%02x", cid[i]);
     }
 
-    printf("%s\t%s\t%s\t%s\t\n",rsn, rsmac, raccount, scid);
+    printf("SN: %s\n", rsn);
+    printf("MAC: %s\n", rsmac);
+    printf("Account: %s\n", raccount);
+    printf("CID: %s\n", scid);
+    unsigned char genid[32];
+    int nret = general_id(genid);
+    if(nret == 0)
+    {
+	printf("HID: ");
+	shex_dump_ln(genid, sizeof(genid));
+    }
     
     boe_release();
 

@@ -1,10 +1,10 @@
-all:rstest msgctest axutest tstest mkimage boetest bawriteinfo getinfo boereg_test boeupdate update_record_info genidtest
+all:rstest axutest tstest mkimage boetest bawriteinfo getinfo boereg_test boeupdate update_record_info genidtest
 
 rstest:
 	gcc -g rstest.c ../rs.c -I ../ -o rstest
 
-msgctest:
-	gcc -g msgctest.c ../common.c ../aq.c ../rs.c ../msgc.c -I .. -o msgctest -lpthread
+#msgctest:
+#	gcc -g msgctest.c ../common.c ../aq.c ../rs.c ../msgc.c -I .. -o msgctest -lpthread
 
 axutest:
 	gcc -g ../common.c ../aq.c ../doAXU.c ../serror.c ../msgc.c ../rs.c ../axu_connector.c axutest.c  -I .. -lpthread -o axutest
@@ -36,4 +36,4 @@ genidtest:
 	gcc ../sha3.c ../genid.c genidtest.c -I ../ -o genidtest
 
 clean:
-	rm rstest msgctest axutest tstest mkimage boetest bawriteinfo getinfo boeupdate boereg_test update_record_info genidtest
+	rm rstest axutest tstest mkimage boetest bawriteinfo getinfo boeupdate boereg_test update_record_info genidtest
