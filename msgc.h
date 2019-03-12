@@ -18,21 +18,37 @@
 #define MSGC_H
 
 #include <stdint.h>
+#include <semaphore.h>
 #include "aq.h"
 #include "rs.h"
 
 typedef int (*CheckResponse)(uint8_t *res, int len, uint32_t uid);
 typedef int (*MsgHandle)(uint8_t *data, int len, void *userdata);
-typedef int (*MsgHandleCallback)(uint8_t *data, int len, void *userdata, uint8_t *old_data, int old_len);
 
-typedef struct WMessage WMessage;
+// wait response. 
+typedef struct WMessage{
+    uint32_t uid;     // unique id.
+    uint64_t timeout; // timeout unit us.
+    uint64_t sTime;   // timestamp of enter wait list..
+    sem_t sem;
+    CheckResponse cFunc; // check response is waited.
+    AQData s;           // source data
+    AQData *d;          // receive data
+    uint8_t *userdata;  // task userdata
+    int     userdata_len;   // userdata length
+    int flag;//send msg async flag
+}WMessage;
+
+typedef int (*MsgHandleCallback)(WMessage *m, void *userdata);
+
 typedef void*  MsgContext;
-uint8_t *TIMEOUT;
 WMessage* WMessageNew(uint32_t uid, CheckResponse cfunc, uint64_t timeout, uint8_t *data, int len, int flag);
+int WMessageAddUserdata(WMessage *m, uint8_t *data, int len);
 int WMessageFree(WMessage *m);
 
 int msgc_init(MsgContext *c, RSContext *rs, MsgHandle msghandle, void*userdata, MsgHandleCallback callback);
 int msgc_release(MsgContext *ctx);
+int msgc_send_async(MsgContext *ctx, WMessage *wmsg);
 int msgc_send(MsgContext *ctx, WMessage *wmsg);
 AQData* msgc_read(MsgContext *ctx, WMessage *wmsg);
 long int g_send;

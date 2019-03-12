@@ -1,4 +1,4 @@
-// Last Update:2018-07-12 19:54:42
+// Last Update:2019-03-12 19:41:28
 /**
  * @file doTSU.h
  * @brief 
@@ -18,4 +18,6 @@ BoeErr* doTSU_Release();
 BoeErr* doTSU_RecoverPub(uint8_t *sig, uint8_t *result);
 BoeErr* doTSU_GetHash(uint8_t *hash, uint8_t *next_hash);
 BoeErr* doTSU_GetNewHash(uint8_t *hash, uint8_t *next_hash);
+BoeErr* doTSU_RecoverPub_Async(uint8_t *sig, unsigned char *param, int param_len);
+void doTSU_RegisAsyncCallback(AsyncCallback afun, void *data);
 #endif  /*DO_T_S_U_H*/

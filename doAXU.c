@@ -9,16 +9,6 @@
 #include "serror.h"
 #include "doAXU.h"
 
-static struct timeval gTs, gTe;
-static struct timezone gTz;
-
-#define PROFILE_START() \
-    gettimeofday(&gTs, &gTz);\
-
-#define PROFILE_END() \
-    gettimeofday(&gTe, &gTz);\
-    printf("--PROFILE-- cost time %ldms.\n", (gTe.tv_sec*1000000 + gTe.tv_usec - gTs.tv_sec*1000000 - gTs.tv_usec)/1000);
-
 typedef struct AXUContext {
     RSContext  rs;
     MsgContext wqc;
@@ -1065,7 +1055,7 @@ BoeErr* doAXU_UpgradeAbort(uint32_t fid)
     }
 }
 
-static int asu_msg_callback(uint8_t *data, int len, void*userdata, uint8_t *old_data, int old_len)
+static int asu_msg_callback(WMessage *m, void*userdata)
 {
     printf("axu rcv \n");
     return 0;

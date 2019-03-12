@@ -1,4 +1,4 @@
-// Last Update:2018-11-02 17:08:11
+// Last Update:2019-03-12 19:44:04
 /**
  * @file nboe.c
  * @brief 
@@ -66,12 +66,12 @@ static int tsu_msg_handle(uint8_t *data, int len, void *userdata)
     return 0;
 }
 
-static int async_tsu_callback(int type, unsigned char * response, unsigned int pid, unsigned char * source, void * userdata)
+static int async_tsu_callback(int type, unsigned char * response, int res_len, unsigned char *param, int param_len, unsigned char * source, void * userdata)
 {
     struct BoeInstance *ins = (struct BoeInstance*)userdata;
 	if(type == FUNCTION_ECSDA_CHECK && ins->validsignCallback != NULL)
 	{
-		ins->validsignCallback(response, source, (void*)&pid);
+		ins->validsignCallback(response, source, (void*)param, param_len);
 	}
 
     return 0;
@@ -432,7 +432,7 @@ BoeErr* boe_get_bind_account(unsigned char *baccount)
         return doAXU_GetBindAccount(baccount);
     return ret;
 }
-
+#if 0
 static void hex_dump_ln(unsigned char *buf, int len)
 {
     for(int i =0; i < len; i++)
@@ -442,6 +442,7 @@ static void hex_dump_ln(unsigned char *buf, int len)
     printf("\n");
 
 }
+#endif
 
 BoeErr* boe_hw_sign(unsigned char *p_random, unsigned char *sig)
 {
@@ -617,12 +618,12 @@ BoeErr* boe_valid_sign(unsigned char *sig, unsigned char *pub)
     }
     return ret;
 }
-BoeErr* boe_valid_sign_recover_pub_async(unsigned char *sig)
+BoeErr* boe_valid_sign_recover_pub_async(unsigned char *sig, unsigned char *param, int paramlen)
 {
     BoeErr *ret = bConnected();
     if(ret == BOE_OK)
     {
-        return doTSU_RecoverPub_Async(sig);
+        return doTSU_RecoverPub_Async(sig, param, paramlen);
     }
     else
     {

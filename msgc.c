@@ -30,20 +30,6 @@
 #include "list.h"
 #include "msgc.h"
 
-
-
-// wait response. 
-typedef struct WMessage{
-    uint32_t uid;     // unique id.
-    uint64_t timeout; // timeout unit us.
-    uint64_t sTime;   // timestamp of enter wait list..
-    sem_t sem;
-    CheckResponse cFunc; // check response is waited.
-    AQData s;
-    AQData *d;
-    int flag;//send msg async flag
-}WMessage;
-
 // wait list.
 typedef struct WaitNode{
     WMessage *wmsg;
@@ -63,10 +49,9 @@ typedef struct IMsgContext{
     AtomicQ  tx_q;
     pthread_t tx_thread;
     int msg_num;
-    MsgHandleCallback callback;
+    MsgHandleCallback callback; // async msg callback
 }IMsgContext;
 
-uint8_t	 *MTIMEOUT = &TIMEOUT;
 static void *sorting_thread(void*userdata);
 static void *receive_thread(void*userdata);
 static void *send_msg_thread(void*userdata);
@@ -84,6 +69,7 @@ WMessage* WMessageNew(uint32_t uid, CheckResponse cfunc, uint64_t timeoutms, uin
     {
         return NULL;
     }
+    memset(msg, 0x0, sizeof(WMessage));
     msg->uid = uid;
     msg->cFunc = cfunc;
     msg->timeout = timeoutms*1000;
@@ -111,6 +97,16 @@ WMessage* WMessageNew(uint32_t uid, CheckResponse cfunc, uint64_t timeoutms, uin
     }
 
     return msg;
+}
+
+int WMessageAddUserdata(WMessage *m, uint8_t *data, int len)
+{
+    if(m != NULL)
+    {
+        m->userdata = data;
+        m->userdata_len = len;
+    }
+    return 0;
 }
 
 int WMessageFree(WMessage *m)
@@ -245,8 +241,6 @@ static void *sorting_thread(void*userdata)
     WMessage *m = NULL;
     AQData *d = NULL;
     uint8_t bmatch = 0;
-    uint64_t ts, te;
-    int cycle_ms = 1;
     uint64_t time_temp;
 
 
@@ -255,7 +249,6 @@ static void *sorting_thread(void*userdata)
     while(c->th_flag == 1)
     {
         bmatch = 0;
-        ts = get_timestamp_us();
         d = aq_pop(&(c->r_q));
         if(d != NULL)
         {
@@ -270,8 +263,8 @@ static void *sorting_thread(void*userdata)
                     if(m->flag == 1)
                     {
                     	g_tsu_rcv ++;
-                        c->callback(d->buf, d->len, userdata, m->s.buf, m->s.len);
-						   
+                        m->d = d;
+                        c->callback(m, userdata);
                     }
                     else
                     {
@@ -309,7 +302,8 @@ static void *sorting_thread(void*userdata)
 				{
 					if(m->flag == 1)
 					{
-						c->callback(TIMEOUT, 0, userdata, m->s.buf, m->s.len);
+                        m->d = NULL;
+						c->callback(m, userdata);
 					}
 					else 
 					{
@@ -329,8 +323,6 @@ static void *sorting_thread(void*userdata)
 		}
 
 #endif
-
-        te = get_timestamp_us();
         usleep(2);
     }
     {
@@ -355,7 +347,6 @@ int msgc_send_async(MsgContext *ctx, WMessage *wmsg)
 {
     IMsgContext *c = *ctx;
     AQData *data = NULL;
-    static uint8_t buf[64*1024];
     int max_package_len = 0;
 	int ret = 0;
 
@@ -415,6 +406,7 @@ static void *send_msg_thread(void *userdata)
         }
         usleep(2);//must add 
     }
+    return NULL;
 }
 
 #endif
