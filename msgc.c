@@ -103,7 +103,8 @@ int WMessageAddUserdata(WMessage *m, uint8_t *data, int len)
 {
     if(m != NULL)
     {
-        m->userdata = data;
+        m->userdata = malloc(len);
+        memcpy(m->userdata, data, len);
         m->userdata_len = len;
     }
     return 0;
@@ -116,6 +117,11 @@ int WMessageFree(WMessage *m)
     {
         free(m->s.buf);
         m->s.buf = NULL;
+    }
+    if(m->userdata != NULL)
+    {
+        free(m->userdata);
+        m->userdata = NULL;
     }
     free(m);
     return 0;
