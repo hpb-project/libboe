@@ -21,7 +21,7 @@
 #include <semaphore.h>
 #include "aq.h"
 #include "rs.h"
-
+#define MAX_WM_USERDATA_LEN (64)
 typedef int (*CheckResponse)(uint8_t *res, int len, uint32_t uid);
 typedef int (*MsgHandle)(uint8_t *data, int len, void *userdata);
 
@@ -34,7 +34,7 @@ typedef struct WMessage{
     CheckResponse cFunc; // check response is waited.
     AQData s;           // source data
     AQData *d;          // receive data
-    uint8_t *userdata;  // task userdata
+    uint8_t userdata[MAX_WM_USERDATA_LEN];  // task userdata
     int     userdata_len;   // userdata length
     int flag;//send msg async flag
 }WMessage;
