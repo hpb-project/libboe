@@ -25,7 +25,7 @@ typedef struct T_PACKAGE{
     uint8_t     version;        // the package is request(0) or responsed(1).
     uint8_t     status;      // 0: no fragment; 1: first fragment; 
                                     // 2: middle fragment; 3:last fragment.
-    uint8_t    reserved;           // reserved.
+    uint8_t     sub_function;           // reserved. sub_function
     uint8_t     payload[];          // payload data pointor.
 }T_Package;
 
@@ -33,6 +33,7 @@ typedef struct T_PACKAGE{
 #define FUNCTION_ECSDA_CHECK 0x2 
 #define FUNCTION_GEN_NEW_HASH 0x3 
 
+#define TSU_HASH_CHECK_LEN (64)
 
 T_Package* tsu_package_new(uint8_t fid, uint32_t len);
 int tsu_set_data(T_Package* p, uint16_t offset, uint8_t* data, uint32_t len);

@@ -238,6 +238,7 @@ static int hwsigntest(void)
 }
 
 #define HASH_TEST_COUNT 10 
+/*
 static const char *hash_serial_v1 [HASH_TEST_COUNT] = {
 	"7dcabd53a3b5fbd6cb014416ddee75d07dcabd53a3b5fbd6cb014416ddee75d0",
 	"06ad07e25b57b7ec3fd5ee5a31f85ff37ad9c1b70cb3268e92b3df4b4c4a1313",
@@ -249,6 +250,20 @@ static const char *hash_serial_v1 [HASH_TEST_COUNT] = {
 	"3a44f859d1c269174d0192bf3ad2b18057a8c4904a8acf368bcb464ecc65bac1",
 	"0e55b054ee1bee82ec27c0a6b8773f971503fa7c4c43dbe9d2ab51a9a6ebbd74",
 	"fcbeb2721937f97739b23984fd011876db3cdc24b6e942013749b9e93e468fbc"
+};
+*/
+
+static const char *hash_serial_v1 [HASH_TEST_COUNT] = {
+	"694d1160ec4a8842e5c14ca9d4a471425b6fbb441518698e09303ea79fda1917",
+	"4582e2d6d337d2d46295c298422506d2a304a3f32387292e0925c3a9f81b8e0f",
+	"4c1669c8565ed042475c8f41004ed0963dda7f4890482baf9e056ef01d77d688",
+	"b77730c21f9bfcdf9791322c0351f9dc8f9481b2ac31e228806a7e1fd9712a57",
+	"7928c34548841a863b796c2c1a73d00b8d8bdc22b2371fcb9891bb6ce803580d",
+	"7cbbd5c29d89b5b98f0ae5dfbb2c307993e888d17181d48b3d0169df0fd4ceb1",
+	"bf9295b9971146bee155247aa22f4832517a0a4f917f34f60de8e3016e805ab0",
+	"d7e51f102e5c73da8388cee74dafe12274892cb24debbbe2ababcb375f1080b3",
+	"496e268ea67dc9e33afb905750ddea6321259f52b6089718bc832d8a24d5202a",
+	"97738b7fa96b28d2984857284421d3729f3ecf12a002fa38dc02e3e513bfeb0a"
 };
 
 static void hash_to_string(unsigned char *hash, char *str)
@@ -267,39 +282,68 @@ static int hash_test()
 	unsigned char shash[32];
 	unsigned char last[32];
 	char hash_str[65] = {0};
+	uint32_t p_status = 0;
+	uint32_t p_result = 0;
+	
 	memset(shash, 0x00, sizeof(shash));
 	memset(last, 0x00, sizeof(last));
 
 	for(int i = 0; i < HASH_TEST_COUNT; i++)
 	{
+	    printf("\n");
+	    printf("##### hash get loop [%d] #####\n",i);
+	    printf("pre_hash=");
+	    shex_dump_ln(last, sizeof(last));
 
-		BoeErr *ret = boe_get_s_random(last, shash);
-		if(ret != BOE_OK)
-		{
-			printf("boe_get_s_random failed.\n");
-			return 1;
-		}
+	    BoeErr *ret = boe_get_n_random(last, shash, &p_status);
+	    if(ret != BOE_OK)
+	    {
+	        printf("boe_get_s_random failed.\n");
+	        return 1;
+	    }
+	    if(0 == p_status)
+	    {
+	        printf("get hash=");
+	        shex_dump_ln(shash, sizeof(shash));
+	        printf("get hash ok p_status = %d\n",p_status);
+	    }
+	    else 
+	    {
+	        printf("time limite sleep 5s continue \n");
+	        printf("return p_status = 0x%x\n",p_status);
+	        sleep(5);
+	        i = i - 1;
+	        continue;
+	    }
 
-		//printf("last = ");
-		//shex_dump_ln(last, sizeof(last));
+	    memset(hash_str, 0, sizeof(hash_str));
+	    hash_to_string(shash, hash_str);
 
-		//printf("hash = ");
-		//shex_dump_ln(shash, sizeof(shash));
+	    if(strcmp(hash_str, hash_serial_v1[i]) != 0)
+	    {
+	        printf("last = ");
+	        shex_dump_ln(last, sizeof(last));
+	        printf("hash = ");
+	        shex_dump_ln(shash, sizeof(shash));
 
-		memset(hash_str, 0, sizeof(hash_str));
-		hash_to_string(shash, hash_str);
-
-		if(strcmp(hash_str, hash_serial_v1[i]) != 0)
-		{
-			printf("last = ");
-			shex_dump_ln(last, sizeof(last));
-			printf("hash = ");
-			shex_dump_ln(shash, sizeof(shash));
-
-			printf("get random not matched with %s.\n", hash_serial_v1[i]);
-			return 1;
-		}
-		memcpy(last, shash, sizeof(shash));
+	        printf("get random not matched with %s.\n", hash_serial_v1[i]);
+	        return 1;
+	    }
+	    else
+	    {
+	        printf("\n");
+	        printf("&&&&& hash check loop [%d] &&&\n",i);
+	        ret = boe_check_random(last, shash, &p_result);
+	        if(ret != BOE_OK)
+	        {
+	            printf("boe_check_random failed.\n");
+	        }
+	        else
+	        {
+	            printf("hash check ok p_result = %d\n",p_result);
+	        }
+	    }
+	    memcpy(last, shash, sizeof(shash));
 	}
 	return 0;
 }
@@ -318,6 +362,10 @@ int main(int argc, char *argv[])
 	{
 		printf("init failed.\r\n");
 		return 1;
+	}
+	else
+	{
+		printf("init ok.\r\n");
 	}
 	ret = boe_hw_check();
 	if(ret != BOE_OK)
@@ -380,7 +428,6 @@ int main(int argc, char *argv[])
 		    printf("ecc test failed.\n");
 		    return 1;
 		}
-		sleep(5);
 		// hash test 
 		if(0 == hash_test())
 		{

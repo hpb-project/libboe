@@ -36,7 +36,14 @@ T_Package* tsu_package_new(uint8_t fid, uint32_t len)
         p->version = g_tsu_version;
         p->status= 0;
         p->function_id = fid;
-        p->reserved = 0;
+        if(TSU_HASH_CHECK_LEN == len)
+        {
+            p->sub_function = 1;//check hash
+        }
+        else
+        {
+            p->sub_function = 0;//get hash
+        }
     }
     return p;
 }
