@@ -599,7 +599,7 @@ BoeErr* boe_get_s_random(unsigned char *hash, unsigned char *nexthash)
     return ret;
 }
 
-BoeErr* boe_get_n_random(unsigned char *hash, unsigned char *nexthash, uint32_t *p_status)
+BoeErr* boe_get_n_random(unsigned char *hash, unsigned char *nexthash, unsigned char *p_status)
 {
     BoeErr *ret = bConnected();
     if(ret == BOE_OK)
@@ -607,7 +607,7 @@ BoeErr* boe_get_n_random(unsigned char *hash, unsigned char *nexthash, uint32_t 
 	
     return ret;
 }
-BoeErr* boe_check_random(unsigned char *hash, unsigned char *nexthash, uint32_t *p_result)
+BoeErr* boe_check_random(unsigned char *hash, unsigned char *nexthash, unsigned char *p_result)
 {
     BoeErr *ret = bConnected();
     if(ret == BOE_OK)

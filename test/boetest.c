@@ -282,8 +282,8 @@ static int hash_test()
 	unsigned char shash[32];
 	unsigned char last[32];
 	char hash_str[65] = {0};
-	uint32_t p_status = 0;
-	uint32_t p_result = 0;
+	unsigned char p_status = 0;
+	unsigned char p_result = 0;
 	
 	memset(shash, 0x00, sizeof(shash));
 	memset(last, 0x00, sizeof(last));
