@@ -17,7 +17,8 @@ BoeErr* doTSU_Init(char *ethname, MsgHandle msghandle, void*userdata);
 BoeErr* doTSU_Release();
 BoeErr* doTSU_RecoverPub(uint8_t *sig, uint8_t *result);
 BoeErr* doTSU_GetHash(uint8_t *hash, uint8_t *next_hash);
-BoeErr* doTSU_GetNewHash(uint8_t *hash, uint8_t *next_hash, uint32_t *p_status);
+BoeErr* doTSU_GetNewHash(uint8_t *hash, uint8_t *next_hash, unsigned char *p_status);
+BoeErr* doTSU_CheckHash(uint8_t *pre_hash, uint8_t *hash, unsigned char *p_result);
 BoeErr* doTSU_RecoverPub_Async(uint8_t *sig, unsigned char *param, int param_len);
 void doTSU_RegisAsyncCallback(AsyncCallback afun, void *data);
 #endif  /*DO_T_S_U_H*/

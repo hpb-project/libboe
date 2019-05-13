@@ -252,7 +252,6 @@ BoeErr* doTSU_RecoverPub(uint8_t *sig, uint8_t *pub)
     return &e_ok;
 }
 
-//static long int gGetRandomLastTime = 0;
 BoeErr* doTSU_GetHash(uint8_t *hash, uint8_t *next_hash)
 {
 	int wlen = 0;
@@ -277,11 +276,7 @@ BoeErr* doTSU_GetHash(uint8_t *hash, uint8_t *next_hash)
 		    memcpy(next_hash, q->payload, TSU_HASH_LEN);
 		    aqd_free(r);
 	    }
-	    /*
-	    memset(&time, 0, sizeof(time));
-	    gettimeofday(&time, NULL);
-	    gGetRandomLastTime = time.tv_sec;
-	    */
+
 	    return ret;
 	}
 	else
@@ -292,8 +287,7 @@ BoeErr* doTSU_GetHash(uint8_t *hash, uint8_t *next_hash)
     return &e_result_invalid;
 }
 
-//static long int gGetRandomLastTime = 0;
-BoeErr* doTSU_GetNewHash(uint8_t *hash, uint8_t *next_hash, uint32_t *p_status)
+BoeErr* doTSU_GetNewHash(uint8_t *hash, uint8_t *next_hash, unsigned char *p_status)
 {
 	int wlen = 0;
 	T_Package *p = make_query_get_new_hash(hash, &wlen);
@@ -329,7 +323,7 @@ BoeErr* doTSU_GetNewHash(uint8_t *hash, uint8_t *next_hash, uint32_t *p_status)
 
     return &e_result_invalid;
 }
-BoeErr* doTSU_CheckHash(uint8_t *pre_hash, uint8_t *hash, uint32_t *p_result)
+BoeErr* doTSU_CheckHash(uint8_t *pre_hash, uint8_t *hash, unsigned char *p_result)
 {
 	int wlen = 0;
 	T_Package *p = make_query_check_hash(pre_hash, hash, &wlen);
