@@ -287,14 +287,15 @@ BoeErr* doTSU_GetHash(uint8_t *hash, uint8_t *next_hash)
     return &e_result_invalid;
 }
 
-BoeErr* doTSU_GetNewHash(uint8_t *hash, uint8_t *next_hash, unsigned char *p_status)
+BoeErr* doTSU_GetNewHash(uint8_t *hash, uint8_t *next_hash)
 {
 	int wlen = 0;
 	T_Package *p = make_query_get_new_hash(hash, &wlen);
 	BoeErr *ret = NULL;
 	AQData *r = NULL;
 	int try = 3;
-	
+	unsigned char p_status = 0;
+		
 	if(p)
 	{
 	    do{
@@ -309,12 +310,18 @@ BoeErr* doTSU_GetNewHash(uint8_t *hash, uint8_t *next_hash, unsigned char *p_sta
 	    {
 	    
 		    T_Package *q = (T_Package*)r->buf;
-		    *p_status = q->status;
+		    p_status = q->status;
 		    memcpy(next_hash, q->payload, TSU_HASH_LEN);
 		    aqd_free(r);
 	    }
-
-	    return ret;
+	    if(0 == p_status)
+	    {
+	        return ret;
+	    }
+	    else if(0x12 == p_status)
+	    {
+	        return &e_hash_get_time_limit;
+	    }
 	}
 	else
 	{
@@ -323,13 +330,15 @@ BoeErr* doTSU_GetNewHash(uint8_t *hash, uint8_t *next_hash, unsigned char *p_sta
 
     return &e_result_invalid;
 }
-BoeErr* doTSU_CheckHash(uint8_t *pre_hash, uint8_t *hash, unsigned char *p_result)
+BoeErr* doTSU_CheckHash(uint8_t *pre_hash, uint8_t *hash)
 {
 	int wlen = 0;
 	T_Package *p = make_query_check_hash(pre_hash, hash, &wlen);
 	BoeErr *ret = NULL;
 	AQData *r = NULL;
 	int try = 3;
+	unsigned char p_result = 0;
+		
 	if(p)
 	{
 	    do{
@@ -343,8 +352,16 @@ BoeErr* doTSU_CheckHash(uint8_t *pre_hash, uint8_t *hash, unsigned char *p_resul
 	    if(ret == &e_ok)
 	    {
 		    T_Package *q = (T_Package*)r->buf;			
-		    *p_result = q->status;
+		    p_result = q->status;
 		    aqd_free(r);
+	    }
+	    if(1 == p_result)
+	    {
+	        return ret;
+	    }
+	    else if(0x11 == p_result)
+	    {
+	        return &e_hash_check_error;
 	    }
 
 	    return ret;

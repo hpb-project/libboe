@@ -599,19 +599,19 @@ BoeErr* boe_get_s_random(unsigned char *hash, unsigned char *nexthash)
     return ret;
 }
 
-BoeErr* boe_get_n_random(unsigned char *hash, unsigned char *nexthash, unsigned char *p_status)
+BoeErr* boe_get_n_random(unsigned char *hash, unsigned char *nexthash)
 {
     BoeErr *ret = bConnected();
     if(ret == BOE_OK)
-        return doTSU_GetNewHash(hash, nexthash, p_status);
+        return doTSU_GetNewHash(hash, nexthash);
 	
     return ret;
 }
-BoeErr* boe_check_random(unsigned char *hash, unsigned char *nexthash, unsigned char *p_result)
+BoeErr* boe_check_random(unsigned char *hash, unsigned char *nexthash)
 {
     BoeErr *ret = bConnected();
     if(ret == BOE_OK)
-        return doTSU_CheckHash(hash, nexthash, p_result);
+        return doTSU_CheckHash(hash, nexthash);
 	
     return ret;
 }

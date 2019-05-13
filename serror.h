@@ -28,6 +28,8 @@ BoeErr e_hw_verify_failed;
 BoeErr e_update_ver_not_match;
 BoeErr e_update_reboot_failed;
 BoeErr e_axu_inner[MAX_AXU_ERRNUM];
+BoeErr e_hash_get_time_limit;
+BoeErr e_hash_check_error;
 
 
 #endif  /*SERROR_H*/

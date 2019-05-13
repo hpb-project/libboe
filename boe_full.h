@@ -27,6 +27,8 @@ typedef struct BoeErr{
 }BoeErr;
 
 BoeErr *BOE_OK;
+BoeErr *BOE_HASH_TIME_LIMIT;
+
 typedef int (*BoeUpgradeCallback)(int,char*);
 typedef int (*BoeValidSignCallback)(unsigned char *pub, unsigned char *sig, void *param, int param_len);
 
@@ -111,11 +113,11 @@ BoeErr* boe_get_s_random(unsigned char *hash, unsigned char *nexthash);
 /*
  * The new version random hash, instead of boe_get_s_random.
  */ 
-BoeErr* boe_get_n_random(unsigned char *hash, unsigned char *nexthash, unsigned char *p_status);
+BoeErr* boe_get_n_random(unsigned char *hash, unsigned char *nexthash);
 /*
  * recover pubkey. if boe board is working, use hardware to do it. else will use soft alghorim.
  */
- BoeErr* boe_check_random(unsigned char *hash, unsigned char *nexthash, unsigned char *p_result);
+ BoeErr* boe_check_random(unsigned char *hash, unsigned char *nexthash);
 /*
  * check random. if boe board is working, use hardware to do it. else will use soft alghorim.
  */

@@ -295,25 +295,23 @@ static int hash_test()
 	    printf("pre_hash=");
 	    shex_dump_ln(last, sizeof(last));
 
-	    BoeErr *ret = boe_get_n_random(last, shash, &p_status);
+	    BoeErr *ret = boe_get_n_random(last, shash);
 	    if(ret != BOE_OK)
 	    {
-	        printf("boe_get_s_random failed.\n");
-	        return 1;
+	        printf("boe_get_s_random failed,error ecode = %d\n",ret->ecode);
+	        if(BOE_HASH_TIME_LIMIT == ret)
+	        {
+	            printf("get hash time limite, sleep 5s continue \n");
+	            sleep(5);
+	            i = i - 1;
+	            continue;
+	        }
 	    }
-	    if(0 == p_status)
+	    else
 	    {
 	        printf("get hash=");
 	        shex_dump_ln(shash, sizeof(shash));
 	        printf("get hash ok p_status = %d\n",p_status);
-	    }
-	    else 
-	    {
-	        printf("time limite sleep 5s continue \n");
-	        printf("return p_status = 0x%x\n",p_status);
-	        sleep(5);
-	        i = i - 1;
-	        continue;
 	    }
 
 	    memset(hash_str, 0, sizeof(hash_str));
@@ -333,14 +331,14 @@ static int hash_test()
 	    {
 	        printf("\n");
 	        printf("&&&&& hash check loop [%d] &&&\n",i);
-	        ret = boe_check_random(last, shash, &p_result);
+	        ret = boe_check_random(last, shash);
 	        if(ret != BOE_OK)
 	        {
-	            printf("boe_check_random failed.\n");
+	            printf("boe_check_random failed,error code = %d\n",ret->ecode);
 	        }
 	        else
 	        {
-	            printf("hash check ok p_result = %d\n",p_result);
+	            printf("boe_check_random ok\n");
 	        }
 	    }
 	    memcpy(last, shash, sizeof(shash));
