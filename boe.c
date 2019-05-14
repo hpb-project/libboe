@@ -579,6 +579,17 @@ BoeErr* boe_reg_read(unsigned int reg, unsigned int *val)
 
     return ret;
 }
+BoeErr* boe_reg_random_read(unsigned char *string)
+{
+    BoeErr *ret = bConnected();
+    if(ret == BOE_OK)
+    {
+        ret = doAXU_Reg_Random_Read(string);
+    }
+
+    return ret;
+}
+
 BoeErr* boe_reg_write(unsigned int reg, unsigned int val)
 {
     BoeErr *ret = bConnected();

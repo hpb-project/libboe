@@ -90,6 +90,8 @@ typedef enum A_CMD {
     ACMD_PB_REG_WRITE       = 0x23,
     ACMD_PB_REG_READ        = 0x24,
 
+    ACMD_PB_REG_RANDOM		= 0x25,
+
 
 
     ACMD_BP_RES_ACK             = 0x51,

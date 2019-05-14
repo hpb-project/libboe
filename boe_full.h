@@ -135,4 +135,6 @@ BoeErr* boe_phy_read(unsigned int reg, unsigned int *val);
 BoeErr* boe_phy_shd_read(unsigned int reg, unsigned int shadow, unsigned int *val);
 BoeErr* boe_reg_read(unsigned int reg, unsigned int *val);
 BoeErr* boe_reg_write(unsigned int reg, unsigned int val);
+BoeErr* boe_reg_random_read(unsigned char *string);
+
 #endif  /*BOE_FULL_H*/

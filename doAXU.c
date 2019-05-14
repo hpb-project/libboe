@@ -830,6 +830,32 @@ BoeErr* doAXU_Reg_Read(uint32_t reg, uint32_t *val)
         return &e_no_mem;
     }
 }
+BoeErr* doAXU_Reg_Random_Read(unsigned char *val)
+{
+    A_Package *p = make_query_simple(ACMD_PB_REG_RANDOM);
+    BoeErr *ret = NULL;
+    AQData *r = NULL;
+    if(p)
+    {
+        ret = doCommand(p, &r);
+        free(p);
+
+        if(ret == &e_ok)
+        {
+            A_Package *q = (A_Package*)r->buf;
+            memcpy(val,q->data,64);			
+            aqd_free(r);
+
+            return &e_ok;
+        }
+        return ret;
+    }
+    else
+    {
+        return &e_no_mem;
+    }
+}
+
 
 BoeErr* doAXU_BindAccount(uint8_t *baccount)
 {

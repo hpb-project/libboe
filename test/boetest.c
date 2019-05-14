@@ -346,6 +346,18 @@ static int hash_test()
 	return 0;
 }
 
+static BoeErr *get_true_random()
+{
+	unsigned char random[65] = {0};
+
+	BoeErr *ret = boe_reg_random_read(random);
+	if(0 != strlen(random))
+	{
+		printf("get_true_random %s\n",random);
+	}
+	return ret;
+}
+
 int main(int argc, char *argv[])
 {
 	if(argc < 5)
@@ -443,6 +455,16 @@ int main(int argc, char *argv[])
 		else 
 		{
 			printf("hwsigntest failed.\n");
+		}
+		//random get
+		ret = get_true_random();
+		if(ret != BOE_OK)
+		{
+			printf("get_true_random failed.\n");
+		}
+		else
+		{
+			printf("get_true_random ok\n");
 		}
 	}
 
