@@ -843,7 +843,7 @@ BoeErr* doAXU_Reg_Random_Read(unsigned char *val)
         if(ret == &e_ok)
         {
             A_Package *q = (A_Package*)r->buf;
-            memcpy(val,q->data,64);			
+            memcpy(val,q->data,32);			
             aqd_free(r);
 
             return &e_ok;

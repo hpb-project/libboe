@@ -348,13 +348,11 @@ static int hash_test()
 
 static BoeErr *get_true_random()
 {
-	unsigned char random[65] = {0};
+	unsigned char random[32] = {0};
 
 	BoeErr *ret = boe_reg_random_read(random);
-	if(0 != strlen(random))
-	{
-		printf("get_true_random %s\n",random);
-	}
+	shex_dump_ln(random, 32);
+
 	return ret;
 }
 
