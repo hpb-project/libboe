@@ -352,8 +352,10 @@ BoeErr* boe_upgrade(unsigned char*image, int imagelen)
                         }
                         else
                         {
-                            printf("version not update, upgrade failed\r\n");
-                            return &e_update_ver_not_match;
+                            printf("version not update, upgrade failed %d.%d.%d.%d\n",version.H,version.M,version.F,version.D);
+                            printf("version not update, upgrade failed %d.%d.%d.%d\n",header.version.H,header.version.M,header.version.F,header.version.D);
+
+							return &e_update_ver_not_match;
                         }
                     }
                     usleep(500000);
@@ -581,10 +583,29 @@ BoeErr* boe_reg_read(unsigned int reg, unsigned int *val)
 }
 BoeErr* boe_reg_random_read(unsigned char *string)
 {
+    TVersion version;
+    static int flag = 0;
+	
     BoeErr *ret = bConnected();
     if(ret == BOE_OK)
     {
-        ret = doAXU_Reg_Random_Read(string);
+        if(1 == flag)
+        {
+            ret = doAXU_Reg_Random_Read(string);
+        }
+        else if(0 == flag)
+        {
+            doAXU_GetVersionInfo(&version.H, &version.M, &version.F, &version.D);
+            if(version.F >= 1)
+            {
+                flag = 1;
+                ret = doAXU_Reg_Random_Read(string);
+            }
+            else
+            {
+                flag = 2;
+            }
+        }
     }
 
     return ret;
