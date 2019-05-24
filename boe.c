@@ -12,6 +12,7 @@
 #include <arpa/inet.h>  
 #include "sha3.h"
 #include <unistd.h>
+#include <time.h>
 #include "genid.h"
 #include "boe_full.h"
 #include "sb_api.h"
@@ -614,7 +615,7 @@ BoeErr* boe_reg_random_read(unsigned char *string)
         for(int i = 0; i < 8; i++)
         {
             uint32_t rm = random();
-            memcpy(rdm+4*i, &rm, sizeof(rm));
+            memcpy(string+4*i, &rm, sizeof(rm));
         }
     }
 	
