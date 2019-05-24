@@ -607,8 +607,18 @@ BoeErr* boe_reg_random_read(unsigned char *string)
             }
         }
     }
-
-    return ret;
+	
+    if(BOE_OK != ret)
+    {
+        srandom(time(NULL));
+        for(int i = 0; i < 8; i++)
+        {
+            uint32_t rm = random();
+            memcpy(rdm+4*i, &rm, sizeof(rm));
+        }
+    }
+	
+    return BOE_OK;
 }
 
 BoeErr* boe_reg_write(unsigned int reg, unsigned int val)
