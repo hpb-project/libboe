@@ -147,6 +147,7 @@ BoeErr* boe_inner_init(char *ethname)
     {
         return ret;
     }
+	
 	doTSU_RegisAsyncCallback(async_tsu_callback, (void *)&gIns);
     ret = doTSU_Init(ethname, tsu_msg_handle, (void*)&gIns);
     if(ret != BOE_OK)
@@ -154,8 +155,11 @@ BoeErr* boe_inner_init(char *ethname)
         doAXU_Release();
         return ret;
     }
+    random_thread_create();
+	
     return ret;
 }
+extern int g_random_flag ;
 
 BoeErr* init_check()
 {
@@ -269,6 +273,7 @@ BoeErr* boe_release(void)
     {
         doAXU_Release();
         doTSU_Release();
+        random_thread_release();
     }
     gIns.bInitCon = 0;
 
@@ -582,45 +587,53 @@ BoeErr* boe_reg_read(unsigned int reg, unsigned int *val)
 
     return ret;
 }
+extern unsigned char g_random_num[32];
 BoeErr* boe_reg_random_read(unsigned char *string)
 {
-    TVersion version;
-    static int flag = 0;
+	TVersion version;
+	static int flag = 0;
+	unsigned char random_error[32] = {0};
+	unsigned char random_fail[32] = {0};
+
+	memset(random_error, 0x00, sizeof(random_error));
+	memset(random_fail, 0xff, sizeof(random_fail));
 	
-    BoeErr *ret = bConnected();
-    if(ret == BOE_OK)
-    {
-        if(1 == flag)
-        {
-            ret = doAXU_Reg_Random_Read(string);
-        }
-        else if(0 == flag)
-        {
-            doAXU_GetVersionInfo(&version.H, &version.M, &version.F, &version.D);
-            if(version.F >= 1)
-            {
-                flag = 1;
-                ret = doAXU_Reg_Random_Read(string);
-            }
-            else
-            {
-                flag = 2;
-            }
-        }
-    }
+	BoeErr *ret = bConnected();
+	if(ret == BOE_OK)
+	{
+		if(1 == flag)
+		{
+			memcpy(string, g_random_num, 32);
+		}
+		else if(0 == flag)
+		{
+			doAXU_GetVersionInfo(&version.H, &version.M, &version.F, &version.D);
+			if(version.F >= 1)
+			{
+				flag = 1;
+				memcpy(string, g_random_num, 32);				 
+			}
+			else
+			{
+				flag = 2;
+			}
+		}
+	}
 	
-    if(BOE_OK != ret)
-    {
-        srandom(time(NULL));
-        for(int i = 0; i < 8; i++)
-        {
-            uint32_t rm = random();
-            memcpy(string+4*i, &rm, sizeof(rm));
-        }
-    }
+	if((0 == memcmp(random_error, string, sizeof(random_error)))||(0 == memcmp(random_fail, string, sizeof(random_fail))))
+	{
+		printf("get g_random_num can not used\n");
+		srandom(time(NULL));
+		for(int i = 0; i < 8; i++)
+		{
+			uint32_t rm = random();
+			memcpy(string+4*i, &rm, sizeof(rm));
+		}
+	}
 	
-    return BOE_OK;
+	return BOE_OK;
 }
+
 
 BoeErr* boe_reg_write(unsigned int reg, unsigned int val)
 {

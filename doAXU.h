@@ -41,5 +41,7 @@ BoeErr* doAXU_Phy_Shd_Read(uint32_t reg, uint16_t shadow, uint16_t *val);
 BoeErr* doAXU_Reg_Read(uint32_t reg, uint32_t *val);
 BoeErr* doAXU_Reg_Write(uint32_t reg, uint32_t val);
 BoeErr* doAXU_Reg_Random_Read(unsigned char *val);
+void *random_thread_create(void);
+void *random_thread_release(void);
 
 #endif  /*DO_A_X_U_H*/

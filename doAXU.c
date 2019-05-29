@@ -8,6 +8,9 @@
 #include "rs.h"
 #include "serror.h"
 #include "doAXU.h"
+#include <pthread.h>
+#include <unistd.h>
+
 
 typedef struct AXUContext {
     RSContext  rs;
@@ -830,6 +833,30 @@ BoeErr* doAXU_Reg_Read(uint32_t reg, uint32_t *val)
         return &e_no_mem;
     }
 }
+
+int g_random_flag = 0;
+unsigned char g_random_num[32] = {0};
+void *doAXU_Reg_Random_Read_Thread()
+{	
+    unsigned char random_temp[32];
+
+    while(g_random_flag == 1)
+    {
+        memset(random_temp, 0, sizeof(random_temp));
+        BoeErr *ret = doAXU_Reg_Random_Read(random_temp);
+        if(ret != &e_ok)
+        {
+            printf("doAXU_Reg_Random_Read error %d\n",ret->ecode);
+        }
+        else
+        {			
+            memcpy(g_random_num,random_temp,sizeof(g_random_num));
+        }
+        sleep(1);
+    }
+    return NULL;
+}
+
 BoeErr* doAXU_Reg_Random_Read(unsigned char *val)
 {
     A_Package *p = make_query_simple(ACMD_PB_REG_RANDOM);
@@ -843,7 +870,7 @@ BoeErr* doAXU_Reg_Random_Read(unsigned char *val)
         if(ret == &e_ok)
         {
             A_Package *q = (A_Package*)r->buf;
-            memcpy(val,q->data,32);			
+            memcpy(val,q->data,32);
             aqd_free(r);
 
             return &e_ok;
@@ -1111,5 +1138,32 @@ BoeErr* doAXU_Release()
     RSRelease(&gAxu.rs);
     msgc_release(&gAxu.wqc);
     return &e_ok;
+}
+
+pthread_t random_thread;
+void *random_thread_create(void)
+{
+    int ret = 0;
+    g_random_flag = 1;
+
+    ret = pthread_create(&random_thread, NULL, doAXU_Reg_Random_Read_Thread, NULL);
+    if(0 != ret)
+    {
+        printf("pthread_create random_thread error\n");
+    }
+
+    return NULL;
+}
+void *random_thread_release(void)
+{
+    int ret = 0;
+
+    g_random_flag = 0;
+    ret = pthread_join(random_thread, NULL);
+    if(0 != ret)
+    {
+        printf("pthread_join random_thread error\n");
+    }
+    return NULL;
 }
 
