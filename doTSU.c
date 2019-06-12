@@ -108,7 +108,7 @@ BoeErr* doTSU_Release()
 
 T_Package *make_query_recover_key(uint8_t *sig, int *len)
 {
-    T_Package *p = tsu_package_new(FUNCTION_ECSDA_CHECK, TX_SIG_LEN);
+    T_Package *p = tsu_package_new(FUNCTION_ECSDA_CHECK, TX_SIG_LEN, 0);
     if(p)
     {
         tsu_set_data(p, 0, sig, TX_SIG_LEN);
@@ -121,7 +121,7 @@ T_Package *make_query_recover_key(uint8_t *sig, int *len)
 
 T_Package *make_query_get_hash(uint8_t *hash, int *len)
 {
-    T_Package *p = tsu_package_new(FUNCTION_GEN_HASH, TSU_HASH_LEN);
+    T_Package *p = tsu_package_new(FUNCTION_GEN_HASH, TSU_HASH_LEN, 0);
     if(p)
     {
         tsu_set_data(p, 0, hash, TSU_HASH_LEN);
@@ -134,7 +134,7 @@ T_Package *make_query_get_hash(uint8_t *hash, int *len)
 
 T_Package *make_query_get_new_hash(uint8_t *hash, int *len)
 {
-    T_Package *p = tsu_package_new(FUNCTION_GEN_NEW_HASH, TSU_HASH_LEN);
+    T_Package *p = tsu_package_new(FUNCTION_GEN_NEW_HASH, TSU_HASH_LEN, 0);
     if(p)
     {
         tsu_set_data(p, 0, hash, TSU_HASH_LEN);
@@ -147,7 +147,7 @@ T_Package *make_query_get_new_hash(uint8_t *hash, int *len)
 
 T_Package *make_query_check_hash(uint8_t *pre_hash, uint8_t *hash, int *len)
 {
-    T_Package *p = tsu_package_new(FUNCTION_GEN_NEW_HASH, TSU_HASH_CHECK_LEN);
+    T_Package *p = tsu_package_new(FUNCTION_GEN_NEW_HASH, TSU_HASH_CHECK_LEN, 1);
     if(p)
     {
     

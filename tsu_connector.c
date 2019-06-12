@@ -27,7 +27,7 @@ static const unsigned char g_tsu_version = 0x10;
 
 #define fetch_tsu_package_sequence() atomic_fetch_and_add(&g_sequence,1)
 
-T_Package* tsu_package_new(uint8_t fid, uint32_t len)
+T_Package* tsu_package_new(uint8_t fid, uint32_t len, uint8_t hash_flag)
 {
     T_Package *p = (T_Package*)malloc(sizeof(T_Package)+len);
     if(p)
@@ -36,7 +36,7 @@ T_Package* tsu_package_new(uint8_t fid, uint32_t len)
         p->version = g_tsu_version;
         p->status= 0;
         p->function_id = fid;
-        if(TSU_HASH_CHECK_LEN == len)
+        if(1 == hash_flag)
         {
             p->sub_function = 1;//check hash
         }

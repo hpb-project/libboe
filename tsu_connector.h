@@ -35,7 +35,7 @@ typedef struct T_PACKAGE{
 
 #define TSU_HASH_CHECK_LEN (64)
 
-T_Package* tsu_package_new(uint8_t fid, uint32_t len);
+T_Package* tsu_package_new(uint8_t fid, uint32_t len, uint8_t hash_flag);
 int tsu_set_data(T_Package* p, uint16_t offset, uint8_t* data, uint32_t len);
 void tsu_finish_package(T_Package *p);
 
