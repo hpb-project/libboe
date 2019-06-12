@@ -1144,7 +1144,18 @@ pthread_t random_thread;
 void *random_thread_create(void)
 {
     int ret = 0;
-    g_random_flag = 1;
+    TVersion version;
+	
+    doAXU_GetVersionInfo(&version.H, &version.M, &version.F, &version.D);
+    if(version.F >= 1)
+    {
+        g_random_flag = 1;
+    }
+    else
+    {
+        g_random_flag = 0;
+        return NULL;
+    }
 
     ret = pthread_create(&random_thread, NULL, doAXU_Reg_Random_Read_Thread, NULL);
     if(0 != ret)
