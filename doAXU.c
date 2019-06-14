@@ -1153,7 +1153,8 @@ void *random_thread_create(void)
     }
     else
     {
-        g_random_flag = 0;
+        g_random_flag = 2;
+        printf("BOE version is low cannot start true_random function\n");
         return NULL;
     }
 
@@ -1168,7 +1169,12 @@ void *random_thread_create(void)
 void *random_thread_release(void)
 {
     int ret = 0;
-
+	
+    if(2 == g_random_flag)
+    {
+        return NULL;
+    }
+	
     g_random_flag = 0;
     ret = pthread_join(random_thread, NULL);
     if(0 != ret)
