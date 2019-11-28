@@ -398,7 +398,7 @@ static void *send_msg_thread(void *userdata)
 
             if(RSWrite(c->rs, data->buf, data->len) < 0)
             {
-                printf("send_msg_thread RSWrite error\n");
+                //printf("send_msg_thread RSWrite error\n");
             }
             else
             {
