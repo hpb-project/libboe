@@ -60,6 +60,7 @@ void delete_pubkey(PublicKey_t *pub);
 SignResult_t* new_signresult(void);
 void delete_signresult(SignResult_t *result);
 uint32_t checksum(uint8_t *data, uint32_t len);
+uint8_t checksum_byte(uint8_t *data, uint32_t len);
 uint64_t get_timestamp_us();
 typedef int (*AsyncCallback)(int type, unsigned char * response, int res_len, unsigned char *param, int param_len, unsigned char * source, void * userdata);
 

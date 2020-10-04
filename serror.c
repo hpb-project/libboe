@@ -26,6 +26,7 @@ BoeErr e_update_reboot_failed = {.ecode = 114, .emsg = "board reboot failed", .b
 BoeErr e_axu_inner[MAX_AXU_ERRNUM];
 BoeErr e_hash_get_time_limit = {.ecode = 115, .emsg = "get hash at least five seconds apart", .bfree = 0};
 BoeErr e_hash_check_error = {.ecode = 116, .emsg = "check hash error", .bfree = 0};
+BoeErr e_checksum_error = {.ecode = 117, .emsg = "checksum not match", .bfree = 0};
 
 BoeErr *BOE_OK = &e_ok;
 BoeErr *BOE_HASH_TIME_LIMIT = &e_hash_get_time_limit;

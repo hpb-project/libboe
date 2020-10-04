@@ -30,6 +30,7 @@ BoeErr e_update_reboot_failed;
 BoeErr e_axu_inner[MAX_AXU_ERRNUM];
 BoeErr e_hash_get_time_limit;
 BoeErr e_hash_check_error;
+BoeErr e_checksum_error;
 
 
 #endif  /*SERROR_H*/

@@ -57,6 +57,19 @@ uint32_t checksum(uint8_t *data, uint32_t len)
     return chk;
 }
 
+uint8_t checksum_byte(uint8_t *data, uint32_t len)
+{
+    uint8_t chk = 0;
+    if(data != NULL && len > 0)
+    {
+        for(uint32_t i = 0; i < len; i++)
+        {
+            chk += data[i];
+        }
+    }
+    return chk;
+}
+
 uint64_t get_timestamp_us()
 {
     struct timeval tl;

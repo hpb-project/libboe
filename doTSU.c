@@ -67,7 +67,17 @@ static int tsu_msg_callback(WMessage *m, void*userdata)
 		else
 		{
             tsu_packet = (T_Package *)(m->d->buf);
-			ctx->asyncCallback(type, tsu_packet->payload, m->d->len, m->userdata, m->userdata_len, tsu_packet_old->payload, ctx->userdata);
+            if(tsu_packet->status == CHKSUMERROR)
+            {
+                printf("boe--- response with error CHKSUM ERROR, package sequence = %d\n", tsu_packet->sequence);
+                ctx->asyncCallback(type, NULL, m->d->len, m->userdata, m->userdata_len, tsu_packet_old->payload, ctx->userdata);
+            }
+            else
+            {
+            ctx->asyncCallback(type, tsu_packet->payload, m->d->len, m->userdata, m->userdata_len, tsu_packet_old->payload, ctx->userdata);    
+            }
+            
+			
 		}
 	}
 
@@ -112,6 +122,7 @@ T_Package *make_query_recover_key(uint8_t *sig, int *len)
     if(p)
     {
         tsu_set_data(p, 0, sig, TX_SIG_LEN);
+        p->sub_function = checksum_byte(sig, TX_SIG_LEN);
         tsu_finish_package(p);
         *len = TX_SIG_LEN + sizeof(T_Package);
     }
@@ -240,7 +251,15 @@ BoeErr* doTSU_RecoverPub(uint8_t *sig, uint8_t *pub)
         if(ret == &e_ok)
         {
             T_Package *q = (T_Package*)r->buf;
-            memcpy(pub, q->payload, TX_PUB_LEN);
+            if(q->status == 0)
+            {
+                memcpy(pub, q->payload, TX_PUB_LEN);
+            }
+            else if(q->status == CHKSUMERROR) 
+            {
+                ret = &e_checksum_error;
+            }
+            
             aqd_free(r);
         }
         return ret;

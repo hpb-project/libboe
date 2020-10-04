@@ -13,6 +13,8 @@
 #include "boe_full.h"
 #include "tsu_connector.h"
 
+#define CHKSUMERROR 0x15
+
 BoeErr* doTSU_Init(char *ethname, MsgHandle msghandle, void*userdata);
 BoeErr* doTSU_Release();
 BoeErr* doTSU_RecoverPub(uint8_t *sig, uint8_t *result);
