@@ -1,4 +1,4 @@
-all:rstest axutest tstest mkimage boetest bawriteinfo getinfo boereg_test boeupdate update_record_info genidtest
+all:rstest axutest tstest mkimage boetest fpgatest bawriteinfo getinfo boereg_test boeupdate update_record_info genidtest
 
 rstest:
 	gcc -g rstest.c ../rs.c -I ../ -o rstest
@@ -18,6 +18,9 @@ mkimage:
 boetest:
 	gcc -g  boetest.c -I ../ -L ../lib --static -lboe -lpthread -o boetest
 
+fpgatest:
+	gcc -g  fpgatest.c -I ../ -L ../lib --static -lboe -lpthread -o fpgatest
+
 boeupdate:
 	gcc -g  boeupdate.c -I ../ -L ../lib --static -lboe -lpthread -o boeupdate
 
@@ -36,4 +39,4 @@ genidtest:
 	gcc ../sha3.c ../genid.c genidtest.c -I ../ -o genidtest
 
 clean:
-	rm rstest axutest tstest mkimage boetest bawriteinfo getinfo boeupdate boereg_test update_record_info genidtest
+	rm rstest axutest tstest mkimage boetest fpgatest bawriteinfo getinfo boeupdate boereg_test update_record_info genidtest
