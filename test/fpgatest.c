@@ -317,12 +317,18 @@ int main(int argc, char *argv[])
 		pthread_t th1;
 		pthread_t th2;
 		pthread_t th3;
+		pthread_t th4;
+		pthread_t th5;
 
 		ret = pthread_create(&th1, NULL, test_ecc, NULL);
+		ret = pthread_create(&th4, NULL, test_ecc, NULL);
+		ret = pthread_create(&th5, NULL, test_ecc, NULL);
 		ret = pthread_create(&th2, NULL, hash_V2_test, NULL);
 		ret = pthread_create(&th3, NULL, hash_V1_test, NULL);
 
 		pthread_join(th1, NULL);
+		pthread_join(th4, NULL);
+		pthread_join(th5, NULL);
 		pthread_join(th2, NULL);
 		pthread_join(th3, NULL);
 	}
