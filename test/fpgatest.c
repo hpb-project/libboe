@@ -74,16 +74,20 @@ void *test_ecc(void *usrdata)
 				if(memcmp(pdata->x, pub, 32) == 0 &&
 						memcmp(pdata->y, pub+32, 32) == 0)
 				{
+					if (gCurrent%5000 == 0)
+					{
+						printf("recover pubkey current = %d\n", gCurrent);
+					}
 					continue;
 				}
 				else
 				{
-					printf("pubkey compare failed.\n");
+					printf("pubkey compare error.\n");
 				}
 			}
 			else
 			{
-				printf("msg send/receive failed.\n");
+				printf("msg send/receive error.\n");
 			}
 			gErrcnt++;
 		}
@@ -206,13 +210,14 @@ void *hash_V2_test(void *usrdata)
 	        {
 	            printf("get hash time limite, sleep 5s continue \n");
 	            sleep(5);
-	            i = i - 1;
-	            continue;
 	        }
 			else 
 			{
 				printf("boe_get_n_random failed,error ecode = %d\n",ret->ecode);
 			}
+
+			i = i - 1;
+			continue;
 	    }
 
 	    memset(hash_str, 0, sizeof(hash_str));
@@ -235,6 +240,10 @@ void *hash_V2_test(void *usrdata)
 	        {
 	            printf("boe_check_random failed,error code = %d\n",ret->ecode);
 	        }
+			else 
+			{
+				printf("boe get random-v2 and check passed.\n");
+			}
 	    }
 	    memcpy(last, shash, sizeof(shash));
 	}
@@ -258,6 +267,7 @@ void *hash_V1_test(void *usrdata)
 	    if(ret != BOE_OK)
 	    {
 			printf("boe_get_s_random failed,error ecode = %d\n",ret->ecode);
+			continue;
 	    }
 
 	    memset(hash_str, 0, sizeof(hash_str));
