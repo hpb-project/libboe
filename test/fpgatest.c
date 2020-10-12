@@ -83,6 +83,7 @@ void *test_ecc(void *usrdata)
 				else
 				{
 					printf("pubkey compare error.\n");
+					exit(-1);
 				}
 			}
 			else
@@ -334,6 +335,7 @@ int main(int argc, char *argv[])
 	}
 	
 	boe_release();
+	printf("test finished...\n");
 
 	return 0;
 }
