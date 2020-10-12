@@ -208,8 +208,8 @@ void *hash_V2_test(void *usrdata)
 	    {
 	        if(BOE_HASH_TIME_LIMIT == ret)
 	        {
-	            printf("get hash time limite, sleep 5s continue \n");
-	            sleep(5);
+	            printf("get hash time limite, sleep 1s continue \n");
+	            sleep(1);
 	        }
 			else 
 			{
