@@ -77,9 +77,13 @@ static int tsu_msg_callback(WMessage *m, void*userdata)
                 ctx->asyncCallback(type, tsu_packet->payload, m->d->len, m->userdata, m->userdata_len, tsu_packet_old->payload, ctx->userdata);    
             }		
 		}
-        WMessageFree(m);
+        
 	}
-
+    if (NULL != m)
+    {
+        WMessageFree(m);
+    }
+    
     return 0;
 }
 
