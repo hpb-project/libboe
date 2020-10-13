@@ -67,7 +67,7 @@ static int tsu_msg_callback(WMessage *m, void*userdata)
 		else
 		{
             tsu_packet = (T_Package *)(m->d->buf);
-            if(tsu_packet->status == CHKSUMERROR)
+            if(tsu_packet->status == RP_CHKSUM_ERROR)
             {
                 printf("boe--- response with error CHKSUM ERROR, package sequence = %d\n", tsu_packet->sequence);
                 ctx->asyncCallback(type, NULL, m->d->len, m->userdata, m->userdata_len, tsu_packet_old->payload, ctx->userdata);
@@ -253,7 +253,7 @@ BoeErr* doTSU_RecoverPub(uint8_t *sig, uint8_t *pub)
             {
                 memcpy(pub, q->payload, TX_PUB_LEN);
             }
-            else if(q->status == CHKSUMERROR) 
+            else if(q->status == RP_CHKSUM_ERROR) 
             {
                 ret = &e_checksum_error;
             }
@@ -335,7 +335,7 @@ BoeErr* doTSU_GetNewHash(uint8_t *hash, uint8_t *next_hash)
 	    {
 	        return ret;
 	    }
-	    else if(0x12 == p_status)
+	    else if(RANDOM_TIME_LIMIT == p_status)
 	    {
 	        return &e_hash_get_time_limit;
 	    }

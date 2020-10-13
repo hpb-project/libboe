@@ -13,7 +13,8 @@
 #include "boe_full.h"
 #include "tsu_connector.h"
 
-#define CHKSUMERROR 0x15
+#define RP_CHKSUM_ERROR (0x13)
+#define RANDOM_TIME_LIMIT (0x12)
 
 BoeErr* doTSU_Init(char *ethname, MsgHandle msghandle, void*userdata);
 BoeErr* doTSU_Release();

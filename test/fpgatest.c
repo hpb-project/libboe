@@ -1,4 +1,4 @@
-// Last Update:2020-10-11 15:33:16
+// Last Update:2020-10-13 11:03:20
 /**
  * @file boetest.c
  * @brief 
@@ -7,6 +7,7 @@
  * @date 2018-08-08
  */
 #include "boe_full.h"
+#include "doTSU.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -68,7 +69,7 @@ void *test_ecc(void *usrdata)
 			memcpy(sig+64, pdata->h, 32);
 			sig[96] = pdata->v;
 
-			BoeErr *bret = boe_valid_sign(sig, pub);
+			BoeErr *bret = doTSU_RecoverPub(sig, pub);
 			if(bret == BOE_OK)
 			{
 				if(memcmp(pdata->x, pub, 32) == 0 &&
@@ -83,7 +84,7 @@ void *test_ecc(void *usrdata)
 				else
 				{
 					printf("pubkey compare error.\n");
-					exit(-1);
+					exit(1);
 				}
 			}
 			else
@@ -204,7 +205,7 @@ void *hash_V2_test(void *usrdata)
 
 	for(int i = 0; i < HASH_TEST_COUNT; i++)
 	{
-	    BoeErr *ret = boe_get_n_random(last, shash);
+	    BoeErr *ret = doTSU_GetNewHash(last, shash);
 	    if(ret != BOE_OK)
 	    {
 	        if(BOE_HASH_TIME_LIMIT == ret)
@@ -236,7 +237,7 @@ void *hash_V2_test(void *usrdata)
 		}
 
 	    {
-	        ret = boe_check_random(last, shash);
+	        ret = doTSU_CheckHash(last, shash);
 	        if(ret != BOE_OK)
 	        {
 	            printf("boe_check_random failed,error code = %d\n",ret->ecode);
@@ -264,7 +265,7 @@ void *hash_V1_test(void *usrdata)
 
 	for(int i = 0; i < HASH_TEST_COUNT; i++)
 	{
-	    BoeErr *ret = boe_get_s_random(last, shash);
+	    BoeErr *ret = doTSU_GetHash(last, shash);
 	    if(ret != BOE_OK)
 	    {
 			printf("boe_get_s_random failed,error ecode = %d\n",ret->ecode);
@@ -291,6 +292,16 @@ void *hash_V1_test(void *usrdata)
 }
 
 
+static int async_tsu_callback(int type, unsigned char * response, int res_len, unsigned char *param, int param_len, unsigned char * source, void * userdata)
+{
+    return 0;
+}
+static int tsu_msg_handle(uint8_t *data, int len, void *userdata)
+{
+    return 0;
+}
+
+
 int main(int argc, char *argv[])
 {
 	if(argc < 5)
@@ -300,32 +311,30 @@ int main(int argc, char *argv[])
 	}
 
 	char *ethname = argv[1];
-	BoeErr *ret = boe_test_init(ethname);
-	if(ret != BOE_OK)
-	{
-		printf("init failed.\r\n");
-		return 1;
-	}
-	else
-	{
-		printf("init ok.\r\n");
-	}
+	BoeErr *ret = NULL;
+	doTSU_RegisAsyncCallback(async_tsu_callback, (void *)NULL);
+    ret = doTSU_Init(ethname, tsu_msg_handle, (void*)NULL);
+    if(ret != BOE_OK)
+    {
+        return -1;
+    }
 
 	load_data(argc, argv);
 
 	while (1)
 	{
+        int r = 0;
 		pthread_t th1;
 		pthread_t th2;
 		pthread_t th3;
 		pthread_t th4;
 		pthread_t th5;
 
-		ret = pthread_create(&th1, NULL, test_ecc, NULL);
-		ret = pthread_create(&th4, NULL, test_ecc, NULL);
-		ret = pthread_create(&th5, NULL, test_ecc, NULL);
-		ret = pthread_create(&th2, NULL, hash_V2_test, NULL);
-		ret = pthread_create(&th3, NULL, hash_V1_test, NULL);
+		r = pthread_create(&th1, NULL, test_ecc, NULL);
+		r = pthread_create(&th4, NULL, test_ecc, NULL);
+		r = pthread_create(&th5, NULL, test_ecc, NULL);
+		r = pthread_create(&th2, NULL, hash_V2_test, NULL);
+		r = pthread_create(&th3, NULL, hash_V1_test, NULL);
 
 		pthread_join(th1, NULL);
 		pthread_join(th4, NULL);
@@ -334,7 +343,7 @@ int main(int argc, char *argv[])
 		pthread_join(th3, NULL);
 	}
 	
-	boe_release();
+	doTSU_Release();
 	printf("test finished...\n");
 
 	return 0;
