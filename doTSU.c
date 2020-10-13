@@ -77,6 +77,7 @@ static int tsu_msg_callback(WMessage *m, void*userdata)
                 ctx->asyncCallback(type, tsu_packet->payload, m->d->len, m->userdata, m->userdata_len, tsu_packet_old->payload, ctx->userdata);    
             }		
 		}
+        WMessageFree(m);
 	}
 
     return 0;
@@ -172,19 +173,31 @@ T_Package *make_query_check_hash(uint8_t *pre_hash, uint8_t *hash, int *len)
 static BoeErr* doCommand(T_Package *p, AQData **d, int timeout, int wlen)
 {
     MsgContext *wqc = &gTsu.msgc;
+    BoeErr *ret = BOE_OK;
     WMessage * wm = WMessageNew(p->sequence, tsu_check_response, timeout, (uint8_t*)p, wlen, 0);
     if(msgc_send_async(wqc, wm) == 0)
     {
         AQData *q = msgc_read(wqc, wm);
         if(q == NULL || q->buf == NULL)
-            return &e_msgc_read_timeout;
-        *d = q;
-        return &e_ok;
+        {
+            ret = &e_msgc_read_timeout;
+            goto end;
+        }
+        else
+        {
+            *d = q;
+        }        
     }
     else
     {
-        return &e_msgc_send_fail;
+        ret = &e_msgc_send_fail;
     }
+end:
+    if(wm != NULL)
+    {
+        WMessageFree(wm);
+    }
+    return ret;
 }
 #if 1
 /*recover pub*/
