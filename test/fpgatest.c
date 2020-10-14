@@ -43,6 +43,7 @@ static uint32_t gTotal = 0;
 static uint32_t gErrcnt = 0;
 static volatile int gCurrent = 0;
 static volatile int gCount = 0;
+static volatile int gPassed = 0;
 
 static void shex_dump_ln(unsigned char *buf, int len)
 {
@@ -70,12 +71,19 @@ static int async_tsu_callback(int type, unsigned char * response, int res_len, u
 {
 	unsigned char *pub = response;
 	unsigned char *sig = source;
-	uint32_t pointer = (uint32_t)param;
-	rsv_t* pdata = (rsv_t*)pointer;
+	if(type != FUNCTION_ECSDA_CHECK)
+	{
+		return 0;
+	}
+	rsv_t* pdata = NULL;
+	if (param != NULL)
+	{
+		memcpy(&pdata, param, sizeof(rsv_t*));
+	}
 
 	if (pub == NULL)
 	{
-		printf("recover pubkey got NULL\n");
+		//printf("recover pubkey got NULL\n");
 	}
 	else
 	{
@@ -87,9 +95,10 @@ static int async_tsu_callback(int type, unsigned char * response, int res_len, u
 		if(memcmp(pdata->x, pub, 32) == 0 &&
 			memcmp(pdata->y, pub+32, 32) == 0)
 		{
+			gPassed++;
 			if (gCount%5000 == 0)
 			{
-				printf("recover pubkey current = %d\n", gCount);
+				printf("recover pubkey current = %d, ok %d\n", gCount,gPassed);
 			}
 		}
 		else
@@ -118,7 +127,7 @@ void *test_ecc(void *usrdata)
 			memcpy(sig+64, pdata->h, 32);
 			sig[96] = pdata->v;
 
-			if (0 != 0)
+			if (0 == 0)
 			{
 				BoeErr *bret = doTSU_RecoverPub(sig, pub);
 				if(bret == BOE_OK)
@@ -146,12 +155,15 @@ void *test_ecc(void *usrdata)
 			}
 			else
 			{
-				uint32_t pointer = (uint32_t)pdata;
-				BoeErr *bret = doTSU_RecoverPub_Async(sig, (unsigned char*)&pointer, sizeof(uint32_t));
+				unsigned char *p = (unsigned char *)malloc(sizeof(rsv_t*));
+				memcpy(p,&pdata,sizeof(rsv_t*));
+				
+				BoeErr *bret = doTSU_RecoverPub_Async(sig, (unsigned char*)p, sizeof(rsv_t*));
 				if(bret != BOE_OK)
 				{
 					printf("msg send/receive error.\n");
 				}
+				usleep(500);
 			}
 			gErrcnt++;
 		}
