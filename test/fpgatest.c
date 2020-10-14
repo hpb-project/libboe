@@ -54,6 +54,40 @@ int get_data(rsv_t **data)
 	return 0;
 }
 
+static int async_tsu_callback(int type, unsigned char * response, int res_len, unsigned char *param, int param_len, unsigned char * source, void * userdata)
+{
+	unsigned char *pub = response;
+	unsigned char *sig = source;
+	rsv_t* pdata = (rsv_t*)param;
+
+	if (pub == NULL)
+	{
+		printf("recover pubkey got NULL\n");
+	}
+	else
+	{
+		if (pdata != NULL)
+		{
+			printf("got param error in async_tsu_callback.\n");
+			return 0;
+		}
+		if(memcmp(pdata->x, pub, 32) == 0 &&
+			memcmp(pdata->y, pub+32, 32) == 0)
+		{
+			if (gCurrent%5000 == 0)
+			{
+				printf("recover pubkey current = %d\n", gCurrent);
+			}
+		}
+		else
+		{
+			printf("pubkey compare error.\n");
+			exit(1);
+		}
+	}
+    return 0;
+}
+
 void *test_ecc(void *usrdata)
 {
 	unsigned char sig[97];
@@ -69,27 +103,38 @@ void *test_ecc(void *usrdata)
 			memcpy(sig+64, pdata->h, 32);
 			sig[96] = pdata->v;
 
-			BoeErr *bret = doTSU_RecoverPub(sig, pub);
-			if(bret == BOE_OK)
+			if (0 == 0)
 			{
-				if(memcmp(pdata->x, pub, 32) == 0 &&
-						memcmp(pdata->y, pub+32, 32) == 0)
+				BoeErr *bret = doTSU_RecoverPub(sig, pub);
+				if(bret == BOE_OK)
 				{
-					if (gCurrent%5000 == 0)
+					if(memcmp(pdata->x, pub, 32) == 0 &&
+							memcmp(pdata->y, pub+32, 32) == 0)
 					{
-						printf("recover pubkey current = %d\n", gCurrent);
+						if (gCurrent%5000 == 0)
+						{
+							printf("recover pubkey current = %d\n", gCurrent);
+						}
+						continue;
 					}
-					continue;
+					else
+					{
+						printf("pubkey compare error.\n");
+						exit(1);
+					}
 				}
 				else
 				{
-					printf("pubkey compare error.\n");
-					exit(1);
+					printf("msg send/receive error.\n");
 				}
 			}
 			else
 			{
-				printf("msg send/receive error.\n");
+				BoeErr *bret = doTSU_RecoverPub_Async(sig, (unsigned char*)pdata, sizeof(rsv_t*));
+				if(bret != BOE_OK)
+				{
+					printf("msg send/receive error.\n");
+				}
 			}
 			gErrcnt++;
 		}
@@ -291,11 +336,6 @@ void *hash_V1_test(void *usrdata)
 	return 0;
 }
 
-
-static int async_tsu_callback(int type, unsigned char * response, int res_len, unsigned char *param, int param_len, unsigned char * source, void * userdata)
-{
-    return 0;
-}
 static int tsu_msg_handle(uint8_t *data, int len, void *userdata)
 {
     return 0;
