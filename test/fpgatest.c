@@ -42,10 +42,22 @@ static rsv_t rsv_array[TOTAL_NUMBER+1];
 static uint32_t gTotal = 0;
 static uint32_t gErrcnt = 0;
 static volatile int gCurrent = 0;
+static volatile int gCount = 0;
+
+static void shex_dump_ln(unsigned char *buf, int len)
+{
+	for(int i =0; i < len; i++)
+	{
+		printf("%02x", buf[i]);
+	}
+	printf("\n");
+
+}
 
 int get_data(rsv_t **data)
 {
 	int pidx = gCurrent++;
+	gCount++;
 	if((pidx >= TOTAL_NUMBER) || (pidx >= gTotal))
 	{
 		return -1;
@@ -58,7 +70,8 @@ static int async_tsu_callback(int type, unsigned char * response, int res_len, u
 {
 	unsigned char *pub = response;
 	unsigned char *sig = source;
-	rsv_t* pdata = (rsv_t*)param;
+	uint32_t pointer = (uint32_t)param;
+	rsv_t* pdata = (rsv_t*)pointer;
 
 	if (pub == NULL)
 	{
@@ -66,7 +79,7 @@ static int async_tsu_callback(int type, unsigned char * response, int res_len, u
 	}
 	else
 	{
-		if (pdata != NULL)
+		if (pdata == NULL)
 		{
 			printf("got param error in async_tsu_callback.\n");
 			return 0;
@@ -74,14 +87,15 @@ static int async_tsu_callback(int type, unsigned char * response, int res_len, u
 		if(memcmp(pdata->x, pub, 32) == 0 &&
 			memcmp(pdata->y, pub+32, 32) == 0)
 		{
-			if (gCurrent%5000 == 0)
+			if (gCount%5000 == 0)
 			{
-				printf("recover pubkey current = %d\n", gCurrent);
+				printf("recover pubkey current = %d\n", gCount);
 			}
 		}
 		else
 		{
 			printf("pubkey compare error.\n");
+			shex_dump_ln(pub,64);
 			exit(1);
 		}
 	}
@@ -97,13 +111,14 @@ void *test_ecc(void *usrdata)
 		memset(sig, 0, sizeof(sig));
 		memset(pub, 0, sizeof(pub));
 		rsv_t *pdata;
-		if (0 == get_data(&pdata)) {
+		if (0 == get_data(&pdata)) 
+		{
 			memcpy(sig+0, pdata->r, 32);
 			memcpy(sig+32, pdata->s, 32);
 			memcpy(sig+64, pdata->h, 32);
 			sig[96] = pdata->v;
 
-			if (0 == 0)
+			if (0 != 0)
 			{
 				BoeErr *bret = doTSU_RecoverPub(sig, pub);
 				if(bret == BOE_OK)
@@ -111,15 +126,16 @@ void *test_ecc(void *usrdata)
 					if(memcmp(pdata->x, pub, 32) == 0 &&
 							memcmp(pdata->y, pub+32, 32) == 0)
 					{
-						if (gCurrent%5000 == 0)
+						if (gCount%5000 == 0)
 						{
-							printf("recover pubkey current = %d\n", gCurrent);
+							printf("recover pubkey current = %d\n", gCount);
 						}
 						continue;
 					}
 					else
 					{
 						printf("pubkey compare error.\n");
+						shex_dump_ln(pub,64);
 						exit(1);
 					}
 				}
@@ -130,7 +146,8 @@ void *test_ecc(void *usrdata)
 			}
 			else
 			{
-				BoeErr *bret = doTSU_RecoverPub_Async(sig, (unsigned char*)pdata, sizeof(rsv_t*));
+				uint32_t pointer = (uint32_t)pdata;
+				BoeErr *bret = doTSU_RecoverPub_Async(sig, (unsigned char*)&pointer, sizeof(uint32_t));
 				if(bret != BOE_OK)
 				{
 					printf("msg send/receive error.\n");
@@ -144,6 +161,8 @@ void *test_ecc(void *usrdata)
 		}
 	}
 }
+
+
 
 static void load_data(int argc, char *argv[])
 {
@@ -185,16 +204,6 @@ static void load_data(int argc, char *argv[])
 	fclose(fd1);
 	fclose(fd2);
 	fclose(fd3);
-}
-
-static void shex_dump_ln(unsigned char *buf, int len)
-{
-	for(int i =0; i < len; i++)
-	{
-		printf("%02x", buf[i]);
-	}
-	printf("\n");
-
 }
 
 #define KNOWN_HASH_COUNT 10 
