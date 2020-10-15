@@ -123,6 +123,7 @@ int WMessageWithPacketControl(WMessage *m, int flag)
     {
         m->packetControl = (flag == 1) ? 1 : 0;
     }
+    return 0;
 }
 
 int WMessageFree(WMessage *m)
@@ -175,6 +176,7 @@ int msgc_set_packet_control(MsgContext *ctx, int maxbuffer)
     IMsgContext *c = *ctx;
     c->maxbuffer = maxbuffer;
     c->remainCount = maxbuffer;
+    return 0;
 }
 
 int msgc_release(MsgContext *ctx)
