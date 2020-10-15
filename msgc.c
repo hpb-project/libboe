@@ -47,9 +47,15 @@ typedef struct IMsgContext{
     void*    userdata;
     pthread_mutex_t mlock; // 
     AtomicQ  tx_q;
+    
     pthread_t tx_thread;
     int msg_num;
     MsgHandleCallback callback; // async msg callback
+
+    // packet control
+    int maxbuffer;
+    int remainCount;
+    AtomicQ  tx_q_control;
 }IMsgContext;
 
 static void *sorting_thread(void*userdata);
@@ -111,6 +117,14 @@ int WMessageAddUserdata(WMessage *m, uint8_t *data, int len)
     return 0;
 }
 
+int WMessageWithPacketControl(WMessage *m, int flag)
+{
+    if(m != NULL)
+    {
+        m->packetControl = (flag == 1) ? 1 : 0;
+    }
+}
+
 int WMessageFree(WMessage *m)
 {
     sem_destroy(&m->sem);
@@ -133,6 +147,7 @@ int msgc_init(MsgContext *ctx, RSContext *rs, MsgHandle msghandle, void*userdata
     INIT_LIST_HEAD(&c->wList.list);
     ret = aq_init(&(c->r_q), 1000000); // 100w
     ret += aq_init(&(c->tx_q), 1000000); // 100w
+    ret += aq_init(&(c->tx_q_control), 1000000);
     
     if(ret != 0)
     {
@@ -155,6 +170,13 @@ int msgc_init(MsgContext *ctx, RSContext *rs, MsgHandle msghandle, void*userdata
     return 0;
 }
 
+int msgc_set_packet_control(MsgContext *ctx, int maxbuffer)
+{
+    IMsgContext *c = *ctx;
+    c->maxbuffer = maxbuffer;
+    c->remainCount = maxbuffer;
+}
+
 int msgc_release(MsgContext *ctx)
 {
     IMsgContext *c = *ctx;
@@ -167,6 +189,7 @@ int msgc_release(MsgContext *ctx)
     
     return 0;
 }
+#if 0 // 
 int msgc_send(MsgContext *ctx, WMessage *wmsg)
 {
     IMsgContext *c = *ctx;
@@ -189,6 +212,7 @@ int msgc_send(MsgContext *ctx, WMessage *wmsg)
 
     return 0;
 }
+#endif
 
 AQData* msgc_read(MsgContext *ctx, WMessage *wmsg)
 {
@@ -262,6 +286,10 @@ static void *sorting_thread(void*userdata)
                 if(d->len > 0 && d->buf != NULL &&
                         (1 == m->cFunc(d->buf, d->len, m->uid)))
                 {
+                    if(m->packetControl == 1)
+                    {
+                        atomic_fetch_and_add(&(c->remainCount), 1);
+                    }
                     if(m->flag == 1)
                     {
                     	g_tsu_rcv ++;
@@ -302,6 +330,10 @@ static void *sorting_thread(void*userdata)
 				 uint64_t st = get_timestamp_us();
 				if((m->sTime + m->timeout) <= st)
 				{
+                    if(m->packetControl == 1)
+                    {
+                        atomic_fetch_and_add(&(c->remainCount), 1);
+                    }
 					if(m->flag == 1)
 					{
                         m->d = NULL;
@@ -333,6 +365,10 @@ static void *sorting_thread(void*userdata)
         { 
             pnode = list_entry(pos, WaitNode, list); 
             m = pnode->wmsg;
+            if(m->packetControl == 1)
+            {
+                atomic_fetch_and_add(&(c->remainCount), 1);
+            }
             m->d = NULL;
             sem_post(&m->sem);
             pthread_mutex_lock(&c->mlock);
@@ -363,8 +399,15 @@ int msgc_send_async(MsgContext *ctx, WMessage *wmsg)
 	{
 		memcpy(data->buf, wmsg->s.buf, wmsg->s.len);
 	}
-
-	ret = aq_push(&c->tx_q, data);
+    if(wmsg->packetControl == 1)
+    {
+        ret = aq_push(&c->tx_q_control, data);
+    }
+    else
+    {
+        ret = aq_push(&c->tx_q, data);
+    }
+    	
 	if(0 != ret)
 	{
 		printf("msgc_send_async aq_push tx_q error\n");
@@ -382,6 +425,7 @@ static void *send_msg_thread(void *userdata)
 {
     IMsgContext *c = (IMsgContext*)userdata;
     AQData *data= NULL;
+    int lastSend = 0; // 0: tx_q   1: tx_q_control
 
     while(c->th_flag == 0) ;
     while(c->th_flag == 1)
@@ -392,7 +436,22 @@ static void *send_msg_thread(void *userdata)
 		    //printf(" msg_num>=10, send_msg##c->msg_num %d\n",c->msg_num);
             continue;
         }
-        data = aq_pop(&(c->tx_q));
+        if(c->remainCount > c->maxbuffer)
+        {
+            c->remainCount = c->maxbuffer;
+        }
+        if(0 >= atomic_add_and_fetch(&(c->remainCount),0) || (1 == aq_empty(&(c->tx_q_control)))
+            || (lastSend == 1 && 1 != aq_empty(&(c->tx_q))))
+        {
+            data = aq_pop(&(c->tx_q));
+            lastSend = 0;
+        }
+        else
+        {
+            data = aq_pop(&(c->tx_q_control));
+            lastSend = 1;
+        }
+        
         if(NULL != data)
         {
 
@@ -402,6 +461,11 @@ static void *send_msg_thread(void *userdata)
             }
             else
             {
+                if(lastSend == 1)
+                {
+                    atomic_fetch_and_sub(&(c->remainCount), 1);
+                }
+                
                 atomic_fetch_and_add(&(c->msg_num), 1);
 				  g_send++;
 			 }

@@ -37,19 +37,21 @@ typedef struct WMessage{
     uint8_t userdata[MAX_WM_USERDATA_LEN];  // task userdata
     int     userdata_len;   // userdata length
     int flag;//send msg async flag
+    int packetControl; // packet control flag.
 }WMessage;
 
 typedef int (*MsgHandleCallback)(WMessage *m, void *userdata);
 
 typedef void*  MsgContext;
 WMessage* WMessageNew(uint32_t uid, CheckResponse cfunc, uint64_t timeout, uint8_t *data, int len, int flag);
+int WMessageWithPacketControl(WMessage *m, int flag);
 int WMessageAddUserdata(WMessage *m, uint8_t *data, int len);
 int WMessageFree(WMessage *m);
 
 int msgc_init(MsgContext *c, RSContext *rs, MsgHandle msghandle, void*userdata, MsgHandleCallback callback);
 int msgc_release(MsgContext *ctx);
+int msgc_set_packet_control(MsgContext *ctx, int maxbuffer);
 int msgc_send_async(MsgContext *ctx, WMessage *wmsg);
-int msgc_send(MsgContext *ctx, WMessage *wmsg);
 AQData* msgc_read(MsgContext *ctx, WMessage *wmsg);
 long int g_send;
 long int g_rsvd;

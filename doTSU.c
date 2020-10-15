@@ -29,6 +29,8 @@ static TSUContext gTsu;
 
 #define TSU_RV (0xFF01)
 
+#define TSU_PACKET_CONTROL (10)
+
 #define TX_SIG_LEN (97)
 #define TX_PUB_LEN (64)
 #define TSU_HASH_LEN (32)
@@ -108,6 +110,7 @@ BoeErr* doTSU_Init(char *ethname, MsgHandle msghandle, void*userdata)
         RSRelease(&ctx->rs);
         return &e_init_fail;
     }
+    msgc_set_packet_control(&(ctx->msgc), TSU_PACKET_CONTROL);
     return &e_ok;
 }
 
@@ -179,6 +182,10 @@ static BoeErr* doCommand(T_Package *p, AQData **d, int timeout, int wlen)
     MsgContext *wqc = &gTsu.msgc;
     BoeErr *ret = BOE_OK;
     WMessage * wm = WMessageNew(p->sequence, tsu_check_response, timeout, (uint8_t*)p, wlen, 0);
+    if(p->function_id == FUNCTION_ECSDA_CHECK)
+    {
+        WMessageWithPacketControl(wm, 1);
+    }
     if(msgc_send_async(wqc, wm) == 0)
     {
         AQData *q = msgc_read(wqc, wm);
@@ -210,6 +217,7 @@ static BoeErr* doCommandRecoverPubAsync(T_Package *p, int timeout, int wlen, uns
     MsgContext *wqc = &gTsu.msgc;
     WMessage * wm = WMessageNew(p->sequence, tsu_check_response, timeout, (uint8_t*)p, wlen, 1);
     WMessageAddUserdata(wm, param, param_len);
+    WMessageWithPacketControl(wm, 1);
 	
     if(msgc_send_async(wqc, wm) == 0)
     {
