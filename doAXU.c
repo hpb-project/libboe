@@ -846,7 +846,7 @@ void *doAXU_Reg_Random_Read_Thread()
         BoeErr *ret = doAXU_Reg_Random_Read(random_temp);
         if(ret != &e_ok)
         {
-            printf("doAXU_Reg_Random_Read error %d\n",ret->ecode);
+            // printf("doAXU_Reg_Random_Read error %d\n",ret->ecode);
         }
         else
         {			
@@ -1110,7 +1110,7 @@ BoeErr* doAXU_UpgradeAbort(uint32_t fid)
 
 static int asu_msg_callback(WMessage *m, void*userdata)
 {
-    printf("axu rcv \n");
+    // printf("axu rcv \n");
     return 0;
 }
 

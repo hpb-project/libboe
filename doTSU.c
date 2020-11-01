@@ -1,4 +1,4 @@
-// Last Update:2019-03-12 20:00:22
+// Last Update:2020-11-01 17:50:34
 /**
  * @file doTSU.c
  * @brief 
@@ -71,7 +71,7 @@ static int tsu_msg_callback(WMessage *m, void*userdata)
             tsu_packet = (T_Package *)(m->d->buf);
             if(tsu_packet->status == RP_CHKSUM_ERROR)
             {
-                printf("boe--- response with error CHKSUM ERROR, package sequence = %d\n", tsu_packet->sequence);
+                // printf("boe--- response with error CHKSUM ERROR, package sequence = %d\n", tsu_packet->sequence);
                 ctx->asyncCallback(type, NULL, m->d->len, m->userdata, m->userdata_len, tsu_packet_old->payload, ctx->userdata);
             }
             else
