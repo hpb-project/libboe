@@ -14,7 +14,7 @@
 #include <unistd.h>
 #include <time.h>
 #include "genid.h"
-#include "boe_full.h"
+#include "boe.h"
 #include "sb_api.h"
 #include "serror.h"
 #include "common.h"

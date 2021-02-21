@@ -46,10 +46,10 @@ void delete_signresult(SignResult_t *result)
 
 uint32_t checksum(uint8_t *data, uint32_t len)
 {
-    uint32_t chk = 0;
+    uint32_t chk = 0, i = 0;
     if(data != NULL && len > 0)
     {
-        for(uint32_t i = 0;i < len; i++)
+        for(i = 0;i < len; i++)
         {
             chk += data[i];
         }
@@ -59,10 +59,10 @@ uint32_t checksum(uint8_t *data, uint32_t len)
 
 uint8_t checksum_byte(uint8_t *data, uint32_t len)
 {
-    uint8_t chk = 0;
+    uint8_t chk = 0, i = 0;
     if(data != NULL && len > 0)
     {
-        for(uint32_t i = 0; i < len; i++)
+        for(i = 0; i < len; i++)
         {
             chk += data[i];
         }

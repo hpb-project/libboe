@@ -10,7 +10,7 @@
 #ifndef DO_A_X_U_H
 #define DO_A_X_U_H
 
-#include "boe_full.h"
+#include "boe.h"
 #include "axu_connector.h"
 
 BoeErr* doAXU_Init(char *ethname, MsgHandle msghandle, void*userdata);

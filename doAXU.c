@@ -473,6 +473,7 @@ BoeErr* doAXU_GetRandom(unsigned char *rdm)
     A_Package *p = make_query_simple(ACMD_PB_GET_RANDOM);
     BoeErr *ret = NULL;
     AQData *r = NULL;
+    int i = 0;
     if(p)
     {
         ret = doCommand(p, &r);
@@ -487,7 +488,7 @@ BoeErr* doAXU_GetRandom(unsigned char *rdm)
     }
 
     srandom(time(NULL));
-    for(int i = 0; i < 8; i++)
+    for(i = 0; i < 8; i++)
     {
         uint32_t rm = random();
         memcpy(rdm+4*i, &rm, sizeof(rm));

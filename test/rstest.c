@@ -28,7 +28,8 @@ int fillinput(char *input, int len)
 
 int dump_hex(char *input, int len)
 {
-    for(int i = 0; i < len; i++)
+	int i = 0;
+    for(i = 0; i < len; i++)
     {
         printf("[%d]=0x%02x\n", i, input[i]);
     }

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "boe_full.h"
+#include "boe.h"
 
 int ch_to_int(char ch)
 {

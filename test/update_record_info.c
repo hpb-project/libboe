@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "boe_full.h"
+#include "boe.h"
 #include "genid.h"
 
 int main(int argc, char *argv[])

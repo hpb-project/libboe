@@ -11,7 +11,7 @@
 #include <unistd.h>
 #include <string.h>
 #include "doAXU.h"
-#include "boe_full.h"
+#include "boe.h"
 
 
 typedef int (*TestFunc)(void);
@@ -40,7 +40,8 @@ static int axu_msg_handle(uint8_t *data, int len, void *userdata)
 }
 void hex_dump_ln(unsigned char *buf, int len)
 {
-    for(int i = 0; i < len; i++)
+    int i = 0;
+    for(i = 0; i < len; i++)
     {
         printf("%02x", buf[i]);
     }

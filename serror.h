@@ -9,7 +9,7 @@
 
 #ifndef SERROR_H
 #define SERROR_H
-#include "boe_full.h"
+#include "boe.h"
 #include "axu_connector.h"
 
 BoeErr e_ok;

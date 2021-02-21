@@ -10,7 +10,7 @@
 #ifndef DO_T_S_U_H
 #define DO_T_S_U_H
 #include <stdint.h>
-#include "boe_full.h"
+#include "boe.h"
 #include "tsu_connector.h"
 
 #define RP_CHKSUM_ERROR (0x13)

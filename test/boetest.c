@@ -6,7 +6,7 @@
  * @version 0.1.00
  * @date 2018-08-08
  */
-#include "boe_full.h"
+#include "boe.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -109,14 +109,15 @@ static void load_data(int argc, char *argv[])
 
 	while((gTotal < TEST_NUMB) && (!feof(fd1)) && (!feof(fd2))  && (!feof(fd3)))
 	{
+		int i = 0;
 		rsv_t *p = &(rsv_array[gTotal]);
 		//读取一组数据并发送
-		for(int i=0;i<32;i++)
+		for(i=0;i<32;i++)
 		{
 			fscanf(fd1,"%hhu,%hhu,%hhu\n",&r[i],&s[i],&h[i]);
 		}
 		fscanf(fd2,"%hhu\n",&v);
-		for(int i=0;i<32;i++)
+		for(i=0;i<32;i++)
 		{
 			fscanf(fd3,"%hhu,%hhu\n",&x[i],&y[i]);
 		}
@@ -201,7 +202,8 @@ static int ecdsa_test(int argc, char *argv[])
 
 static void shex_dump_ln(unsigned char *buf, int len)
 {
-	for(int i =0; i < len; i++)
+	int i = 0;
+	for(i =0; i < len; i++)
 	{
 		printf("%02x", buf[i]);
 	}
@@ -268,7 +270,8 @@ static const char *hash_serial_v1 [HASH_TEST_COUNT] = {
 
 static void hash_to_string(unsigned char *hash, char *str)
 {
-	for(int i = 0; i < 32; i++)
+	int i = 0;
+	for(i = 0; i < 32; i++)
 	{
 		char byte[3] = {0};
 		memset(byte, 0x0, sizeof(byte));
@@ -284,11 +287,12 @@ static int hash_test()
 	char hash_str[65] = {0};
 	unsigned char p_status = 0;
 	unsigned char p_result = 0;
+	int i = 0;
 	
 	memset(shash, 0x00, sizeof(shash));
 	memset(last, 0x00, sizeof(last));
 
-	for(int i = 0; i < HASH_TEST_COUNT; i++)
+	for(i = 0; i < HASH_TEST_COUNT; i++)
 	{
 	    printf("\n");
 	    printf("##### hash get loop [%d] #####\n",i);

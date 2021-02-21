@@ -117,9 +117,9 @@ BoeErr* boe_get_n_random(unsigned char *hash, unsigned char *nexthash);
 /*
  * recover pubkey. if boe board is working, use hardware to do it. else will use soft alghorim.
  */
- BoeErr* boe_check_random(unsigned char *hash, unsigned char *nexthash);
+BoeErr* boe_check_random(unsigned char *hash, unsigned char *nexthash);
 /*
- * check random. if boe board is working, use hardware to do it. else will use soft alghorim.
+ *check random. if boe board is working, use hardware to do it. else will use soft alghorim.
  */
 BoeErr* boe_valid_sign(unsigned char *sig, unsigned char *pub);
 BoeErr* boe_valid_sign_recover_pub_async(unsigned char *sig, unsigned char *param, int paramlen);

@@ -6,7 +6,7 @@
  * @version 0.1.00
  * @date 2018-08-08
  */
-#include "boe_full.h"
+#include "boe.h"
 #include "doTSU.h"
 #include <stdio.h>
 #include <stdlib.h>

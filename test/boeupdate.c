@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include "boe_full.h"
+#include "boe.h"
 
 typedef struct Tversion {
     unsigned char H;
