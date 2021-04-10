@@ -48,6 +48,8 @@ BoeErr* boe_upgrade_abort(void);
  */
 BoeErr* boe_hw_check(void);
 BoeErr* boe_hw_connect(void);
+BoeErr* boe_reg_random_read(unsigned char *string);
+
 /*
  * let board reboot.
  */
@@ -93,6 +95,15 @@ BoeErr* boe_get_bind_account(unsigned char *account);
  */
 BoeErr* boe_hw_sign(unsigned char *p_random, unsigned char *sig);
 /*
+ * do signature for hardware authentication.
+ * in: p_random, 32 bytes random
+ * out: sig,    64 bytes signature.
+ * return :
+ *  BOE_OK is sign successed.
+ *
+ */
+BoeErr* boe_hw_sign_with_hid(unsigned char *p_random, unsigned char *sig);
+/*
  * do signature verify.
  * p_random:    32 bytes random.
  * hid     :    string.
@@ -103,7 +114,18 @@ BoeErr* boe_hw_sign(unsigned char *p_random, unsigned char *sig);
  *  BOE_OK is verify passed.
  *
  */
-BoeErr* boe_p256_verify(unsigned char *p_random, unsigned char *hid, unsigned char *pubkey, unsigned char *sig);
+BoeErr* boe_p256_verify_with_hid(unsigned char *p_random, unsigned char *hid, unsigned char *pubkey, unsigned char *sig);
+/*
+ * do signature verify.
+ * p_random:    32 bytes random.
+ * pubkey  :    64 bytes pubkey.
+ * sig     :    64 bytes signature.
+ *
+ * return:
+ *  BOE_OK is verify passed.
+ *
+ */
+BoeErr* boe_p256_verify(unsigned char *random, unsigned char *pubkey, unsigned char *signature);
 /*
  * get a random for consensus.
  * in: hash, 32 bytes hash.

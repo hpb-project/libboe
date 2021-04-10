@@ -1,4 +1,4 @@
-// Last Update:2019-03-12 19:44:04
+// Last Update:2021-04-10 18:01:33
 /**
  * @file nboe.c
  * @brief 
@@ -452,7 +452,7 @@ static void hex_dump_ln(unsigned char *buf, int len)
 }
 #endif
 
-BoeErr* boe_hw_sign(unsigned char *p_random, unsigned char *sig)
+BoeErr* boe_hw_sign_with_hid(unsigned char *p_random, unsigned char *sig)
 {
     // merge p_random and hid, 
     // sha3_256 generate hash.
@@ -484,7 +484,36 @@ BoeErr* boe_hw_sign(unsigned char *p_random, unsigned char *sig)
     }
     return ret;
 }
-BoeErr* boe_p256_verify(unsigned char *random,  unsigned char * hid, unsigned char *pubkey, unsigned char *signature)
+
+BoeErr* boe_hw_sign(unsigned char *p_random, unsigned char *sig)
+{
+    // merge p_random and hid, 
+    // sha3_256 generate hash.
+    // use hash to signature.
+    BoeErr *ret = bConnected();
+    if(p_random == NULL || sig == NULL)
+    {
+        printf("boe_hw_sign p_random == NULL || sig == NULL, return\n");
+        return &e_param_invalid;
+    }
+    if(ret == BOE_OK)
+    {
+        int len = 32;
+        unsigned char p_buf[32];
+        uint8_t hash[32] = {0};
+
+        memset(p_buf, 0, len);
+        memcpy(p_buf, p_random, 32);
+        //printf("boe hwsign---p_buf:0x");
+        //hex_dump_ln(p_buf, sizeof(p_buf));
+        SHA3_256(hash, p_buf, len);
+        //printf("boe hwsign---hash:0x");
+        //hex_dump_ln(hash, sizeof(hash));
+        return doAXU_HWSign(hash, sig);
+    }
+    return ret;
+}
+BoeErr* boe_p256_verify_with_hid(unsigned char *random,  unsigned char * hid, unsigned char *pubkey, unsigned char *signature)
 {
     int len = 32 + 32;
     unsigned char p_buf[32 + 32];
@@ -504,6 +533,27 @@ BoeErr* boe_p256_verify(unsigned char *random,  unsigned char * hid, unsigned ch
         return BOE_OK;
     return &e_hw_verify_failed;
 }
+
+BoeErr* boe_p256_verify(unsigned char *random, unsigned char *pubkey, unsigned char *signature)
+{
+    int len = 32;
+    unsigned char p_buf[32];
+    memset(p_buf, 0, len);
+    memcpy(p_buf, random, 32);
+
+    //printf("boe verify---p_buf:0x");
+    //hex_dump_ln(p_buf, sizeof(p_buf));
+    uint8_t hash[32] = {0};
+    SHA3_256(hash, p_buf, len);
+    //printf("boe verify---hash:0x");
+    //hex_dump_ln(hash, sizeof(hash));
+
+    int ret = p256_verify(hash, pubkey, signature);
+    if(ret == 0)
+        return BOE_OK;
+    return &e_hw_verify_failed;
+}
+
 BoeErr* boe_genkey(unsigned char *pubkey)
 {
     BoeErr *ret = bConnected();
