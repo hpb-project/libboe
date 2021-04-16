@@ -21,17 +21,29 @@
 #include "common.h"
 typedef struct T_PACKAGE{
     uint32_t    sequence;           // package sequence id.
-    uint8_t     function_id;            // protocol version.
-    uint8_t     version;        // the package is request(0) or responsed(1).
-    uint8_t     status;      // 0: no fragment; 1: first fragment; 
-                                    // 2: middle fragment; 3:last fragment.
-    uint8_t     sub_function;           // reserved. sub_function
+    uint8_t     function_id;        // functin id.
+    uint8_t     version;            // protocol versoin.
+    uint8_t     status;             // error code return from fpga.
+    uint8_t     sub_function;       // sub_function
     uint8_t     payload[];          // payload data pointor.
 }T_Package;
 
+typedef struct T_SLICE_PACKAGE {
+    uint16_t task_id;
+    uint16_t fragment_id;
+    uint16_t fragment_cnt;
+    uint16_t checksum;
+    uint16_t payload_len;
+    uint8_t  payload[];
+}T_Slice;
+
 #define FUNCTION_GEN_HASH 0x1
 #define FUNCTION_ECSDA_CHECK 0x2 
-#define FUNCTION_GEN_NEW_HASH 0x3 
+#define FUNCTION_GEN_NEW_HASH 0x3
+#define FUNCTION_ZSC_VERIFY 0x4
+
+#define SUB_FUNC_NEW_HASH   (0x0)
+#define SUB_FUNC_CHECK_HASH (0x1)
 
 #define TSU_HASH_CHECK_LEN (64)
 

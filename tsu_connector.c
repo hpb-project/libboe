@@ -38,11 +38,11 @@ T_Package* tsu_package_new(uint8_t fid, uint32_t len, uint8_t hash_flag)
         p->function_id = fid;
         if(1 == hash_flag)
         {
-            p->sub_function = 1;//check hash
+            p->sub_function = SUB_FUNC_CHECK_HASH;//check hash
         }
         else
         {
-            p->sub_function = 0;//get hash
+            p->sub_function = SUB_FUNC_NEW_HASH;//get hash
         }
     }
     return p;
