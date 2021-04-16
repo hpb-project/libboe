@@ -177,6 +177,12 @@ T_Package *make_query_check_hash(uint8_t *pre_hash, uint8_t *hash, int *len)
     return p;
 }
 
+T_Multi_Package_List *make_query_zscVerify(uint8_t *data, uint32_t datalen, int *len)
+{
+    T_Multi_Package_List *list = tsu_max_package_new(FUNCTION_ZSC_VERIFY, data, datalen);
+    return list;
+}
+
 static BoeErr* doCommand(T_Package *p, AQData **d, int timeout, int wlen)
 {
     MsgContext *wqc = &gTsu.msgc;
@@ -407,6 +413,52 @@ BoeErr* doTSU_CheckHash(uint8_t *pre_hash, uint8_t *hash)
 	    }
 
 	    return ret;
+	}
+	else
+	{
+	    return &e_no_mem;
+	}
+
+    return &e_result_invalid;
+}
+
+BoeErr* doTSU_ZSCVerify(uint8_t *data, uint32_t len)
+{
+	int wlen = 0;
+	T_Multi_Package_List *list = make_query_zscVerify(data, len, &wlen), *p;
+	BoeErr *ret = NULL;
+	AQData *r = NULL;
+	int try = 3;
+	unsigned char p_result = 0;
+    p = list;          
+	if(p)
+	{
+        #if 0
+	    do{
+	        ret = doCommand(p, &r, gShortTimeout, wlen);
+	        if(ret == &e_msgc_read_timeout)
+	           try --;
+	        else
+	            break;
+	    }while(try > 0);
+	    free(p);
+	    if(ret == &e_ok)
+	    {
+		    T_Package *q = (T_Package*)r->buf;			
+		    p_result = q->status;
+		    aqd_free(r);
+	    }
+	    if(1 == p_result)
+	    {
+	        return ret;
+	    }
+	    else if(0x11 == p_result)
+	    {
+	        return &e_hash_check_error;
+	    }
+
+	    return ret;
+        #endif
 	}
 	else
 	{

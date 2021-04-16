@@ -37,6 +37,12 @@ typedef struct T_SLICE_PACKAGE {
     uint8_t  payload[];
 }T_Slice;
 
+typedef struct T_Multi_Slice_Package {
+    T_Package *package;
+    int32_t package_len;
+    struct T_Multi_Slice_Package *next;
+}T_Multi_Package_Node, T_Multi_Package_List;
+
 #define FUNCTION_GEN_HASH 0x1
 #define FUNCTION_ECSDA_CHECK 0x2 
 #define FUNCTION_GEN_NEW_HASH 0x3
@@ -50,5 +56,7 @@ typedef struct T_SLICE_PACKAGE {
 T_Package* tsu_package_new(uint8_t fid, uint32_t len, uint8_t hash_flag);
 int tsu_set_data(T_Package* p, uint16_t offset, uint8_t* data, uint32_t len);
 void tsu_finish_package(T_Package *p);
+
+T_Multi_Package_List tsu_max_package_new(uint8_t fid, uint8_t* data, uint32_t len);
 
 #endif  /*TSU_CONNECTOR_H*/
