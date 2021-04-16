@@ -1,2 +1,4 @@
 *.obj
 obj/*
+.idea/*
+.vscode/*
