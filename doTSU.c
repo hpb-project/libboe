@@ -422,48 +422,91 @@ BoeErr* doTSU_CheckHash(uint8_t *pre_hash, uint8_t *hash)
     return &e_result_invalid;
 }
 
-BoeErr* doTSU_ZSCVerify(uint8_t *data, uint32_t len)
+static BoeErr* doCommandAsync(T_Package *p, int timeout, int wlen, unsigned char *param, int param_len)
+{
+    MsgContext *wqc = &gTsu.msgc;
+    WMessage * wm = WMessageNew(p->sequence, tsu_check_response, timeout, (uint8_t*)p, wlen, 1);
+    WMessageAddUserdata(wm, param, param_len);
+    WMessageWithPacketControl(wm, 1);
+	
+    if(msgc_send_async(wqc, wm) == 0)
+    {
+        return &e_ok;
+    }
+    else
+    {
+        return &e_msgc_send_fail;
+    }
+}
+
+BoeErr* doTSU_ZSCVerify(uint8_t *data, int len)
 {
 	int wlen = 0;
 	T_Multi_Package_List *list = make_query_zscVerify(data, len, &wlen), *p;
+    T_Multi_Package_Node *node = NULL;
 	BoeErr *ret = NULL;
 	AQData *r = NULL;
-	int try = 3;
-	unsigned char p_result = 0;
+	int retry = 3;
+	uint8_t p_result = 0;
+
     p = list;          
 	if(p)
 	{
-        #if 0
-	    do{
-	        ret = doCommand(p, &r, gShortTimeout, wlen);
-	        if(ret == &e_msgc_read_timeout)
-	           try --;
-	        else
-	            break;
-	    }while(try > 0);
-	    free(p);
-	    if(ret == &e_ok)
-	    {
-		    T_Package *q = (T_Package*)r->buf;			
-		    p_result = q->status;
-		    aqd_free(r);
-	    }
-	    if(1 == p_result)
-	    {
-	        return ret;
-	    }
-	    else if(0x11 == p_result)
-	    {
-	        return &e_hash_check_error;
-	    }
-
-	    return ret;
-        #endif
+        while(NULL != p->next)
+        {
+            node = p->next;
+            if (NULL == node->next)
+            {
+                // the last one use sync command.
+                ret = doCommand(node->package, &r, 1000, node->package_len);
+                if (ret == &e_ok)
+                {   // receive verify response.
+                    T_Package *q = (T_Package*)r->buf;
+                    if(q->status == 0)
+                    {   // get verify result;
+                        p_result = q->payload[0];
+                    }
+                    else if(q->status == RP_CHKSUM_ERROR) 
+                    {
+                        ret = &e_checksum_error;
+                        // resend max retry times.
+                        if(retry > 0)
+                        {
+                            retry--;
+                            p = list;
+                            continue;
+                        }
+                    }
+                    
+                    aqd_free(r);
+                }
+                break;
+            }
+            else
+            {
+                ret = doCommandAsync(node->package, 100, node->package_len, NULL, 0);
+                if(ret != &e_ok)
+                {
+                    break;
+                }
+            }
+            p = p->next;
+        }
+        tsu_max_package_release(list);
 	}
 	else
 	{
-	    return &e_no_mem;
+	    ret = &e_no_mem;
 	}
 
-    return &e_result_invalid;
+    if(p_result == 0)
+    {   // verify false.
+        ret = &e_hw_verify_failed;
+    }
+    else
+    {   // verify true.
+        ret = &e_ok;
+    }
+
+    return ret;
 }

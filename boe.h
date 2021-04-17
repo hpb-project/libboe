@@ -159,4 +159,9 @@ BoeErr* boe_reg_read(unsigned int reg, unsigned int *val);
 BoeErr* boe_reg_write(unsigned int reg, unsigned int val);
 BoeErr* boe_reg_random_read(unsigned char *string);
 
+/*
+ * do zscverify. return is e_ok or other error.
+*/
+BoeErr* boe_zscverify(unsigned char *data, int len);
+
 #endif  /*BOE_H*/

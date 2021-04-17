@@ -752,3 +752,13 @@ BoeErr* boe_valid_sign_callback(BoeValidSignCallback func)
     return BOE_OK;
 }
 
+
+BoeErr* boe_zscverify(unsigned char *data, int len)
+{
+    BoeErr *ret = bConnected();
+    if(ret == BOE_OK)
+    {
+        ret = doTSU_ZSCVerify(data, len);
+    }
+    return ret;
+}
