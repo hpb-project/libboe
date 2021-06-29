@@ -90,7 +90,7 @@ T_Multi_Package_List* tsu_max_package_new(uint8_t fid, uint8_t* data, uint32_t l
     T_Package *package = NULL;
     int per_package_len = MAX_TSU_SLICE_PACKAGE_PAYLOAD_LEN;
     int cnt = length/per_package_len + ((length%per_package_len) > 0) ? 1 : 0;
-    int i = 0, offset = 0, payloadlen = 0, slice_len = 0, package_len = 0;
+    int i = 0, offset = 0, payloadlen = 0, slice_len = 0;
 
     head = (T_Multi_Package_List*)malloc(sizeof(T_Multi_Package_List));
     if(NULL == head)
