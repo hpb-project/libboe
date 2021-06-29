@@ -94,11 +94,11 @@ int main(int argc, char *argv[])
 		// hash test 
 		if(0 == multipacket_test())
 		{
-			printf("hash test ok.\n");
+			printf("multi packet test ok.\n");
 		}
 		else
 		{
-			printf("hash test failed.\n");
+			printf("multi packet failed.\n");
 			return 3;
 		}
 	}
