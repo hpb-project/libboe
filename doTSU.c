@@ -188,7 +188,7 @@ static BoeErr* doCommand(T_Package *p, AQData **d, int timeout, int wlen)
     MsgContext *wqc = &gTsu.msgc;
     BoeErr *ret = BOE_OK;
     WMessage * wm = WMessageNew(p->sequence, tsu_check_response, timeout, (uint8_t*)p, wlen, 0);
-    if(p->function_id == FUNCTION_ECSDA_CHECK)
+    if(p->function_id == FUNCTION_ECSDA_CHECK || p->function_id == FUNCTION_ZSC_VERIFY)
     {
         WMessageWithPacketControl(wm, 1);
     }
@@ -458,6 +458,7 @@ BoeErr* doTSU_ZSCVerify(uint8_t *data, int len)
             if (NULL == node->next)
             {
                 // the last one use sync command.
+                printf("send with async command, length = %d\n", node->package_len);
                 ret = doCommand(node->package, &r, 1000, node->package_len);
                 if (ret == &e_ok)
                 {   // receive verify response.
@@ -484,6 +485,7 @@ BoeErr* doTSU_ZSCVerify(uint8_t *data, int len)
             }
             else
             {
+                printf("send with sync command, length = %d\n", node->package_len);
                 ret = doCommandAsync(node->package, 100, node->package_len, NULL, 0);
                 if(ret != &e_ok)
                 {

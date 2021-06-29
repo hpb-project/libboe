@@ -1,4 +1,4 @@
-all:rstest axutest tstest mkimage boetest fpgatest bawriteinfo getinfo boereg_test boeupdate update_record_info genidtest
+all:rstest axutest tstest mkimage boetest fpgatest bawriteinfo getinfo boereg_test boeupdate update_record_info genidtest multitest
 
 rstest:
 	gcc -g rstest.c ../rs.c -I ../ -o rstest

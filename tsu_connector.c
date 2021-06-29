@@ -78,6 +78,8 @@ T_Slice* new_t_slice(uint16_t taskid, uint16_t fragmentid, uint16_t fragment_cnt
     s->payload_len = payloadlen;
     memcpy(s->payload, data, payloadlen);
     s->checksum = checksum_2bytes(data, payloadlen);
+    printf("new slice with taskid = 0x%02x, fragment_id = 0x%02x, fragment_cnt = 0x%02x, payload_len = 0x%02x, checksum = 0x%02x\n",
+        taskid, fragmentid, fragment_cnt, payloadlen, s->checksum);
 
     return s;
 }
@@ -89,8 +91,9 @@ T_Multi_Package_List* tsu_max_package_new(uint8_t fid, uint8_t* data, uint32_t l
     T_Slice *slice = NULL;
     T_Package *package = NULL;
     int per_package_len = MAX_TSU_SLICE_PACKAGE_PAYLOAD_LEN;
-    int cnt = length/per_package_len + ((length%per_package_len) > 0) ? 1 : 0;
+    int cnt = length/per_package_len + (((length%per_package_len) > 0) ? 1 : 0);
     int i = 0, offset = 0, payloadlen = 0, slice_len = 0;
+    //printf("tsu make max_package data length = %d, per_packet_len = %d\n", length, per_package_len);
 
     head = (T_Multi_Package_List*)malloc(sizeof(T_Multi_Package_List));
     if(NULL == head)
@@ -103,6 +106,7 @@ T_Multi_Package_List* tsu_max_package_new(uint8_t fid, uint8_t* data, uint32_t l
     
     for(i=0; i < cnt; i++) 
     {
+        printf("make slice for idx=%d, cnt = %d\n",i, cnt);
         payloadlen = (length-offset) > per_package_len ? per_package_len : (length-offset);
         slice = new_t_slice(task_id, i, cnt, data+offset, payloadlen);
         if(NULL == slice)
@@ -110,9 +114,8 @@ T_Multi_Package_List* tsu_max_package_new(uint8_t fid, uint8_t* data, uint32_t l
             return NULL;
         }
         slice_len = sizeof(T_Slice) + payloadlen;
+        offset += payloadlen;
         package = tsu_package_new(fid, slice_len, 0);
-        // release slice
-        free(slice);
 
         if(NULL == package)
         {
@@ -121,6 +124,9 @@ T_Multi_Package_List* tsu_max_package_new(uint8_t fid, uint8_t* data, uint32_t l
 
         tsu_set_data(package, 0, (uint8_t*)slice, slice_len);
         tsu_finish_package(package);
+
+        // release slice
+        free(slice);
 
         node = (T_Multi_Package_Node*)malloc(sizeof(T_Multi_Package_Node));
         if(NULL == node)

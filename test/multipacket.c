@@ -52,7 +52,7 @@ static int multipacket_test(void)
 		}
 	}
 
-	BoeErr *ret = boe_zscverify(data, 1000*5)
+	BoeErr *ret = boe_zscverify(data, 1000*5);
 	if(ret != BOE_OK)
 	{
 		printf("zscverify failed.\n");
