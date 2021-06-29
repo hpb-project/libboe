@@ -15,8 +15,8 @@
 // along with the go-hpb. If not, see <http://www.gnu.org/licenses/>.
 
 
-#ifndef BOE_FULL_H
-#define BOE_FULL_H
+#ifndef BOE_H
+#define BOE_H
 #include <stdint.h>
 
 
@@ -163,5 +163,7 @@ BoeErr* boe_reg_random_read(unsigned char *string);
  * do zscverify. return is e_ok or other error.
 */
 BoeErr* boe_zscverify(unsigned char *data, int len);
+BoeErr* boe_inner_tsu_init(char *ethname);
+BoeErr* boe_inner_axu_init(char *ethname);
 
-#endif  /*BOE_FULL_H*/
+#endif  /*BOE_H*/

@@ -6,7 +6,8 @@
  * @version 0.1.00
  * @date 2018-08-08
  */
-#include "boe.h"
+#include "boe_full.h"
+#include "doTSU.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -52,7 +53,7 @@ static int multipacket_test(void)
 		}
 	}
 
-	BoeErr *ret = boe_zscverify(data, 1000*5);
+	BoeErr *ret = doTSU_ZSCVerify(data, 1000*5);
 	if(ret != BOE_OK)
 	{
 		printf("zscverify failed.\n");
@@ -70,7 +71,7 @@ int main(int argc, char *argv[])
 	}
 
 	char *ethname = argv[1];
-	BoeErr *ret = boe_test_init(ethname);
+	BoeErr *ret = boe_inner_tsu_init(ethname);
 	if(ret != BOE_OK)
 	{
 		printf("init failed.\r\n");
@@ -79,16 +80,6 @@ int main(int argc, char *argv[])
 	else
 	{
 		printf("init ok.\r\n");
-	}
-	ret = boe_hw_check();
-	if(ret != BOE_OK)
-	{
-		printf("hw check failed.\r\n");
-		return 1;
-	}
-	else
-	{
-		printf("hw check success.\r\n");
 	}
 	{
 		// hash test 

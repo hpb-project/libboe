@@ -140,23 +140,41 @@ int find_eth(char *ethname)
     freeifaddrs(ifList);
     return find;
 }
-BoeErr* boe_inner_init(char *ethname)
+
+BoeErr* boe_inner_axu_init(char *ethname)
 {
     BoeErr *ret = doAXU_Init(ethname, axu_msg_handle, (void*)&gIns);
     if(ret != BOE_OK)
     {
         return ret;
     }
-	
-	doTSU_RegisAsyncCallback(async_tsu_callback, (void *)&gIns);
+	random_thread_create();
+	return ret;
+}
+
+BoeErr* boe_inner_tsu_init(char *ethname)
+{
+    BoeErr *ret = &e_ok;
+    doTSU_RegisAsyncCallback(async_tsu_callback, (void *)&gIns);
     ret = doTSU_Init(ethname, tsu_msg_handle, (void*)&gIns);
     if(ret != BOE_OK)
     {
         doAXU_Release();
         return ret;
     }
-    random_thread_create();
-	
+    
+    return ret;
+}
+
+BoeErr* boe_inner_init(char *ethname)
+{
+    BoeErr *ret = boe_inner_axu_init(ethname);
+    if (ret != &e_ok)
+    {
+        return ret;
+    }
+
+    ret = boe_inner_tsu_init(ethname);
     return ret;
 }
 extern int g_random_flag ;
