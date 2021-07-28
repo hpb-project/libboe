@@ -23,12 +23,15 @@
 #include "rs.h"
 
 #define MAX_TSU_PACKAGE_PAYLOAD_LEN ((RS_MAX_PACKAGE_LEN) - sizeof(T_Package))
-#define MAX_TSU_SLICE_PACKAGE_PAYLOAD_LEN ((MAX_TSU_PACKAGE_PAYLOAD_LEN) - sizeof(T_Slice))
+#define MAX_TSU_SLICE_PACKAGE_PAYLOAD_LEN (1024)
 
+// #if (MAX_TSU_SLICE_PACKAGE_PAYLOAD_LEN) > ((MAX_TSU_PACKAGE_PAYLOAD_LEN) - sizeof(T_Slice))
+// #error "slice payload length can't greater than tsu package payload length"
+// #endif
 #define TRACE() printf("func:%s,line:%d\n", __FUNCTION__, __LINE__)
 
 static uint32_t  g_sequence = 0;
-static uint16_t  g_task_id = 0;
+static uint8_t  g_task_id = 0;
 static const unsigned char g_tsu_version = 0x10;
 
 #define fetch_tsu_package_sequence() atomic_fetch_and_add(&g_sequence,1)
@@ -65,26 +68,26 @@ void tsu_finish_package(T_Package *p)
 {
 }
 
-T_Slice* new_t_slice(uint16_t taskid, uint16_t fragmentid, uint16_t fragment_cnt, uint8_t *data, uint16_t payloadlen)
+T_Slice* new_t_slice(uint8_t taskid, uint8_t checksum, uint8_t mode, uint8_t fragmentid, uint8_t *data, uint16_t payloadlen)
 {
     T_Slice *s = (T_Slice*)malloc(sizeof(T_Slice) + payloadlen);
     if(NULL == s) 
     {
         return NULL;
     }
+    memset(s, 0x0, sizeof(T_Slice) + payloadlen);
     s->task_id = taskid;
+    s->checksum = checksum;
+    s->proof_mode = mode;
     s->fragment_id = fragmentid;
-    s->fragment_cnt = fragment_cnt;
-    s->payload_len = payloadlen;
     memcpy(s->payload, data, payloadlen);
-    s->checksum = checksum_2bytes(data, payloadlen);
-    printf("new slice with taskid = 0x%02x, fragment_id = 0x%02x, fragment_cnt = 0x%02x, payload_len = 0x%02x, checksum = 0x%02x\n",
-        taskid, fragmentid, fragment_cnt, payloadlen, s->checksum);
+    printf("new slice with taskid = 0x%02x, checksum = 0x%02x, mode = %d, fragment_id = %d, payload_len = 0x%02x\n",
+        taskid, s->checksum, s->proof_mode, s->fragment_id, payloadlen);
 
     return s;
 }
 
-T_Multi_Package_List* tsu_max_package_new(uint8_t fid, uint8_t* data, uint32_t length)
+T_Multi_Package_List* tsu_zsc_proof_package_new(uint8_t fid, uint8_t mode, uint8_t* data, uint32_t length)
 {
     T_Multi_Package_List *head = NULL, *p = NULL;
     T_Multi_Package_Node *node = NULL;
@@ -93,6 +96,12 @@ T_Multi_Package_List* tsu_max_package_new(uint8_t fid, uint8_t* data, uint32_t l
     int per_package_len = MAX_TSU_SLICE_PACKAGE_PAYLOAD_LEN;
     int cnt = length/per_package_len + (((length%per_package_len) > 0) ? 1 : 0);
     int i = 0, offset = 0, payloadlen = 0, slice_len = 0;
+
+    if((MAX_TSU_SLICE_PACKAGE_PAYLOAD_LEN) > ((MAX_TSU_PACKAGE_PAYLOAD_LEN) - sizeof(T_Slice)))
+    {
+        printf("assert: tsu slice package ");
+        abort();
+    }
     //printf("tsu make max_package data length = %d, per_packet_len = %d\n", length, per_package_len);
 
     head = (T_Multi_Package_List*)malloc(sizeof(T_Multi_Package_List));
@@ -102,13 +111,14 @@ T_Multi_Package_List* tsu_max_package_new(uint8_t fid, uint8_t* data, uint32_t l
     }
     p = head;
 
-    uint16_t task_id = fetch_tsu_multi_package_task();
+    uint8_t task_id = fetch_tsu_multi_package_task();
+    uint8_t checksum = checksum_byte(data,length);
     
     for(i=0; i < cnt; i++) 
     {
         printf("make slice for idx=%d, cnt = %d\n",i, cnt);
         payloadlen = (length-offset) > per_package_len ? per_package_len : (length-offset);
-        slice = new_t_slice(task_id, i, cnt, data+offset, payloadlen);
+        slice = new_t_slice(task_id, checksum, mode, i, data+offset, payloadlen);
         if(NULL == slice)
         {
             return NULL;
@@ -144,7 +154,7 @@ T_Multi_Package_List* tsu_max_package_new(uint8_t fid, uint8_t* data, uint32_t l
     return head;
 }
 
-void tsu_max_package_release(T_Multi_Package_List* head)
+void tsu_zsc_proof_package_release(T_Multi_Package_List* head)
 {
     T_Multi_Package_Node *node;
     if(NULL != head)

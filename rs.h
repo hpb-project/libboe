@@ -32,7 +32,7 @@ typedef struct RSContext{
     uint8_t loc_mac[6];
     struct sockaddr_ll device;
 }RSContext;
-#define RS_MAX_PACKAGE_LEN (1000)
+#define RS_MAX_PACKAGE_LEN (1200)
 int RSCreate(char *ethname, int type, RSContext *ctx);
 int RSRelease(RSContext *ctx);
 int RSWrite(RSContext *ctx, uint8_t*p_data, int len);

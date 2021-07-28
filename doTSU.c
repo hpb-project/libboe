@@ -20,6 +20,7 @@
 
 typedef struct TSUContext{
 	AsyncCallback asyncCallback;
+    TSU_PreSendCallback presendCallback;
 	void *userdata;
     RSContext  rs;
     MsgContext msgc;
@@ -94,6 +95,12 @@ void doTSU_RegisAsyncCallback(AsyncCallback afun, void *data)
 	TSUContext *ctx = &gTsu;
 	ctx->asyncCallback = afun;
 	ctx->userdata = data;
+}
+
+void doTSU_RegisPresendCallback(TSU_PreSendCallback pfun)
+{
+    TSUContext *ctx = &gTsu;
+	ctx->presendCallback = pfun;
 }
 
 BoeErr* doTSU_Init(char *ethname, MsgHandle msghandle, void*userdata)
@@ -176,10 +183,13 @@ T_Package *make_query_check_hash(uint8_t *pre_hash, uint8_t *hash, int *len)
 
     return p;
 }
-
-T_Multi_Package_List *make_query_zscVerify(uint8_t *data, uint32_t datalen, int *len)
+#define ZSC_BURN_MODE (0)
+#define ZSC_TRANSFER_MODE (1)
+#define BURNPROOF_LENGTH (2912)
+#define TRANSFERPROOF_LENGTH (5088)
+T_Multi_Package_List *make_query_zscVerify(uint8_t *data, uint8_t mode, uint32_t datalen, int *len)
 {
-    T_Multi_Package_List *list = tsu_max_package_new(FUNCTION_ZSC_VERIFY, data, datalen);
+    T_Multi_Package_List *list = tsu_zsc_proof_package_new(FUNCTION_ZSC_VERIFY, mode, data, datalen);
     return list;
 }
 
@@ -187,6 +197,10 @@ static BoeErr* doCommand(T_Package *p, AQData **d, int timeout, int wlen)
 {
     MsgContext *wqc = &gTsu.msgc;
     BoeErr *ret = BOE_OK;
+    if(gTsu.presendCallback != NULL)
+    {
+        gTsu.presendCallback(p);
+    }
     WMessage * wm = WMessageNew(p->sequence, tsu_check_response, timeout, (uint8_t*)p, wlen, 0);
     if(p->function_id == FUNCTION_ECSDA_CHECK || p->function_id == FUNCTION_ZSC_VERIFY)
     {
@@ -221,6 +235,10 @@ end:
 static BoeErr* doCommandRecoverPubAsync(T_Package *p, int timeout, int wlen, unsigned char *param, int param_len)
 {
     MsgContext *wqc = &gTsu.msgc;
+    if(gTsu.presendCallback != NULL)
+    {
+        gTsu.presendCallback(p);
+    }
     WMessage * wm = WMessageNew(p->sequence, tsu_check_response, timeout, (uint8_t*)p, wlen, 1);
     WMessageAddUserdata(wm, param, param_len);
     WMessageWithPacketControl(wm, 1);
@@ -442,13 +460,27 @@ static BoeErr* doCommandAsync(T_Package *p, int timeout, int wlen, unsigned char
 BoeErr* doTSU_ZSCVerify(uint8_t *data, int len)
 {
 	int wlen = 0;
-	T_Multi_Package_List *list = make_query_zscVerify(data, len, &wlen), *p;
+    uint8_t mode;
+	T_Multi_Package_List *list = NULL, *p = NULL;
     T_Multi_Package_Node *node = NULL;
 	BoeErr *ret = NULL;
 	AQData *r = NULL;
 	int retry = 3;
 	uint8_t p_result = 0;
 
+    if(len == BURNPROOF_LENGTH)
+    {
+        mode = ZSC_BURN_MODE;
+    }
+    else if (len == TRANSFERPROOF_LENGTH)
+    {
+        mode = ZSC_TRANSFER_MODE;
+    }
+    else 
+    {
+        ret = &e_param_invalid;
+    }
+    list = make_query_zscVerify(data, mode, len, &wlen);
     p = list;          
 	if(p)
 	{
@@ -463,11 +495,7 @@ BoeErr* doTSU_ZSCVerify(uint8_t *data, int len)
                 if (ret == &e_ok)
                 {   // receive verify response.
                     T_Package *q = (T_Package*)r->buf;
-                    if(q->status == 0)
-                    {   // get verify result;
-                        p_result = q->payload[0];
-                    }
-                    else if(q->status == RP_CHKSUM_ERROR) 
+                    if (q->status == RP_CHKSUM_ERROR)
                     {
                         ret = &e_checksum_error;
                         // resend max retry times.
@@ -477,6 +505,10 @@ BoeErr* doTSU_ZSCVerify(uint8_t *data, int len)
                             p = list;
                             continue;
                         }
+                    }
+                    else
+                    {
+                        p_result = q->status; // got verify result.
                     }
                     
                     aqd_free(r);
@@ -494,7 +526,7 @@ BoeErr* doTSU_ZSCVerify(uint8_t *data, int len)
             }
             p = p->next;
         }
-        tsu_max_package_release(list);
+        tsu_zsc_proof_package_release(list);
 	}
 	else
 	{
@@ -502,8 +534,12 @@ BoeErr* doTSU_ZSCVerify(uint8_t *data, int len)
 	}
 
     if(p_result == 0)
-    {   // verify false.
-        ret = &e_hw_verify_failed;
+    {
+        if (ret != &e_checksum_error)
+        {
+            // verify false.
+            ret = &e_hw_verify_failed;
+        }
     }
     else
     {   // verify true.
