@@ -59,7 +59,8 @@ uint32_t checksum(uint8_t *data, uint32_t len)
 
 uint8_t checksum_byte(uint8_t *data, uint32_t len)
 {
-    uint8_t chk = 0, i = 0;
+    uint8_t chk = 0;
+    uint32_t i = 0;
     if(data != NULL && len > 0)
     {
         for(i = 0; i < len; i++)
@@ -72,7 +73,8 @@ uint8_t checksum_byte(uint8_t *data, uint32_t len)
 
 uint16_t checksum_2bytes(uint8_t *data, uint32_t len)
 {
-    uint16_t chk = 0, i = 0;
+    uint16_t chk = 0;
+    uint32_t i = 0;
     if(data != NULL && len > 0)
     {
         for(i = 0; i < len; i++)

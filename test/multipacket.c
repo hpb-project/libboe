@@ -32,7 +32,7 @@ printf("--PROFILE-- cost time %ldms.\n", (gTe.tv_sec*1000000 + gTe.tv_usec - gTs
 
 uint8_t hextobin(const char * str, uint8_t * bytes, int blen)
 {
-   uint8_t  pos;
+   int  pos;
    uint8_t  idx0;
    uint8_t  idx1;
 
@@ -238,7 +238,7 @@ void loop(void)
 		printf("9: 退出测试\n");
 
 		printf("选择测试用例：");
-		scanf("%d\n", &choice);
+		scanf("%d", &choice);
 		printf("choice %d\n", choice);
 		switch (choice)
 		{
