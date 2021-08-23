@@ -240,7 +240,7 @@ static int hwsigntest(void)
 }
 
 #define HASH_TEST_COUNT 10 
-/*
+
 static const char *hash_serial_v1 [HASH_TEST_COUNT] = {
 	"7dcabd53a3b5fbd6cb014416ddee75d07dcabd53a3b5fbd6cb014416ddee75d0",
 	"06ad07e25b57b7ec3fd5ee5a31f85ff37ad9c1b70cb3268e92b3df4b4c4a1313",
@@ -253,9 +253,8 @@ static const char *hash_serial_v1 [HASH_TEST_COUNT] = {
 	"0e55b054ee1bee82ec27c0a6b8773f971503fa7c4c43dbe9d2ab51a9a6ebbd74",
 	"fcbeb2721937f97739b23984fd011876db3cdc24b6e942013749b9e93e468fbc"
 };
-*/
 
-static const char *hash_serial_v1 [HASH_TEST_COUNT] = {
+static const char *hash_serial_v2 [HASH_TEST_COUNT] = {
 	"694d1160ec4a8842e5c14ca9d4a471425b6fbb441518698e09303ea79fda1917",
 	"4582e2d6d337d2d46295c298422506d2a304a3f32387292e0925c3a9f81b8e0f",
 	"4c1669c8565ed042475c8f41004ed0963dda7f4890482baf9e056ef01d77d688",
@@ -280,7 +279,57 @@ static void hash_to_string(unsigned char *hash, char *str)
 	}
 }
 
-static int hash_test()
+
+static int hash_v1_test()
+{
+	unsigned char shash[32];
+	unsigned char last[32];
+	char hash_str[65] = {0};
+	unsigned char p_status = 0;
+	unsigned char p_result = 0;
+	int i = 0;
+	
+	memset(shash, 0x00, sizeof(shash));
+	memset(last, 0x00, sizeof(last));
+
+	for(i = 0; i < HASH_TEST_COUNT; i++)
+	{
+	    printf("\n");
+	    printf("##### hash v1 get loop [%d] #####\n",i);
+	    printf("pre_hash=");
+	    shex_dump_ln(last, sizeof(last));
+
+	    BoeErr *ret = boe_get_s_random(last, shash);
+	    if(ret != BOE_OK)
+	    {
+	        printf("boe_get_s_random failed,error ecode = %d\n",ret->ecode);
+	    }
+	    else
+	    {
+	        printf("get hash=");
+	        shex_dump_ln(shash, sizeof(shash));
+	        printf("get hash ok p_status = %d\n",p_status);
+	    }
+
+	    memset(hash_str, 0, sizeof(hash_str));
+	    hash_to_string(shash, hash_str);
+
+	    if(strcmp(hash_str, hash_serial_v1[i]) != 0)
+	    {
+	        printf("last = ");
+	        shex_dump_ln(last, sizeof(last));
+	        printf("hash = ");
+	        shex_dump_ln(shash, sizeof(shash));
+
+	        printf("get random not matched with %s.\n", hash_serial_v1[i]);
+	        return 1;
+	    }
+	    memcpy(last, shash, sizeof(shash));
+	}
+	return 0;
+}
+
+static int hash_v2_test()
 {
 	unsigned char shash[32];
 	unsigned char last[32];
@@ -302,7 +351,7 @@ static int hash_test()
 	    BoeErr *ret = boe_get_n_random(last, shash);
 	    if(ret != BOE_OK)
 	    {
-	        printf("boe_get_s_random failed,error ecode = %d\n",ret->ecode);
+	        printf("boe_get_n_random failed,error ecode = %d\n",ret->ecode);
 	        if(BOE_HASH_TIME_LIMIT == ret)
 	        {
 	            printf("get hash time limite, sleep 5s continue \n");
@@ -321,7 +370,7 @@ static int hash_test()
 	    memset(hash_str, 0, sizeof(hash_str));
 	    hash_to_string(shash, hash_str);
 
-	    if(strcmp(hash_str, hash_serial_v1[i]) != 0)
+	    if(strcmp(hash_str, hash_serial_v2[i]) != 0)
 	    {
 	        printf("last = ");
 	        shex_dump_ln(last, sizeof(last));
@@ -440,14 +489,23 @@ int main(int argc, char *argv[])
 		    printf("ecc test failed.\n");
 		    return 1;
 		}
-		// hash test 
-		if(0 == hash_test())
+		if(0 == hash_v1_test())
 		{
-			printf("hash test ok.\n");
+			printf("hash v1 test ok.\n");
 		}
 		else
 		{
-			printf("hash test failed.\n");
+			printf("hash v1 test failed.\n");
+			return 3;
+		}
+		// hash test 
+		if(0 == hash_v2_test())
+		{
+			printf("hash v2 test ok.\n");
+		}
+		else
+		{
+			printf("hash v2 test failed.\n");
 			return 3;
 		}
 		if(0 == hwsigntest())
