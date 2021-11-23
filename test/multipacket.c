@@ -176,6 +176,7 @@ static int checksum_err_burn_test()
 	hextobin(burn, data, blen);
 	doTSU_RegisPresendCallback(presend_modify_checksum);
 	BoeErr *ret = doTSU_ZSCVerify(data, blen);
+	doTSU_RegisPresendCallback(NULL);
 	if(ret != &e_checksum_error)
 	{
 		printf("failed: transfer verify should return checksum error.\n");
@@ -191,6 +192,7 @@ static int checksum_err_transfer_test()
 	hextobin(transfer, data, blen);
 	doTSU_RegisPresendCallback(presend_modify_checksum);
 	BoeErr *ret = doTSU_ZSCVerify(data, blen);
+	doTSU_RegisPresendCallback(NULL);
 	if(ret != &e_checksum_error)
 	{
 		printf("failed: transfer verify should return checksum error.\n");
