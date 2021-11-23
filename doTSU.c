@@ -202,7 +202,7 @@ static BoeErr* doCommand(T_Package *p, AQData **d, int timeout, int wlen)
         gTsu.presendCallback(p);
     }
     WMessage * wm = WMessageNew(p->sequence, tsu_check_response, timeout, (uint8_t*)p, wlen, 0);
-    if(p->function_id == FUNCTION_ECSDA_CHECK)
+    if(p->function_id == FUNCTION_ECSDA_CHECK || p->function_id == FUNCTION_ZSC_VERIFY)
     {
         WMessageWithPacketControl(wm, 1);
     }
@@ -440,12 +440,15 @@ BoeErr* doTSU_CheckHash(uint8_t *pre_hash, uint8_t *hash)
     return &e_result_invalid;
 }
 
-static BoeErr* doCommandAsync(T_Package *p, int timeout, int wlen, unsigned char *param, int param_len)
+static BoeErr* doCommandAsync(T_Package *p, int timeout, int wlen, unsigned char *param, int param_len, int no_flow_control)
 {
     MsgContext *wqc = &gTsu.msgc;
     WMessage * wm = WMessageNew(p->sequence, tsu_check_response, timeout, (uint8_t*)p, wlen, 1);
     WMessageAddUserdata(wm, param, param_len);
-    WMessageWithPacketControl(wm, 1);
+    if (no_flow_control != 1) 
+    {
+        WMessageWithPacketControl(wm, 1);
+    }
 	
     if(msgc_send_async(wqc, wm) == 0)
     {
@@ -518,7 +521,7 @@ BoeErr* doTSU_ZSCVerify(uint8_t *data, int len)
             else
             {
                 printf("send with sync command, length = %d\n", node->package_len);
-                ret = doCommandAsync(node->package, 100, node->package_len, NULL, 0);
+                ret = doCommandAsync(node->package, 100, node->package_len, NULL, 0, 1);
                 if(ret != &e_ok)
                 {
                     break;
