@@ -202,7 +202,7 @@ static BoeErr* doCommand(T_Package *p, AQData **d, int timeout, int wlen)
         gTsu.presendCallback(p);
     }
     WMessage * wm = WMessageNew(p->sequence, tsu_check_response, timeout, (uint8_t*)p, wlen, 0);
-    if(p->function_id == FUNCTION_ECSDA_CHECK || p->function_id == FUNCTION_ZSC_VERIFY)
+    if(p->function_id == FUNCTION_ECSDA_CHECK)
     {
         WMessageWithPacketControl(wm, 1);
     }
