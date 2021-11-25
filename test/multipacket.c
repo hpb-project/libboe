@@ -147,6 +147,21 @@ static int ok_burn_test()
 	return 0;
 }
 
+
+static int out_of_order_burn_test()
+{
+	int blen = strlen(burn)/2;
+	uint8_t *data = (uint8_t*)malloc(blen);
+	hextobin(burn, data, blen);
+	BoeErr *ret = doTSU_ZSCVerify_out_of_order(data, blen);
+	if(ret != BOE_OK)
+	{
+		printf("failed: burn verify should return ok.\n");
+		return 1;
+	}
+	return 0;
+}
+
 static int bench_transfer_test(int count)
 {
 	int blen = strlen(transfer)/2;
@@ -177,6 +192,21 @@ static int ok_transfer_test()
 	uint8_t *data = (uint8_t*)malloc(blen);
 	hextobin(transfer, data, blen);
 	BoeErr *ret = doTSU_ZSCVerify(data, blen);
+	if(ret != BOE_OK)
+	{
+		printf("failed: transfer verify should return ok.\n");
+		return 1;
+	}
+	return 0;
+}
+
+
+static int out_of_order_transfer_test()
+{
+	int blen = strlen(transfer)/2;
+	uint8_t *data = (uint8_t*)malloc(blen);
+	hextobin(transfer, data, blen);
+	BoeErr *ret = doTSU_ZSCVerify_out_of_order(data, blen);
 	if(ret != BOE_OK)
 	{
 		printf("failed: transfer verify should return ok.\n");
@@ -250,24 +280,6 @@ static int checksum_err_transfer_test()
 	return 0;
 }
 
-static int out_of_order_transfer_test()
-{
-	// todo: implement 
-	int blen = strlen(transfer)/2;
-	uint8_t *data = (uint8_t*)malloc(blen);
-	hextobin(transfer, data, blen);
-	doTSU_RegisPresendCallback(presend_modify_checksum);
-	BoeErr *ret = doTSU_ZSCVerify(data, blen);
-	doTSU_RegisPresendCallback(NULL);
-	if(ret != &e_checksum_error)
-	{
-		printf("failed: transfer verify should return checksum error.\n");
-		return 1;
-	}
-	return 0;
-}
-
-
 static int multipacket_test(void)
 {
 	unsigned char *data = (unsigned char *)malloc(1000*5);
@@ -293,22 +305,22 @@ static int multipacket_test(void)
 void loop(void)
 {
 	int bexit = 0;
-	int choice = 99;
+	int choice = 999;
 	while(bexit != 1)
 	{
 		// 1. 4的业务包 ，分片间穿插 123业务包。  结果：互不影响
-		// 2. 4的业务包，分片乱序发送。			 结果：不影响
+		//x 2. 4的业务包，分片乱序发送。			 结果：不影响
 		// 3. 4的业务包，不同的分组，交叉发送，   结果：前面的分组被丢弃，(最后一个分片发送后超时)
-		// 4. 4的业务包，相同的分组，顺序发送，   结果：正常执行
-		// 5. 4的业务包，不同的分组, 分组间顺序发送，     结构：正常执行
+		//x 4. 4的业务包，相同的分组，顺序发送，   结果：正常执行
+		//x 5. 4的业务包，不同的分组, 分组间顺序发送，     结构：正常执行
 		// 6. 验签业务加压的同时， 发送 4的业务包		  结果：正常执行
 		// 7. 验签性能测试
-		// 8. 4的业务包性能测试( 100 burn proof)
-		// 9. 4的业务包性能测试( 100 transfer proof)
-		// 10. 4的业务包性能测试( 1000 burn proof)
-		// 11. 4的业务包性能测试( 1000 transfer proof)
-		// 12. 4的业务包性能测试( 10000 burn proof)
-		// 13. 4的业务包性能测试( 10000 transfer proof)
+		//x 8. 4的业务包性能测试( 100 burn proof)
+		//x 9. 4的业务包性能测试( 100 transfer proof)
+		//x 10. 4的业务包性能测试( 1000 burn proof)
+		//x 11. 4的业务包性能测试( 1000 transfer proof)
+		//x 12. 4的业务包性能测试( 10000 burn proof)
+		//x 13. 4的业务包性能测试( 10000 transfer proof)
 		printf("-------------------------\n");
 		printf("0: 验证正常(burn proof)\n");
 		printf("1: 验证正常(transfer proof)\n");
@@ -324,7 +336,8 @@ void loop(void)
 		printf("11. 4的业务包性能测试( 1000 transfer proof)\n");
 		printf("12. 4的业务包性能测试( 10000 burn proof)\n");
 		printf("13. 4的业务包性能测试( 10000 transfer proof)\n");
-		printf("99: 退出测试\n");
+
+		printf("88: 退出测试\n");
 
 		printf("选择测试用例：");
 		scanf("%d", &choice);
@@ -345,12 +358,16 @@ void loop(void)
 			break;
 		case 4:
 			checksum_err_burn_test();
-			break;
-		
+			break;		
 		case 5:
 			checksum_err_transfer_test();
 			break;
-
+		case 6:
+			out_of_order_burn_test();
+			break;
+		case 7:
+			out_of_order_transfer_test();
+			break;
 		case 8:
 			bench_burn_test(100);
 			break;
@@ -369,9 +386,8 @@ void loop(void)
 		case 13:
 			bench_transfer_test(10000);
 			break;
-		
 		}
-		if(choice == 99)
+		if(choice == 88)
 		{
 			return;
 		}		
