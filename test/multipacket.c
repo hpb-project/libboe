@@ -128,7 +128,7 @@ static int bench_burn_test(int count)
 		}
 	}
 	PROFILE_END("bench test");
-	printf("total %d, failed %d, ok %s\n", count, failed, ok);
+	printf("total %d, failed %d, ok %d\n", count, failed, ok);
 	return 0;
 }
 
@@ -182,7 +182,7 @@ static int bench_transfer_test(int count)
 		}
 	}
 	PROFILE_END("bench test");
-	printf("total %d, failed %d, ok %s\n", count, failed, ok);
+	printf("total %d, failed %d, ok %d\n", count, failed, ok);
 	return 0;
 }
 
