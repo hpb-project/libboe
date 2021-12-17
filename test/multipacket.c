@@ -366,7 +366,7 @@ static int merge_burn_and_burn()
 	BoeErr *result_b1, *result_b2;
 
 	doTSU_ZSCVerify_Merge(data_1,blen_b1,&result_b1, data_2,blen_b2, &result_b2);
-	if( result_b1 != &e_hw_verify_failed && result_b2 != &e_ok)
+	if(!(result_b1 == &e_hw_verify_failed && result_b2 == &e_ok))
 	{
 		printf("failed: burn_1 should failed and burn_2 should be ok.\n");
 		return 1;
