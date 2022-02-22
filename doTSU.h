@@ -27,6 +27,8 @@ BoeErr* doTSU_CheckHash(uint8_t *pre_hash, uint8_t *hash);
 BoeErr* doTSU_RecoverPub_Async(uint8_t *sig, unsigned char *param, int param_len);
 BoeErr* doTSU_ZSCVerify(uint8_t *data, int len);
 BoeErr* doTSU_ZSCVerify_out_of_order(uint8_t *data, int len);
+BoeErr* doTSU_ZSCVerify_Merge(uint8_t *data_1, int len_1, BoeErr **result_1, uint8_t *data_2, int len_2, BoeErr **result_2);
+
 void doTSU_RegisAsyncCallback(AsyncCallback afun, void *data);
 void doTSU_RegisPresendCallback(TSU_PreSendCallback pfun);
 

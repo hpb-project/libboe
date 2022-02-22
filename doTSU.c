@@ -652,104 +652,167 @@ BoeErr* doTSU_ZSCVerify_out_of_order(uint8_t *data, int len)
 
     return ret;
 }
-# if 0
-BoeErr* doTSU_ZSCVerify_Merge(uint8_t *data_1, int len_1, uint8_t *data_2, int len_2)
+# if 1
+BoeErr* doTSU_ZSCVerify_Merge(uint8_t *data_1, int len_1, BoeErr **result_1, uint8_t *data_2, int len_2, BoeErr **result_2)
 {
 	int wlen = 0;
-    uint8_t mode;
-	T_Multi_Package_List *list = NULL, *p = NULL;
-    T_Multi_Package_Node *node = NULL;
-	BoeErr *ret = NULL;
-	AQData *r = NULL;
-	int retry = 3;
-	uint8_t p_result = 0;
+	uint8_t mode1,mode2;
+	T_Multi_Package_List *list_1 = NULL, *list_2 = NULL;
 
-    if(len == BURNPROOF_LENGTH)
-    {
-        mode = ZSC_BURN_MODE;
-    }
-    else if (len == TRANSFERPROOF_LENGTH)
-    {
-        mode = ZSC_TRANSFER_MODE;
-    }
-    else 
-    {
-        ret = &e_param_invalid;
-    }
-    list = make_query_zscVerify(data, mode, len, &wlen);
-    p = list;          
-    // out of the order.
-    {
-        T_Multi_Package_List *r1 = list->next;
-        T_Multi_Package_List *r2 = r1->next;
-        list->next = r2;
-        r1->next = r2->next;
-        r2->next = r1;
-    }
+	T_Multi_Package_List *current = NULL, *p = NULL;
+	T_Multi_Package_Node *node = NULL;
+
+	BoeErr *ret = NULL;
+	AQData *r1 = NULL, *r2 = NULL;
+	int finish = 0;
+	//int retry = 3;
+	uint8_t p_result_1 = 0, p_result_2 = 0;
+	{
+		// init data_1
+		if(len_1 == BURNPROOF_LENGTH)
+		{
+			mode1 = ZSC_BURN_MODE;
+		}
+		else if (len_1 == TRANSFERPROOF_LENGTH)
+		{
+			mode1 = ZSC_TRANSFER_MODE;
+		}
+		else 
+		{
+			ret = &e_param_invalid;
+			*result_1 = &e_param_invalid;
+			*result_2 = &e_param_invalid;
+			return ret;
+		}
+		list_1 = make_query_zscVerify(data_1, mode1, len_1, &wlen);
+	}
+	{
+		// init data_2
+		if(len_2 == BURNPROOF_LENGTH)
+		{
+			mode2 = ZSC_BURN_MODE;
+		}
+		else if (len_2 == TRANSFERPROOF_LENGTH)
+		{
+			mode2 = ZSC_TRANSFER_MODE;
+		}
+		else 
+		{
+			ret = &e_param_invalid;
+			*result_1 = &e_param_invalid;
+			*result_2 = &e_param_invalid;
+			return ret;
+		}
+		list_2 = make_query_zscVerify(data_2, mode2, len_2, &wlen);
+	}
+	current = list_1;
+	p = current;
 	if(p)
 	{
-        while(NULL != p->next)
-        {
-            node = p->next;
-            if (NULL == node->next)
-            {
-                // the last one use sync command.
-                printf("send with async command, length = %d\n", node->package_len);
-                ret = doCommand(node->package, &r, 1000, node->package_len);
-                if (ret == &e_ok)
-                {   // receive verify response.
-                    T_Package *q = (T_Package*)r->buf;
-                    if (q->status == RP_CHKSUM_ERROR)
-                    {
-                        ret = &e_checksum_error;
-                        // resend max retry times.
-                        if(retry > 0)
-                        {
-                            retry--;
-                            p = list;
-                            continue;
-                        }
-                    }
-                    else
-                    {
-                        p_result = q->status; // got verify result.
-                    }
-                    
-                    aqd_free(r);
-                }
-                break;
-            }
-            else
-            {
-                printf("send with sync command, length = %d\n", node->package_len);
-                ret = doCommandAsync(node->package, 100, node->package_len, NULL, 0, 1);
-                if(ret != &e_ok)
-                {
-                    break;
-                }
-            }
-            p = p->next;
-        }
-        tsu_zsc_proof_package_release(list);
+		while(NULL != p->next)
+		{
+			node = p->next;
+			if (NULL == node->next)
+			{
+				if (current == list_1 && finish != 1) 
+				{
+					// if current is list_1 , then change to send list_2;
+					list_1 = p; // list_1 has send at p position.
+					current = list_2;
+					p = current;
+					continue;
+				}
+				// the last one use sync command.
+				printf("send with async command, length = %d\n", node->package_len);
+				if (current == list_1) 
+				{
+					*result_1 = doCommand(node->package, &r1, 1000, node->package_len);
+					if ((*result_1) == &e_ok)
+					{	// receive verify response.
+						T_Package *q = (T_Package*)r1->buf;
+						if (q->status == RP_CHKSUM_ERROR)
+						{
+							*result_1 = &e_checksum_error;
+						}
+						else
+						{
+							p_result_1 = q->status; // got verify result.
+						}
+
+						aqd_free(r1);
+					}
+					// list_1 and list_2 has been send finished.
+					break;
+				} else if (current == list_2) {
+					*result_2 = doCommand(node->package, &r2, 1000, node->package_len);
+					if ((*result_2) == &e_ok)
+					{   // receive verify response.
+						T_Package *q = (T_Package*)r2->buf;
+						if (q->status == RP_CHKSUM_ERROR)
+						{
+							*result_2 = &e_checksum_error;
+						}
+						else
+						{
+							p_result_2 = q->status; // got verify result.
+						}
+
+						aqd_free(r2);
+					}
+					// after send list_2, continue send list_1.
+					current = list_1;
+					p = current;
+					finish = 1;
+					continue;
+				}
+			}
+			else
+			{
+				printf("send with sync command, length = %d\n", node->package_len);
+				ret = doCommandAsync(node->package, 100, node->package_len, NULL, 0, 1);
+				if(ret != &e_ok)
+				{
+					break;
+				}
+				// for test sleep, be sure the packet send.
+				sleep(1);
+			}
+			p = p->next;
+		}
+		tsu_zsc_proof_package_release(list_1);
+		tsu_zsc_proof_package_release(list_2);
 	}
 	else
 	{
-	    ret = &e_no_mem;
+		ret = &e_no_mem;
+		*result_1 = &e_no_mem;
+		*result_2 = &e_no_mem;
 	}
 
-    if(p_result == 0)
-    {
-        if (ret != &e_checksum_error)
-        {
-            // verify false.
-            ret = &e_hw_verify_failed;
-        }
-    }
-    else
-    {   // verify true.
-        ret = &e_ok;
-    }
+	if(p_result_1 == 0)
+	{
+		if ((*result_1) != &e_checksum_error)
+		{
+			*result_1 = &e_hw_verify_failed;
+		}
+	}
+	else
+	{   // verify true.
+		*result_1 = &e_ok;
+	}
 
-    return ret;
+	if(p_result_2 == 0)
+	{
+		if ((*result_2) != &e_checksum_error)
+		{
+			*result_2 = &e_hw_verify_failed;
+		}
+	}
+	else
+	{   // verify true.
+		*result_2 = &e_ok;
+	}
+
+	return ret;
 }
 # endif
