@@ -1119,7 +1119,8 @@ static int asu_msg_callback(WMessage *m, void*userdata)
 BoeErr* doAXU_Init(char *ethname, MsgHandle msghandle, void*userdata)
 {
     int ret = 0;
-
+    pid_t pid = getpid();
+    axu_set_pid(pid);
     ret = RSCreate(ethname, AXU_TYPE, &(gAxu.rs));
     if(ret != 0)
     {

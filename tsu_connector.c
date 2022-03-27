@@ -32,9 +32,17 @@
 
 static uint32_t  g_sequence = 0;
 static uint8_t  g_task_id = 0;
+static uint8_t  g_pid = 0;
 static const unsigned char g_tsu_version = 0x10;
 
 #define fetch_tsu_package_sequence() atomic_fetch_and_add(&g_sequence,1)
+
+int tsu_set_pid(pid_t pid) 
+{
+    g_pid = (uint8_t)pid;
+}
+
+
 #define fetch_tsu_multi_package_task() atomic_fetch_and_add(&g_task_id,1)
 
 T_Package* tsu_package_new(uint8_t fid, uint32_t len, uint8_t hash_flag)
@@ -42,7 +50,9 @@ T_Package* tsu_package_new(uint8_t fid, uint32_t len, uint8_t hash_flag)
     T_Package *p = (T_Package*)malloc(sizeof(T_Package)+len);
     if(p)
     {
-        p->sequence = fetch_tsu_package_sequence();
+        uint32_t seq = fetch_tsu_package_sequence();
+
+        p->sequence = seq | g_pid << 24;
         p->version = g_tsu_version;
         p->status= 0;
         p->function_id = fid;
@@ -54,6 +64,7 @@ T_Package* tsu_package_new(uint8_t fid, uint32_t len, uint8_t hash_flag)
         {
             p->sub_function = SUB_FUNC_NEW_HASH;//get hash
         }
+        printf("tsu make package pid = %d, packageid = %u\n", g_pid, p->sequence);
     }
     return p;
 }

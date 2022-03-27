@@ -106,6 +106,8 @@ void doTSU_RegisPresendCallback(TSU_PreSendCallback pfun)
 BoeErr* doTSU_Init(char *ethname, MsgHandle msghandle, void*userdata)
 {
     TSUContext *ctx = &gTsu;
+    pid_t pid = getpid();
+    tsu_set_pid(pid);
     int ret = RSCreate(ethname, TSU_RV, &ctx->rs);
     if(ret != 0)
     {

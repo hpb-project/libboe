@@ -17,7 +17,8 @@
 
 #ifndef TSU_CONNECTOR_H
 #define TSU_CONNECTOR_H
-
+#include <sys/types.h>
+#include <unistd.h>
 #include "common.h"
 typedef struct T_PACKAGE{
     uint32_t    sequence;           // package sequence id.
@@ -53,6 +54,7 @@ typedef struct T_Multi_Slice_Package {
 
 #define TSU_HASH_CHECK_LEN (64)
 
+int tsu_set_pid(pid_t pid);
 T_Package* tsu_package_new(uint8_t fid, uint32_t len, uint8_t hash_flag);
 int tsu_set_data(T_Package* p, uint16_t offset, uint8_t* data, uint32_t len);
 void tsu_finish_package(T_Package *p);

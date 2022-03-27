@@ -16,6 +16,8 @@
 
 #ifndef AXU_CONNECTOR_H
 #define AXU_CONNECTOR_H
+#include <sys/types.h>
+#include <unistd.h>
 #include <stdint.h>
 #include "common.h"
 #include "rs.h"
@@ -109,6 +111,7 @@ typedef struct ImageHeader{
     TVersion version;
 }ImageHeader;
 
+int axu_set_pid(pid_t pid);
 A_Package* axu_package_new(uint32_t len);
 int axu_package_free(A_Package* pack);
 

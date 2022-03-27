@@ -21,11 +21,18 @@
 #include "atomic.h"
 
 static uint16_t  g_sequence_id = 0;
+static uint8_t  g_pid = 0;
 
 #define fetch_axu_package_sequence() atomic_fetch_and_add(&g_sequence_id,1)
 
+int axu_set_pid(pid_t pid) 
+{
+    g_pid = (uint8_t)pid;
+}
+
 A_Package* axu_package_new(uint32_t len)
 {
+
     if(len > PACKAGE_MAX_SIZE)
     {
         printf("Package len (%d) is bigger than PACKAGE_MAX_SIZE(%d) \r\n", len, (int)PACKAGE_MAX_SIZE);
@@ -64,8 +71,10 @@ void axu_package_init(A_Package *pack, A_Package* req, ACmd cmd)
         pack->header.package_id = req->header.package_id;
         pack->header.q_or_r = AP_RESPONSE;
     }else{
-        pack->header.package_id = fetch_axu_package_sequence();
+        uint16_t package_id = fetch_axu_package_sequence();
+        pack->header.package_id = package_id | g_pid << 4;
         pack->header.q_or_r = AP_QUERY;
+        printf("axu make package pid = %d, packageid = %d\n", g_pid, pack->header.package_id);
     }
 }
 
