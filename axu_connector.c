@@ -74,7 +74,7 @@ void axu_package_init(A_Package *pack, A_Package* req, ACmd cmd)
         uint16_t package_id = fetch_axu_package_sequence();
         pack->header.package_id = package_id | g_pid << 4;
         pack->header.q_or_r = AP_QUERY;
-        printf("axu make package pid = %d, packageid = %d\n", g_pid, pack->header.package_id);
+        // printf("axu make package pid = %d, packageid = %d\n", g_pid, pack->header.package_id);
     }
 }
 
