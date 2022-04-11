@@ -64,7 +64,7 @@ T_Package* tsu_package_new(uint8_t fid, uint32_t len, uint8_t hash_flag)
         {
             p->sub_function = SUB_FUNC_NEW_HASH;//get hash
         }
-        printf("tsu make package pid = %d, packageid = %u\n", g_pid, p->sequence);
+        //printf("tsu make package pid = %d, packageid = %u\n", g_pid, p->sequence);
     }
     return p;
 }
