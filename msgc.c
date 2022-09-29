@@ -23,6 +23,8 @@
 #include <sys/stat.h> 
 #include <pthread.h>
 #include <semaphore.h>
+#include <time.h>
+#include <errno.h>
 #include "common.h"
 #include "rs.h"
 #include "atomic.h"
@@ -179,13 +181,35 @@ int msgc_set_packet_control(MsgContext *ctx, int maxbuffer)
     return 0;
 }
 
+int msleep(long msec)
+{
+    struct timespec ts;
+    int res;
+
+    if (msec < 0)
+    {
+        errno = EINVAL;
+        return -1;
+    }
+
+    ts.tv_sec = msec / 1000;
+    ts.tv_nsec = (msec % 1000) * 1000000;
+
+    do {
+        res = nanosleep(&ts, &ts);
+    } while (res && errno == EINTR);
+
+    return res;
+}
+
 int msgc_release(MsgContext *ctx)
 {
     IMsgContext *c = *ctx;
     c->th_flag = 2;
-    pthread_join(c->r_thread, NULL);
-    pthread_join(c->s_thread, NULL);
-    pthread_join(c->tx_thread, NULL);
+    //pthread_join(c->r_thread, NULL);
+    //pthread_join(c->s_thread, NULL);
+    //pthread_join(c->tx_thread, NULL);
+    msleep(500);
     pthread_mutex_destroy(&c->mlock);
     aq_free(&(c->r_q));
     
