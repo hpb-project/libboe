@@ -158,6 +158,8 @@ int RSRead(RSContext *ctx, uint8_t*p_buf, int *len)
         return -1;
 
     rx_len -= package_header_len;
+    if (rx_len < 0)
+	    return -1;
     if(rx_len < *len)
         *len = rx_len;
 
